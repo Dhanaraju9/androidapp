@@ -721,53 +721,39 @@ fun TopicSetsScreen(
                             Color(0xFFE11D48), // Rose
                             Color(0xFF0891B2)  // Cyan
                         )
-                        val chunkedSubs = subtopicsList.chunked(2)
-                        itemsIndexed(chunkedSubs, key = { rowIndex, _ -> "sub_row_$rowIndex" }) { rowIndex, rowSubs ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                rowSubs.forEachIndexed { colIndex, subtopicTitle ->
-                                    val globalIndex = rowIndex * 2 + colIndex
-                                    val bgCol = solidColors[globalIndex % solidColors.size]
-                                    val code = "S%02d".format(globalIndex + 1)
-                                    val subQuestionsCount = matchedCountsMap[subtopicTitle] ?: 0
+                        itemsIndexed(subtopicsList, key = { index, sub -> "sub_${index}_$sub" }) { globalIndex, subtopicTitle ->
+                            val bgCol = solidColors[globalIndex % solidColors.size]
+                            val code = "S%02d".format(globalIndex + 1)
+                            val subQuestionsCount = matchedCountsMap[subtopicTitle] ?: 0
 
-                                    val subtopicId = "subtopic-${activeTopicVal.id}-${subtopicTitle.hashCode()}"
-                                    val hasDbCompletedSub = testResults.any { it.testName.contains(subtopicTitle, ignoreCase = true) }
-                                    val status = remember(subtopicId, testResults) {
-                                        PracticeSessionManager.getSessionStatus(context, subtopicId, hasDbCompletedSub)
-                                    }
-
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        CompactGridSubtopicCard(
-                                            code = code,
-                                            title = subtopicTitle,
-                                            questionsCount = subQuestionsCount,
-                                            status = status,
-                                            backgroundColor = bgCol,
-                                            onClick = {
-                                                val subQuestions = topicQuestions.filter { it.subtopic.equals(subtopicTitle, ignoreCase = true) }
-                                                val subtopicPracticeSet = subtopicSetsList.getOrNull(globalIndex) ?: PracticeSetModel(
-                                                    id = subtopicId,
-                                                    title = subtopicTitle,
-                                                    subtitle = "${subQuestions.size} Questions",
-                                                    setNumber = globalIndex + 1,
-                                                    questionsCount = subQuestions.size,
-                                                    startQuestionNumber = 1,
-                                                    endQuestionNumber = subQuestions.size,
-                                                    questions = subQuestions,
-                                                    badge = ""
-                                                )
-                                                onStartSet(subtopicPracticeSet, subtopicSetsList)
-                                            }
-                                        )
-                                    }
-                                }
-                                if (rowSubs.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
+                            val subtopicId = "subtopic-${activeTopicVal.id}-${subtopicTitle.hashCode()}"
+                            val hasDbCompletedSub = testResults.any { it.testName.contains(subtopicTitle, ignoreCase = true) }
+                            val status = remember(subtopicId, testResults) {
+                                PracticeSessionManager.getSessionStatus(context, subtopicId, hasDbCompletedSub)
                             }
+
+                            CompactGridSubtopicCard(
+                                code = code,
+                                title = subtopicTitle,
+                                questionsCount = subQuestionsCount,
+                                status = status,
+                                backgroundColor = bgCol,
+                                onClick = {
+                                    val subQuestions = topicQuestions.filter { it.subtopic.equals(subtopicTitle, ignoreCase = true) }
+                                    val subtopicPracticeSet = subtopicSetsList.getOrNull(globalIndex) ?: PracticeSetModel(
+                                        id = subtopicId,
+                                        title = subtopicTitle,
+                                        subtitle = "${subQuestions.size} Questions",
+                                        setNumber = globalIndex + 1,
+                                        questionsCount = subQuestions.size,
+                                        startQuestionNumber = 1,
+                                        endQuestionNumber = subQuestions.size,
+                                        questions = subQuestions,
+                                        badge = ""
+                                    )
+                                    onStartSet(subtopicPracticeSet, subtopicSetsList)
+                                }
+                            )
                         }
                     }
                 }

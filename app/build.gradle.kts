@@ -120,6 +120,7 @@ dependencies {
   implementation("com.google.firebase:firebase-storage")
   implementation("com.google.firebase:firebase-messaging")
   implementation("com.google.firebase:firebase-analytics")
+  implementation(libs.firebase.perf)
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)

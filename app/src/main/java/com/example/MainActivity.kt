@@ -33,6 +33,7 @@ sealed class AppScreen {
     data object CurrentAffairs : AppScreen()
     data object MockTests : AppScreen()
     data object Performance : AppScreen()
+    data object ContactUs : AppScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -213,7 +214,16 @@ fun AppNavigationHost() {
                 onNavigateToHome = { currentScreen = AppScreen.Home },
                 onNavigateToSubscription = { navigateTo(AppScreen.Subscription) },
                 onNavigateToLogin = { navigateTo(AppScreen.Login) },
-                onNavigateToSavedQuestions = { navigateTo(AppScreen.SavedQuestions) }
+                onNavigateToSavedQuestions = { navigateTo(AppScreen.SavedQuestions) },
+                onNavigateToContact = { navigateTo(AppScreen.ContactUs) },
+                onNavigateToPrivacy = { navigateTo(AppScreen.ContactUs) }
+            )
+        }
+        is AppScreen.ContactUs -> {
+            ContactUsScreen(
+                onBack = { goBack() },
+                onNavigateToFaq = { navigateTo(AppScreen.Profile) },
+                onNavigateToHelpCenter = { navigateTo(AppScreen.Profile) }
             )
         }
         is AppScreen.SavedQuestions -> {

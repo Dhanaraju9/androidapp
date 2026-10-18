@@ -67,7 +67,8 @@ fun UserProfileScreen(
     onNavigateToMockTestHistory: () -> Unit = {},
     onNavigateToAppearanceSettings: () -> Unit = {},
     onNavigateToPerformance: () -> Unit = onNavigateToPracticeHistory,
-    onNavigateToNotificationSettings: () -> Unit = {}
+    onNavigateToNotificationSettings: () -> Unit = {},
+    onNavigateToContact: () -> Unit = {}
 ) {
     val config = LocalAppConfig.current
     val context = LocalContext.current
@@ -580,7 +581,7 @@ fun UserProfileScreen(
                                     iconTint = brandPrimary,
                                     title = "Support Desk & FAQs",
                                     subtitle = "Contact us directly via Email or Support link",
-                                    onClick = onNavigateToPrivacy,
+                                    onClick = onNavigateToContact,
                                     isDark = isDark
                                 )
                                 HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(horizontal = 14.dp))

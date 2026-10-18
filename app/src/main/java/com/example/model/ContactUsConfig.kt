@@ -8,34 +8,34 @@ import androidx.compose.ui.graphics.Color
  */
 data class ContactUsConfig(
     // Contact Info (defaults match the pixel reference image)
-    val supportEmail: String = "support@infinitylabs.in",
-    val emailTitle: String = "Email Us",
-    val emailSubtext: String = "Get detailed support via email",
+    val supportEmail: String = "Sobhadhanaraju1@gmail.com",
+    val emailTitle: String = "Email Support",
+    val emailSubtext: String = "Send us your questions or technical issues",
     
-    val whatsappNumber: String = "+91 98765 43210",
-    val whatsappTitle: String = "Chat on WhatsApp",
-    val whatsappSubtext: String = "Quick replies during support hours",
-    val whatsappLink: String = "https://wa.me/919876543210",
+    val whatsappNumber: String = "+91 94935 12768",
+    val whatsappTitle: String = "WhatsApp Support",
+    val whatsappSubtext: String = "Contact us directly for assistance",
+    val whatsappLink: String = "https://wa.me/919493512768",
     
-    val telegramLink: String = "t.me/infinitylabs",
-    val telegramTitle: String = "Join our Telegram",
-    val telegramSubtext: String = "Updates, Notifications & Study Resources",
+    val telegramLink: String = "https://t.me/DHANARAJU0",
+    val telegramTitle: String = "Telegram Support",
+    val telegramSubtext: String = "Contact us through our Telegram account",
     
-    val phoneNumber: String = "+91 98765 43210",
+    val phoneNumber: String = "+91 94935 12768",
     
     // Support Timings & Quick Response
-    val supportTimingsTitle: String = "Support Timings",
+    val supportTimingsTitle: String = "Support Hours",
     val supportTimingsLine1: String = "Mon - Sat : 9:00 AM - 6:00 PM",
     val supportTimingsLine2: String = "Sunday : Holiday",
     
     val quickSupportTitle: String = "Quick Support",
-    val quickSupportSubtext: String = "We usually respond within 2-4 hours",
+    val quickSupportSubtext: String = "We are here to assist you",
     
     // Header & Banner
-    val headerTitle: String = "Contact Us",
-    val headerSubtitle: String = "We're here to help you",
-    val bannerTitle: String = "Your Success Matters",
-    val bannerSubtitle: String = "Reach out to us anytime. We're always with you.",
+    val headerTitle: String = "Premium Support Center",
+    val headerSubtitle: String = "WE ARE HERE TO HELP",
+    val bannerTitle: String = "Your learning matters. We're here to help.",
+    val bannerSubtitle: String = "Need assistance? Contact our support team for help with your app, account, payments, subscriptions, or learning experience.",
     val fastSupportBadge: String = "Fast Support",
     
     // Quick-Links Grid

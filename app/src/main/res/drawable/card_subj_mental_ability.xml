@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Cyber Midnight Blue to Electric Cyan Gradient -->
+    <path
+        android:fillColor="#041E34"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#0284C7"
+        android:fillAlpha="0.65"
+        android:pathData="M0,0h360v110L0,165z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:fillAlpha="0.25"
+        android:pathData="M0,60 Q180,10 360,70 L360,200 L0,200 Z" />
+
+    <!-- Ambient Brain / Neural Synapse Aura -->
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.18"
+        android:pathData="M180,90 m-60,0 a60,60 0 1,1 120,0 a60,60 0 1,1 -120,0" />
+    <path
+        android:fillColor="#7DD3FC"
+        android:fillAlpha="0.25"
+        android:pathData="M180,90 m-35,0 a35,35 0 1,1 70,0 a35,35 0 1,1 -70,0" />
+
+    <!-- Central Glowing Brain Network / Logic Emblem -->
+    <!-- Left Hemisphere Silhouette -->
+    <path
+        android:fillColor="#0369A1"
+        android:fillAlpha="0.8"
+        android:pathData="M175,60 C155,60 140,75 140,90 C140,95 142,100 145,105 C140,110 142,120 150,123 C155,127 165,125 175,120 Z" />
+    <!-- Right Hemisphere Silhouette -->
+    <path
+        android:fillColor="#0284C7"
+        android:fillAlpha="0.8"
+        android:pathData="M185,60 C205,60 220,75 220,90 C220,95 218,100 215,105 C220,110 218,120 210,123 C205,127 195,125 185,120 Z" />
+    <!-- Center Split Line -->
+    <path
+        android:strokeColor="#BAE6FD"
+        android:strokeWidth="2"
+        android:pathData="M180,62 L180,118" />
+
+    <!-- Isometric Logic Cube / Puzzle Matrix (Left Side) -->
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.35"
+        android:pathData="M70,70 L90,60 L110,70 L90,80 Z" />
+    <path
+        android:fillColor="#0284C7"
+        android:fillAlpha="0.45"
+        android:pathData="M70,70 L90,80 L90,102 L70,92 Z" />
+    <path
+        android:fillColor="#0369A1"
+        android:fillAlpha="0.55"
+        android:pathData="M110,70 L90,80 L90,102 L110,92 Z" />
+
+    <!-- Ascending Data Analytics Graph & Bar Chart (Right Side) -->
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.4"
+        android:pathData="M260,110 H272 V140 H260 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.55"
+        android:pathData="M278,95 H290 V140 H278 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.75"
+        android:pathData="M296,80 H308 V140 H296 Z" />
+    <path
+        android:fillColor="#7DD3FC"
+        android:fillAlpha="0.9"
+        android:pathData="M314,65 H326 V140 H314 Z" />
+    <!-- Graph Line Trend Arrow -->
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeWidth="2.5"
+        android:pathData="M255,120 L272,105 L290,92 L308,76 L326,58" />
+
+    <!-- Neural Constellation Lines & Data Nodes -->
+    <path
+        android:strokeColor="#7DD3FC"
+        android:strokeAlpha="0.3"
+        android:strokeWidth="1.5"
+        android:pathData="M50,130 L90,102 M110,92 L145,105 M215,105 L260,110" />
+    <path
+        android:fillColor="#FDE68A"
+        android:pathData="M50,130 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 M326,58 m-3.5,0 a3.5,3.5 0 1,1 7,0 a3.5,3.5 0 1,1 -7,0" />
+
+    <!-- Cyber Circuit Floor Base -->
+    <path
+        android:fillColor="#021424"
+        android:pathData="M0,165h360v35h-360z" />
+</vector>

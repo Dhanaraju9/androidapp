@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Deep Royal Amethyst / Velvet Purple Base -->
+    <path
+        android:fillColor="#3B0764"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#701A75"
+        android:fillAlpha="0.75"
+        android:pathData="M0,0h360v120L0,170z" />
+    <path
+        android:fillColor="#A21CAF"
+        android:fillAlpha="0.25"
+        android:pathData="M0,70 Q180,20 360,80 L360,200 L0,200 Z" />
+
+    <!-- Cultural Diversity Mandala & Harmony Aura -->
+    <path
+        android:fillColor="#F472B6"
+        android:fillAlpha="0.16"
+        android:pathData="M180,95 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" />
+    <path
+        android:fillColor="#E879F9"
+        android:fillAlpha="0.20"
+        android:pathData="M180,95 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0" />
+
+    <!-- Protective Social Justice Shield in Center Background -->
+    <path
+        android:fillColor="#581C87"
+        android:fillAlpha="0.55"
+        android:pathData="M155,50 L205,50 Q205,90 180,115 Q155,90 155,50 Z" />
+    <path
+        android:strokeColor="#F0ABFC"
+        android:strokeAlpha="0.4"
+        android:strokeWidth="1.5"
+        android:pathData="M157,52 L203,52 Q203,88 180,112 Q157,88 157,52 Z" />
+
+    <!-- Interconnected Human Family & Community Silhouette (Bottom Strip) -->
+    <!-- Center Person (Adult/Leader) -->
+    <path
+        android:fillColor="#2E1065"
+        android:pathData="M180,118 m-9,0 a9,9 0 1,1 18,0 a9,9 0 1,1 -18,0 M165,145 Q180,132 195,145 L195,200 L165,200 Z" />
+    <!-- Left Person (Mother / Woman) -->
+    <path
+        android:fillColor="#240A50"
+        android:pathData="M145,124 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0 M132,148 Q145,136 158,148 L158,200 L132,200 Z" />
+    <!-- Right Person (Youth / Student) -->
+    <path
+        android:fillColor="#240A50"
+        android:pathData="M215,124 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0 M202,148 Q215,136 228,148 L228,200 L202,200 Z" />
+    <!-- Far Left Elder -->
+    <path
+        android:fillColor="#1E0740"
+        android:pathData="M110,132 m-7,0 a7,7 0 1,1 14,0 a7,7 0 1,1 -14,0 M100,154 Q110,144 120,154 L120,200 L100,200 Z" />
+    <!-- Far Right Child -->
+    <path
+        android:fillColor="#1E0740"
+        android:pathData="M250,132 m-7,0 a7,7 0 1,1 14,0 a7,7 0 1,1 -14,0 M240,154 Q250,144 260,154 L260,200 L240,200 Z" />
+
+    <!-- Unity Wave Horizon at Base -->
+    <path
+        android:fillColor="#1A0436"
+        android:pathData="M0,175 Q90,165 180,175 T360,175 L360,200 L0,200 Z" />
+
+    <!-- Scales of Social Justice Emblem (Right Upper) -->
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeAlpha="0.35"
+        android:strokeWidth="2"
+        android:pathData="M315,40 L315,75 M295,48 L335,48" />
+    <path
+        android:fillColor="#FBBF24"
+        android:fillAlpha="0.35"
+        android:pathData="M290,62 L300,62 L295,54 Z M330,62 L340,62 L335,54 Z" />
+</vector>

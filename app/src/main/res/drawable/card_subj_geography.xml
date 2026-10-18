@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Sky Base Layer (Deep Oceanic Teal & Atmosphere) -->
+    <path
+        android:fillColor="#022C22"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#064E3B"
+        android:fillAlpha="0.8"
+        android:pathData="M0,0h360v130L0,160z" />
+    <path
+        android:fillColor="#047857"
+        android:fillAlpha="0.35"
+        android:pathData="M0,40 Q180,90 360,30 L360,160 L0,160 Z" />
+
+    <!-- Atmospheric Sun / Celestial Glow -->
+    <path
+        android:fillColor="#6EE7B7"
+        android:fillAlpha="0.22"
+        android:pathData="M270,60 m-50,0 a50,50 0 1,1 100,0 a50,50 0 1,1 -100,0" />
+
+    <!-- Himalayan Mountain Snow-Capped Background Peaks -->
+    <path
+        android:fillColor="#065F46"
+        android:pathData="M20,130 L75,55 L130,130 L185,45 L240,125 L300,65 L360,130 L360,200 L0,200 L0,130 Z" />
+    <!-- Snow Caps -->
+    <path
+        android:fillColor="#ECFDF5"
+        android:fillAlpha="0.85"
+        android:pathData="M75,55 L65,75 L85,75 Z M185,45 L170,72 L185,68 L200,72 Z M300,65 L290,82 L310,82 Z" />
+
+    <!-- Middle Mountain Ridge (Eastern Ghats & Deccan Plateau) -->
+    <path
+        android:fillColor="#044E3B"
+        android:pathData="M0,140 Q60,105 130,130 T270,120 T360,135 L360,200 L0,200 Z" />
+
+    <!-- River Valley Basin (Krishna & Godavari River Delta Meander) -->
+    <!-- Broad River Ribbon -->
+    <path
+        android:fillColor="#38BDF8"
+        android:fillAlpha="0.65"
+        android:pathData="M185,130 Q160,145 190,160 Q230,175 140,200 L180,200 Q270,175 220,158 Q190,145 205,130 Z" />
+    <!-- River Reflection Glow -->
+    <path
+        android:fillColor="#BAE6FD"
+        android:fillAlpha="0.45"
+        android:pathData="M190,132 Q168,146 195,160 Q225,174 155,200 L165,200 Q235,174 205,160 Q178,146 198,132 Z" />
+
+    <!-- Coastal Plains / Fertile Delta Foreground -->
+    <path
+        android:fillColor="#022C22"
+        android:pathData="M0,160 Q90,140 180,165 T360,155 L360,200 L0,200 Z" />
+
+    <!-- Topographical Contour Curves & Compass Rose Watermark (Top Left) -->
+    <path
+        android:strokeColor="#34D399"
+        android:strokeAlpha="0.25"
+        android:strokeWidth="1.5"
+        android:pathData="M30,30 m-18,0 a18,18 0 1,1 36,0 a18,18 0 1,1 -36,0" />
+    <!-- Compass Pointer Star -->
+    <path
+        android:fillColor="#10B981"
+        android:fillAlpha="0.4"
+        android:pathData="M30,16 L33,27 L44,30 L33,33 L30,44 L27,33 L16,30 L27,27 Z" />
+    <!-- North Pointer highlight -->
+    <path
+        android:fillColor="#A7F3D0"
+        android:fillAlpha="0.7"
+        android:pathData="M30,16 L33,27 L30,27 Z" />
+</vector>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Sky Base Layer (Terracotta Burgundy to Golden Twilight) -->
+    <path
+        android:fillColor="#3D0C02"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#881337"
+        android:fillAlpha="0.85"
+        android:pathData="M0,0h360v140L0,180z" />
+    <path
+        android:fillColor="#D97706"
+        android:fillAlpha="0.30"
+        android:pathData="M0,60 Q180,20 360,70 L360,200 L0,200 Z" />
+
+    <!-- Radiant Sun & Sacred Ashoka Wheel Glow -->
+    <path
+        android:fillColor="#FBBF24"
+        android:fillAlpha="0.25"
+        android:pathData="M180,80 m-70,0 a70,70 0 1,1 140,0 a70,70 0 1,1 -140,0" />
+    <path
+        android:fillColor="#FDE68A"
+        android:fillAlpha="0.18"
+        android:pathData="M180,80 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0" />
+
+    <!-- Ancient Mountain / Heritage Horizon -->
+    <path
+        android:fillColor="#1C0601"
+        android:fillAlpha="0.65"
+        android:pathData="M0,150 L50,120 L110,145 L170,110 L230,135 L290,105 L360,140 L360,200 L0,200 Z" />
+
+    <!-- Red Fort / Ancient Citadel Ramparts Silhouette -->
+    <!-- Base Walls -->
+    <path
+        android:fillColor="#260803"
+        android:pathData="M30,200 L30,135 L60,135 L60,145 L90,145 L90,130 L130,130 L130,140 L160,140 L160,125 L200,125 L200,140 L230,140 L230,130 L270,130 L270,145 L300,145 L300,135 L330,135 L330,200 Z" />
+
+    <!-- Central Grand Gate Archway -->
+    <path
+        android:fillColor="#150401"
+        android:pathData="M150,200 L150,150 Q180,130 210,150 L210,200 Z" />
+    <path
+        android:fillColor="#D97706"
+        android:fillAlpha="0.4"
+        android:pathData="M160,200 L160,160 Q180,145 200,160 L200,200 Z" />
+
+    <!-- Left & Right Royal Chhatri Domes (Pillared Pavilions) -->
+    <!-- Left Chhatri -->
+    <path
+        android:fillColor="#3D0C02"
+        android:pathData="M65,135 H85 V125 H65 Z M70,125 Q75,108 80,125 Z M74,108 H76 V103 H74 Z" />
+    <!-- Right Chhatri -->
+    <path
+        android:fillColor="#3D0C02"
+        android:pathData="M275,135 H295 V125 H275 Z M280,125 Q285,108 290,125 Z M284,108 H286 V103 H284 Z" />
+    <!-- Center Grand Dome -->
+    <path
+        android:fillColor="#4A0E04"
+        android:pathData="M165,125 H195 V115 H165 Z M170,115 Q180,95 190,115 Z M179,95 H181 V88 H179 Z" />
+
+    <!-- Ashoka Lion Capital Emblem (Right Foreground Silhouette) -->
+    <path
+        android:fillColor="#F59E0B"
+        android:fillAlpha="0.30"
+        android:pathData="M310,195 H345 V188 H310 Z M315,188 H340 V165 H315 Z M320,165 Q327,150 335,165 Z" />
+    <!-- Chakra circle in capital -->
+    <path
+        android:fillColor="#FBBF24"
+        android:fillAlpha="0.45"
+        android:pathData="M327,176 m-6,0 a6,6 0 1,1 12,0 a6,6 0 1,1 -12,0" />
+
+    <!-- Ancient Temple Spire (Gopuram) Left Silhouette -->
+    <path
+        android:fillColor="#2E0A03"
+        android:pathData="M20,200 L32,150 L34,150 L36,130 L40,110 L44,130 L46,150 L58,200 Z" />
+
+    <!-- Foreground Decorative Glow Strip -->
+    <path
+        android:fillColor="#D97706"
+        android:fillAlpha="0.12"
+        android:pathData="M0,185 L360,170 L360,200 L0,200 Z" />
+</vector>

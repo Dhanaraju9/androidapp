@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Prosperous Jade & Deep Forest Green Base -->
+    <path
+        android:fillColor="#052E16"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#15803D"
+        android:fillAlpha="0.65"
+        android:pathData="M0,0h360v120L0,165z" />
+    <path
+        android:fillColor="#16A34A"
+        android:fillAlpha="0.25"
+        android:pathData="M0,50 Q180,10 360,60 L360,200 L0,200 Z" />
+
+    <!-- Radiant Golden Wealth / Solar Coin Aura -->
+    <path
+        android:fillColor="#4ADE80"
+        android:fillAlpha="0.18"
+        android:pathData="M180,85 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" />
+
+    <!-- Indian Rupee Symbol (₹) Giant Watermark Emblem in Background -->
+    <path
+        android:fillColor="#22C55E"
+        android:fillAlpha="0.15"
+        android:pathData="M165,45 H210 V52 H165 Z M165,58 H210 V65 H165 Z M175,65 C195,65 205,75 205,88 C205,100 195,108 175,108 L175,115 L208,145 H195 L165,115 V45 Z" />
+
+    <!-- Reserve Bank of India / Commercial Financial Hub Silhouette (Left) -->
+    <!-- Base Platform -->
+    <path
+        android:fillColor="#042010"
+        android:pathData="M30,195 H155 V180 H30 Z" />
+    <!-- Classical Bank Pillars -->
+    <path
+        android:fillColor="#0A3A1D"
+        android:pathData="M40,180 H48 V125 H40 Z M56,180 H64 V125 H56 Z M72,180 H80 V125 H72 Z M88,180 H96 V125 H88 Z M104,180 H112 V125 H104 Z M120,180 H128 V125 H120 Z M136,180 H144 V125 H136 Z" />
+    <!-- Classical Pediment (Triangular Gable Roof) -->
+    <path
+        android:fillColor="#052E16"
+        android:pathData="M30,125 H155 V117 H30 Z M30,117 L92,90 L155,117 Z" />
+    <!-- Clock / Medallion in Gable -->
+    <path
+        android:fillColor="#FBBF24"
+        android:fillAlpha="0.6"
+        android:pathData="M92,105 m-6,0 a6,6 0 1,1 12,0 a6,6 0 1,1 -12,0" />
+
+    <!-- Ascending Economic Growth Bars & Stock Chart (Right) -->
+    <path
+        android:fillColor="#15803D"
+        android:fillAlpha="0.6"
+        android:pathData="M210,140 H224 V185 H210 Z" />
+    <path
+        android:fillColor="#16A34A"
+        android:fillAlpha="0.75"
+        android:pathData="M232,120 H246 V185 H232 Z" />
+    <path
+        android:fillColor="#22C55E"
+        android:fillAlpha="0.85"
+        android:pathData="M254,100 H268 V185 H254 Z" />
+    <path
+        android:fillColor="#4ADE80"
+        android:pathData="M276,80 H290 V185 H276 Z" />
+    <path
+        android:fillColor="#86EFAC"
+        android:pathData="M298,60 H312 V185 H298 Z" />
+
+    <!-- Soaring Trend Arrow Vector -->
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeWidth="3.5"
+        android:pathData="M195,150 L217,135 L239,115 L261,95 L283,75 L310,50" />
+    <!-- Arrowhead -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M312,47 L300,53 L314,60 Z" />
+
+    <!-- Coastal Port Cargo Container Cranes Silhouette (Far Right Horizon) -->
+    <path
+        android:strokeColor="#042010"
+        android:strokeWidth="2"
+        android:pathData="M325,185 L325,145 L350,130 M335,145 L355,145" />
+
+    <!-- Prosperity Foundation Base -->
+    <path
+        android:fillColor="#02140A"
+        android:pathData="M0,185h360v15h-360z" />
+</vector>

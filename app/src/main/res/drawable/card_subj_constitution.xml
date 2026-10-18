@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Supreme Court Deep Navy & Royal Indigo Sky -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M0,0h360v200h-360z" />
+    <path
+        android:fillColor="#1E3A8A"
+        android:fillAlpha="0.80"
+        android:pathData="M0,0h360v120L0,165z" />
+    <path
+        android:fillColor="#3B82F6"
+        android:fillAlpha="0.25"
+        android:pathData="M0,60 Q180,15 360,65 L360,200 L0,200 Z" />
+
+    <!-- Constitution Seal / Ashoka Chakra Glow (Centered Background) -->
+    <path
+        android:fillColor="#60A5FA"
+        android:fillAlpha="0.15"
+        android:pathData="M180,85 m-70,0 a70,70 0 1,1 140,0 a70,70 0 1,1 -140,0" />
+    <!-- Chakra Rim -->
+    <path
+        android:strokeColor="#93C5FD"
+        android:strokeAlpha="0.35"
+        android:strokeWidth="1.5"
+        android:pathData="M180,85 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
+    <!-- Chakra 8 Major Spokes -->
+    <path
+        android:strokeColor="#BFDBFE"
+        android:strokeAlpha="0.25"
+        android:strokeWidth="1"
+        android:pathData="M180,45 L180,125 M140,85 L220,85 M152,57 L208,113 M152,113 L208,57" />
+
+    <!-- Indian Parliament (Sansad Bhavan) Circular Colonnade Silhouette -->
+    <!-- Base Platform -->
+    <path
+        android:fillColor="#091122"
+        android:pathData="M30,195 H330 V175 H30 Z" />
+    <!-- Parliament Pillars Row -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M45,175 H52 V118 H45 Z M65,175 H72 V118 H65 Z M85,175 H92 V118 H85 Z M105,175 H112 V118 H105 Z M125,175 H132 V118 H125 Z M145,175 H152 V118 H145 Z M165,175 H172 V118 H165 Z M188,175 H195 V118 H188 Z M208,175 H215 V118 H208 Z M228,175 H235 V118 H228 Z M248,175 H255 V118 H248 Z M268,175 H275 V118 H268 Z M288,175 H295 V118 H288 Z M308,175 H315 V118 H308 Z" />
+    <!-- Entablature / Roof Band -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M40,118 H320 V110 H40 Z" />
+
+    <!-- Supreme Court Central Dome Silhouette (Center Towering Behind Colonnade) -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M140,110 H220 V98 H140 Z" />
+    <path
+        android:fillColor="#2563EB"
+        android:fillAlpha="0.7"
+        android:pathData="M150,98 C150,65 210,65 210,98 Z" />
+    <!-- Dome Spire / Finial -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M178,65 H182 V55 H178 Z M176,55 H184 V53 H176 Z" />
+
+    <!-- Golden Scales of Justice Emblem (Foreground Left) -->
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeAlpha="0.7"
+        android:strokeWidth="2.5"
+        android:pathData="M75,120 L75,170 M55,130 L95,130" />
+    <!-- Scale Bowls -->
+    <path
+        android:fillColor="#FDE68A"
+        android:fillAlpha="0.75"
+        android:pathData="M50,148 L60,148 L55,140 Z M90,148 L100,148 L95,140 Z" />
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeAlpha="0.6"
+        android:strokeWidth="1"
+        android:pathData="M55,130 L55,140 M95,130 L95,140" />
+
+    <!-- Open Constitution Law Book Silhouette (Foreground Right) -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M260,170 L285,155 L310,170 L285,178 Z" />
+    <path
+        android:fillColor="#F8FAFC"
+        android:fillAlpha="0.3"
+        android:pathData="M262,168 L285,154 L308,168 L285,176 Z" />
+
+    <!-- Foreground Dignity Floor Base -->
+    <path
+        android:fillColor="#050811"
+        android:pathData="M0,185h360v15h-360z" />
+</vector>

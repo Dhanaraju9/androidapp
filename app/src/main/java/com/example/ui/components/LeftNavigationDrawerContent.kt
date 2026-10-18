@@ -699,8 +699,9 @@ private fun ExactDrawerFooterCard(
                 }
 
                 Column {
+                    val regionText = com.example.data.SampleData.getActiveApp().region.ifBlank { "Excellence" }
                     Text(
-                        text = "Together for a Better Andhra",
+                        text = "Together for a Better $regionText",
                         color = if (isDarkMode) Color.White else Color(0xFF0C192E),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.ExtraBold

@@ -31,11 +31,12 @@ object AppShareManager {
     /**
      * Generates a high-converting, professional invitation message tailored for competitive exam aspirants.
      */
-    fun buildAppShareMessage(appName: String = "APPSC Group-2"): String {
+    fun buildAppShareMessage(appName: String = "Exam Preparation"): String {
+        val region = com.example.data.SampleData.getActiveApp().region.ifBlank { "state" }
         return """
             📚 *${appName.uppercase()} Official Exam Preparation App* 🎯
             
-            Accelerate your APPSC exam preparation with Andhra Pradesh's premier study companion:
+            Accelerate your exam preparation with $region's premier study companion:
             
             ⭐ 10,000+ Topic-wise & Unit-wise MCQs with Detailed Solutions
             🏆 State-level Live Leaderboard & Real-time Ranks
@@ -47,7 +48,7 @@ object AppShareManager {
             📲 *Download Free on Google Play Store:*
             $PLAY_STORE_WEB_URL
             
-            Join thousands of serious APPSC aspirants and secure your dream government post today! 🚀
+            Join thousands of serious aspirants and secure your dream government post today! 🚀
         """.trimIndent()
     }
 

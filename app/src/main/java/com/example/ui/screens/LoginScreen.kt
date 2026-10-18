@@ -1249,8 +1249,9 @@ fun ApHeritageDecorationArea(
             Spacer(modifier = Modifier.height(4.dp))
 
             // Subtitle Uppercase
+            val activeRegionText = SampleData.getActiveApp().region.ifBlank { "FUTURE" }.uppercase()
             Text(
-                text = "A BRIGHTER ANDHRA",
+                text = "A BRIGHTER $activeRegionText",
                 color = Color(0xFFFDE68A).copy(alpha = 0.9f),
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,

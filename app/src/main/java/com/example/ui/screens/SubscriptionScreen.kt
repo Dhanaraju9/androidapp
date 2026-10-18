@@ -311,8 +311,9 @@ fun SubscriptionScreen(
                                     fontWeight = FontWeight.Black,
                                     letterSpacing = 1.sp
                                 )
+                                val subRegion = SampleData.getActiveApp().region.ifBlank { "Nation" }
                                 Text(
-                                    text = "Prepare | Practice | Perform | Serve Andhra Pradesh",
+                                    text = "Prepare | Practice | Perform | Serve $subRegion",
                                     color = Color(0xFFFDE047), // Gold
                                     fontSize = 9.5.sp,
                                     fontWeight = FontWeight.Bold
@@ -930,8 +931,9 @@ fun SubscriptionScreen(
                         .padding(vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val sloganRegion = SampleData.getActiveApp().region.ifBlank { "Future" }
                     Text(
-                        text = "“Better Citizens • Stronger Andhra Pradesh”",
+                        text = "“Better Citizens • Stronger $sloganRegion”",
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF64748B),

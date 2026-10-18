@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,60 +31,84 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 /**
- * Premium, elegant Splash Screen with education-themed background,
- * animated logo and text with smooth fade-in + subtle scale-up + upward motion sequence,
- * and refined glow/shimmer effect.
+ * Ultra-Premium Inspirational Splash Screen with cinematic typing animation,
+ * luxurious background gradients, glowing emblem, and curated motivational quotes.
  */
 @Composable
 fun AppSplashScreen(
     onLoadingFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val transitionState = remember { MutableTransitionState(false).apply { targetState = true } }
-    val transition = rememberTransition(transitionState, label = "SplashTransition")
-
-    // Entrance animations: smooth fade-in + subtle scale-up + upward motion
-    val alphaAnim by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 700, easing = FastOutSlowInEasing) },
-        label = "Alpha"
-    ) { if (it) 1f else 0f }
-
-    val scaleAnim by transition.animateFloat(
-        transitionSpec = { spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow) },
-        label = "Scale"
-    ) { if (it) 1f else 0.85f }
-
-    val offsetYAnim by transition.animateDp(
-        transitionSpec = { tween(durationMillis = 800, easing = FastOutSlowInEasing) },
-        label = "OffsetY"
-    ) { if (it) 0.dp else 24.dp }
-
-    val subtitleAlpha by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 700, delayMillis = 200, easing = FastOutSlowInEasing) },
-        label = "SubtitleAlpha"
-    ) { if (it) 1f else 0f }
-
-    val subtitleOffsetY by transition.animateDp(
-        transitionSpec = { tween(durationMillis = 700, delayMillis = 200, easing = FastOutSlowInEasing) },
-        label = "SubtitleOffsetY"
-    ) { if (it) 0.dp else 16.dp }
-
-    // Refined glow / shimmer infinite pulse effect
-    val infiniteTransition = rememberInfiniteTransition(label = "SplashShimmer")
-    val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+    val quotes = listOf(
+        QuoteItem(
+            text = "Education is the most powerful weapon which you can use to change the world.",
+            author = "APJ Abdul Kalam"
         ),
-        label = "ShimmerAlpha"
+        QuoteItem(
+            text = "Dream, dream, dream. Dreams transform into thoughts and thoughts result in action.",
+            author = "APJ Abdul Kalam"
+        ),
+        QuoteItem(
+            text = "Success is not final; failure is not fatal: It is the courage to continue that counts.",
+            author = "Winston Churchill"
+        ),
+        QuoteItem(
+            text = "Discipline is the bridge between goals and accomplishment.",
+            author = "Jim Rohn"
+        ),
+        QuoteItem(
+            text = "Excellence is not an act, but a habit. You are what you repeatedly do.",
+            author = "Aristotle"
+        )
     )
 
+    var currentQuoteIndex by remember { mutableStateOf(0) }
+    var displayedText by remember { mutableStateOf("") }
+
+    // Typing effect coroutine
+    LaunchedEffect(currentQuoteIndex) {
+        val quote = quotes[currentQuoteIndex]
+        // Type characters
+        for (i in 0..quote.text.length) {
+            displayedText = quote.text.take(i)
+            delay(32) // Smooth typing speed
+        }
+        delay(1400) // Pause to read quote
+        
+        // Move to next quote if time permits
+        if (currentQuoteIndex < quotes.size - 1) {
+            currentQuoteIndex++
+        }
+    }
+
+    // Overall splash timer to transition to main app after ~3.4 seconds
     LaunchedEffect(Unit) {
-        delay(2400)
+        delay(3400)
         onLoadingFinished()
     }
+
+    // Blinking cursor alpha
+    val infiniteTransition = rememberInfiniteTransition(label = "CursorBlink")
+    val cursorAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "CursorAlpha"
+    )
+
+    // Background Shimmer
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "BgShimmer"
+    )
 
     Box(
         modifier = modifier
@@ -90,116 +116,150 @@ fun AppSplashScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF070F1E), // Deep luxury navy
-                        Color(0xFF0F172A),
-                        Color(0xFF1E3E62)  // Rich royal blue
+                        Color(0xFF030712), // Rich Midnight Black-Blue
+                        Color(0xFF0F172A), // Royal Midnight Blue
+                        Color(0xFF1E293B)  // Deep Slate Navy
                     )
                 )
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Education-themed abstract geometric glow canvas
+        // Luxury ambient lighting canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2f, size.height / 2f - 40.dp.toPx())
+            val center = Offset(size.width / 2f, size.height * 0.35f)
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFFFFD700).copy(alpha = 0.22f * shimmerAlpha), Color.Transparent),
-                    radius = size.width * 0.75f,
+                    colors = listOf(Color(0xFFFFD700).copy(alpha = 0.18f * shimmerAlpha), Color.Transparent),
+                    radius = size.width * 0.85f,
                     center = center
                 )
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF3B82F6).copy(alpha = 0.28f), Color.Transparent),
-                    radius = size.width * 0.95f,
-                    center = Offset(size.width * 0.5f, size.height * 0.3f)
+                    colors = listOf(Color(0xFF3B82F6).copy(alpha = 0.22f), Color.Transparent),
+                    radius = size.width * 0.9f,
+                    center = Offset(size.width * 0.5f, size.height * 0.7f)
                 )
             )
         }
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .graphicsLayer {
-                    alpha = alphaAnim
-                    scaleX = scaleAnim
-                    scaleY = scaleAnim
-                    translationY = offsetYAnim.toPx()
-                },
+                .fillMaxWidth(0.88f)
+                .navigationBarsPadding()
+                .statusBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Animated Logo Emblem
+            // Glowing Emblem Box
             Surface(
-                shape = RoundedCornerShape(26.dp),
-                color = Color(0x33FFFFFF),
+                shape = RoundedCornerShape(28.dp),
+                color = Color(0x22FFFFFF),
                 border = BorderStroke(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.85f)),
-                shadowElevation = 8.dp,
-                modifier = Modifier.size(88.dp)
+                shadowElevation = 12.dp,
+                modifier = Modifier.size(92.dp)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
                         imageVector = Icons.Default.School,
-                        contentDescription = "Education Logo",
+                        contentDescription = "Emblem",
                         tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(46.dp)
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // App Title / Branding Badge
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFFFD700).copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.3f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "PREMIUM EXAM PORTAL",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD700),
+                        letterSpacing = 2.sp
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App Name / Title with gold accent
-            Text(
-                text = "APPSC & TSPSC PREP",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                fontFamily = FontFamily.SansSerif,
-                textAlign = TextAlign.Center,
-                letterSpacing = 1.5.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Subtitle / Tagline
-            Text(
-                text = "Thanks for Choosing Us\nYour Journey to Success Starts Here",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFFFDE68A),
-                fontFamily = FontFamily.SansSerif,
-                textAlign = TextAlign.Center,
-                lineHeight = 22.sp,
+            // Cinematic Typing Quote Container
+            Box(
                 modifier = Modifier
-                    .alpha(subtitleAlpha)
-                    .offset(y = subtitleOffsetY)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Refined shimmer loading indicator
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.alpha(shimmerAlpha)
+                    .fillMaxWidth()
+                    .height(130.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(Color(0xFFFFD700), CircleShape)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(Color.White, CircleShape)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(Color(0xFFFFD700), CircleShape)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "“$displayedText${if (displayedText.length < quotes[currentQuoteIndex].text.length) "|" else ""}”",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFF8FAFC),
+                        fontFamily = FontFamily.SansSerif,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 24.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "— ${quotes[currentQuoteIndex].author}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFFFD700).copy(alpha = 0.9f),
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            // Shimmer Progress Indicators
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                quotes.forEachIndexed { index, _ ->
+                    val isActive = index == currentQuoteIndex
+                    Box(
+                        modifier = Modifier
+                            .height(4.dp)
+                            .width(if (isActive) 24.dp else 8.dp)
+                            .background(
+                                color = if (isActive) Color(0xFFFFD700) else Color.White.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    )
+                }
             }
         }
     }
 }
+
+data class QuoteItem(
+    val text: String,
+    val author: String
+)

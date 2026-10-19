@@ -424,8 +424,15 @@ fun SubjectFhdCardImage(
             CardAssetRegistry.getSubjectDrawable(subject.id, subject.name)
         }
     }
+    val effectiveUrl = remember(subject.imageUrl, resolvedRes) {
+        if (resolvedRes != 0 && subject.imageUrl.contains("unsplash.com", ignoreCase = true)) {
+            ""
+        } else {
+            subject.imageUrl
+        }
+    }
     AppFhdImage(
-        imageUrl = subject.imageUrl,
+        imageUrl = effectiveUrl,
         imageRes = resolvedRes,
         contentDescription = subject.name,
         modifier = modifier,

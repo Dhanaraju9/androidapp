@@ -177,7 +177,8 @@ fun HomeScreen(
         }
     }
 
-    var expandedSubjectIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var expandedSubjectId by rememberSaveable { mutableStateOf<String?>(null) }
+    var expandedUnitId by rememberSaveable { mutableStateOf<String?>(null) }
     var upgradePromptFeature by remember { mutableStateOf<String?>(null) }
 
     if (showAdminLoginDialog) {
@@ -581,7 +582,13 @@ fun HomeScreen(
                         // 3. PRELIMS, MAINS, and GENERAL TEST category cards - placed very close to Exam Syllabus & Papers
                         HomeSubjectCategoryFilterBar(
                             selectedCategory = selectedCategoryFilter,
-                            onSelectCategory = { selectedCategoryFilter = it },
+                            onSelectCategory = { newCategory ->
+                                if (selectedCategoryFilter != newCategory) {
+                                    selectedCategoryFilter = newCategory
+                                    expandedSubjectId = null
+                                    expandedUnitId = null
+                                }
+                            },
                             prelimsCount = dynamicCategoryCounts.prelimsCount,
                             mainsCount = dynamicCategoryCounts.mainsCount,
                             generalCount = dynamicCategoryCounts.generalCount,
@@ -655,6 +662,7 @@ fun HomeScreen(
                             }
                         } else {
                             filteredDisplaySubjects.forEachIndexed { subIndex, subject ->
+                                key(subject.id) {
                                 val questionCount = remember(subject.id, SampleData.questionsState.size) {
                                     SampleData.getQuestionsCountForSubject(subject.id)
                                 }
@@ -665,14 +673,32 @@ fun HomeScreen(
                                 val topicCount = remember(subject.id) { subject.units.sumOf { it.topics.size } }
                                 // Each topic typically has 2 practice sets (or calculated dynamically)
                                 val totalSets = remember(topicCount) { topicCount * 2 }
-                                val isExpanded = expandedSubjectIds.contains(subject.id)
+                                val isExpanded = expandedSubjectId == subject.id
+                                val subjectChevronRotation by animateAccordionChevronRotation(isExpanded = isExpanded)
                                 val richGradient = remember(subject.id, subject.name) {
                                     com.example.ui.theme.PremiumCardColorSystem.getGradientForSubject(subject.name, subject.id)
+                                }
+                                val toggleSubjectExpand = {
+                                    if (isZeroMcq && !isExpanded) {
+                                        Toast.makeText(
+                                            context,
+                                            "⚠️ ${subject.name} question bank is updating soon! Exploring syllabus outline...",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    if (expandedSubjectId == subject.id) {
+                                        expandedSubjectId = null
+                                        expandedUnitId = null
+                                    } else {
+                                        expandedSubjectId = subject.id
+                                        expandedUnitId = null
+                                    }
                                 }
 
                                 HomeCardContainer(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .testTag("subject_card_${subject.id}")
                                         .homeSmoothReveal(
                                             index = 5 + subIndex,
                                             scrollState = homeScrollState
@@ -694,92 +720,70 @@ fun HomeScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .height(168.dp)
-                                                    .clickable {
-                                                        if (isZeroMcq) {
-                                                            Toast.makeText(
-                                                                context,
-                                                                "⚠️ ${subject.name} question bank is updating soon! Exploring syllabus outline...",
-                                                                Toast.LENGTH_LONG
-                                                            ).show()
-                                                        }
-                                                        onNavigateToSubject(subject)
-                                                    }
+                                                    .height(172.dp)
+                                                    .clickable { toggleSubjectExpand() }
                                             ) {
-                                                // High-Quality Subject Thematic Hero Image
+                                                // Full-Width Scenic Background Image relevant to each subject
                                                 SubjectFhdCardImage(
                                                     subject = subject,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
 
-                                                // Multi-stage contrast overlay scrim to guarantee 100% text readability
+                                                // Subtle, lightweight readability scrim that keeps the scenic image bright and clearly visible across the entire card
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
                                                         .background(
-                                                            Brush.verticalGradient(
+                                                            Brush.horizontalGradient(
                                                                 colors = listOf(
-                                                                    Color.Black.copy(alpha = 0.30f),
-                                                                    Color.Black.copy(alpha = 0.52f),
-                                                                    Color.Black.copy(alpha = 0.88f)
+                                                                    Color(0x520F172A),
+                                                                    Color(0x240F172A),
+                                                                    Color.Transparent
                                                                 )
                                                             )
                                                         )
                                                 )
 
-                                                // Ambient concentric luminous sheen rings
-                                                Box(
-                                                    modifier = Modifier
-                                                        .matchParentSize()
-                                                        .drawBehind {
-                                                            drawCircle(
-                                                                brush = Brush.radialGradient(
-                                                                    colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                                                                    radius = size.width * 0.75f,
-                                                                    center = Offset(size.width * 0.35f, size.height * 0.5f)
-                                                                )
-                                                            )
-                                                            drawCircle(
-                                                                brush = Brush.radialGradient(
-                                                                    colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
-                                                                    radius = size.width * 0.95f,
-                                                                    center = Offset(size.width * 0.85f, size.height * 0.2f)
-                                                                )
-                                                            )
-                                                        }
-                                                )
-
                                                 Column(
                                                     modifier = Modifier
                                                         .fillMaxSize()
-                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                        .padding(horizontal = 14.dp, vertical = 11.dp),
                                                     verticalArrangement = Arrangement.SpaceBetween
                                                 ) {
-                                                    // Top Row: "★ PREMIUM • PRELIMS • MAINS" badge + Expand/Collapse circular button
+                                                    // Top Row: Clean Category Pill + Expand/Collapse circular button
                                                     Row(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.SpaceBetween,
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Surface(
-                                                            shape = RoundedCornerShape(12.dp),
-                                                            color = Color(0x38000000),
-                                                            border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.65f))
+                                                            shape = RoundedCornerShape(50),
+                                                            color = Color.Transparent,
+                                                            border = BorderStroke(1.dp, Color(0xFFFDE68A).copy(alpha = 0.85f))
                                                         ) {
                                                             Row(
-                                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                                                modifier = Modifier
+                                                                    .background(
+                                                                        Brush.horizontalGradient(
+                                                                            colors = listOf(
+                                                                                Color(0xFFFEF3C7).copy(alpha = 0.94f),
+                                                                                Color(0xFFFDE68A).copy(alpha = 0.94f)
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                    .padding(horizontal = 10.dp, vertical = 3.5.dp),
                                                                 verticalAlignment = Alignment.CenterVertically
                                                             ) {
                                                                 Text(
                                                                     text = "★ ",
-                                                                    color = Color(0xFFFFD700),
-                                                                    fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.Bold
+                                                                    color = Color(0xFFB45309),
+                                                                    fontSize = 10.5.sp,
+                                                                    fontWeight = FontWeight.Black
                                                                 )
                                                                 Text(
                                                                     text = "PREMIUM • ${subject.displayCategoryLabel}",
-                                                                    color = Color(0xFFFDE68A),
-                                                                    fontSize = 10.5.sp,
+                                                                    color = Color(0xFF78350F),
+                                                                    fontSize = 10.sp,
                                                                     fontWeight = FontWeight.Black,
                                                                     letterSpacing = 0.4.sp
                                                                 )
@@ -788,153 +792,217 @@ fun HomeScreen(
 
                                                         Surface(
                                                             shape = CircleShape,
-                                                            color = Color(0x44000000),
-                                                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                                            color = if (isExpanded) Color(0xFFFEF3C7) else Color.White.copy(alpha = 0.28f),
+                                                            border = BorderStroke(
+                                                                1.dp,
+                                                                if (isExpanded) Color(0xFFF59E0B)
+                                                                else Color.White.copy(alpha = 0.65f)
+                                                            ),
                                                             modifier = Modifier
-                                                                .size(32.dp)
+                                                                .size(30.dp)
                                                                 .clip(CircleShape)
-                                                                .clickable {
-                                                                    expandedSubjectIds = if (expandedSubjectIds.contains(subject.id)) {
-                                                                        expandedSubjectIds - subject.id
-                                                                    } else {
-                                                                        expandedSubjectIds + subject.id
-                                                                    }
-                                                                }
+                                                                .testTag("subject_expand_btn_${subject.id}")
+                                                                .clickable { toggleSubjectExpand() }
                                                         ) {
                                                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                                                 Icon(
-                                                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                                    imageVector = Icons.Default.KeyboardArrowDown,
                                                                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                                                    tint = Color.White.copy(alpha = 0.9f),
-                                                                    modifier = Modifier.size(19.dp)
+                                                                    tint = if (isExpanded) Color(0xFF92400E) else Color.White,
+                                                                    modifier = Modifier
+                                                                        .size(18.dp)
+                                                                        .graphicsLayer {
+                                                                            rotationZ = subjectChevronRotation
+                                                                        }
                                                                 )
                                                             }
                                                         }
                                                     }
 
-                                                    // Middle Row: Squircle Book Icon + Title & Subtitle
+                                                    // Middle Row: Compact Icon Badge + Readable Subject Title & Subtitle
                                                     Row(
-                                                        modifier = Modifier.fillMaxWidth(),
+                                                        modifier = Modifier
+                                                            .fillMaxWidth(0.88f),
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Surface(
-                                                            shape = RoundedCornerShape(14.dp),
-                                                            color = Color(0x33000000),
-                                                            border = BorderStroke(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.85f)),
-                                                            modifier = Modifier.size(52.dp)
+                                                            shape = RoundedCornerShape(12.dp),
+                                                            color = Color.White.copy(alpha = 0.22f),
+                                                            border = BorderStroke(1.2.dp, Color(0xFFFDE68A).copy(alpha = 0.9f)),
+                                                            modifier = Modifier.size(44.dp)
                                                         ) {
                                                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                                                 Icon(
                                                                     imageVector = Icons.Default.MenuBook,
                                                                     contentDescription = null,
-                                                                    tint = Color(0xFFFFD700),
-                                                                    modifier = Modifier.size(28.dp)
+                                                                    tint = Color(0xFFFFFBEB),
+                                                                    modifier = Modifier.size(23.dp)
                                                                 )
                                                             }
                                                         }
-                                                        Spacer(modifier = Modifier.width(12.dp))
+                                                        Spacer(modifier = Modifier.width(10.dp))
                                                         Column(modifier = Modifier.weight(1f)) {
                                                             Text(
                                                                 text = subject.name,
                                                                 color = Color.White,
-                                                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                                    fontWeight = FontWeight.ExtraBold,
+                                                                    shadow = androidx.compose.ui.graphics.Shadow(
+                                                                        color = Color(0x99000000),
+                                                                        offset = Offset(0f, 2f),
+                                                                        blurRadius = 6f
+                                                                    )
+                                                                ),
                                                                 fontSize = 17.sp,
-                                                                lineHeight = 21.sp,
+                                                                lineHeight = 20.sp,
                                                                 maxLines = 2,
                                                                 overflow = TextOverflow.Ellipsis
                                                             )
                                                             Spacer(modifier = Modifier.height(2.dp))
                                                             Text(
                                                                 text = subject.heroQuote.replace("\n", " • "),
-                                                                color = Color.White.copy(alpha = 0.8f),
-                                                                style = MaterialTheme.typography.bodySmall,
-                                                                fontSize = 11.5.sp,
+                                                                color = Color(0xFFFFFBEB),
+                                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    shadow = androidx.compose.ui.graphics.Shadow(
+                                                                        color = Color(0x99000000),
+                                                                        offset = Offset(0f, 1.5f),
+                                                                        blurRadius = 4f
+                                                                    )
+                                                                ),
+                                                                fontSize = 11.sp,
                                                                 maxLines = 1,
                                                                 overflow = TextOverflow.Ellipsis
                                                             )
                                                         }
                                                     }
 
-                                                    // Bottom Stats Strip: [2 Units | 4 Topics | 40 MCQs]
-                                                    Surface(
-                                                        shape = RoundedCornerShape(10.dp),
-                                                        color = Color(0x38000000),
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(34.dp)
+                                                    // Bottom Compact Bright High-Luminance Statistics Badges:
+                                                    // [Book: 2 Units] [Stacked Layers: 4 Topics] [Document/Checklist: 116 MCQs]
+                                                    val useLavenderMcqBadge = subIndex % 2 == 1
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
                                                     ) {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            verticalAlignment = Alignment.CenterVertically
+                                                        // Badge 1: Light Gold ("2 Units" with Book icon)
+                                                        Surface(
+                                                            shape = RoundedCornerShape(50),
+                                                            color = Color.Transparent,
+                                                            border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
+                                                            shadowElevation = 1.dp,
+                                                            modifier = Modifier.height(26.dp)
                                                         ) {
                                                             Row(
-                                                                modifier = Modifier.weight(1f),
-                                                                horizontalArrangement = Arrangement.Center,
-                                                                verticalAlignment = Alignment.CenterVertically
+                                                                modifier = Modifier
+                                                                    .background(
+                                                                        Brush.horizontalGradient(
+                                                                            colors = listOf(
+                                                                                Color(0xFFFFFBEB),
+                                                                                Color(0xFFFDE68A)
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.Center
                                                             ) {
-                                                                Text(
-                                                                    text = "$unitCount",
-                                                                    color = Color(0xFFFFD700),
-                                                                    fontSize = 13.sp,
-                                                                    fontWeight = FontWeight.Black
+                                                                Icon(
+                                                                    imageVector = Icons.Default.MenuBook,
+                                                                    contentDescription = null,
+                                                                    tint = Color(0xFFB45309),
+                                                                    modifier = Modifier.size(12.dp)
                                                                 )
                                                                 Spacer(modifier = Modifier.width(4.dp))
                                                                 Text(
-                                                                    text = "Units",
-                                                                    color = Color.White.copy(alpha = 0.85f),
+                                                                    text = "$unitCount Units",
+                                                                    color = Color(0xFF78350F),
                                                                     fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.Medium
+                                                                    fontWeight = FontWeight.ExtraBold,
+                                                                    maxLines = 1
                                                                 )
                                                             }
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .width(1.dp)
-                                                                    .height(18.dp)
-                                                                    .background(Color.White.copy(alpha = 0.2f))
-                                                            )
+                                                        }
+
+                                                        // Badge 2: Vivid Sky Blue ("4 Topics" with Stacked Layers icon)
+                                                        Surface(
+                                                            shape = RoundedCornerShape(50),
+                                                            color = Color.Transparent,
+                                                            border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.75f)),
+                                                            shadowElevation = 1.dp,
+                                                            modifier = Modifier.height(26.dp)
+                                                        ) {
                                                             Row(
-                                                                modifier = Modifier.weight(1f),
-                                                                horizontalArrangement = Arrangement.Center,
-                                                                verticalAlignment = Alignment.CenterVertically
+                                                                modifier = Modifier
+                                                                    .background(
+                                                                        Brush.horizontalGradient(
+                                                                            colors = listOf(
+                                                                                Color(0xFFE0F2FE),
+                                                                                Color(0xFF7DD3FC)
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.Center
                                                             ) {
-                                                                Text(
-                                                                    text = "$topicCount",
-                                                                    color = Color(0xFFFFD700),
-                                                                    fontSize = 13.sp,
-                                                                    fontWeight = FontWeight.Black
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Layers,
+                                                                    contentDescription = null,
+                                                                    tint = Color(0xFF0369A1),
+                                                                    modifier = Modifier.size(12.dp)
                                                                 )
                                                                 Spacer(modifier = Modifier.width(4.dp))
                                                                 Text(
-                                                                    text = "Topics",
-                                                                    color = Color.White.copy(alpha = 0.85f),
+                                                                    text = "$topicCount Topics",
+                                                                    color = Color(0xFF0C4A6E),
                                                                     fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.Medium
+                                                                    fontWeight = FontWeight.ExtraBold,
+                                                                    maxLines = 1
                                                                 )
                                                             }
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .width(1.dp)
-                                                                    .height(18.dp)
-                                                                    .background(Color.White.copy(alpha = 0.2f))
-                                                            )
+                                                        }
+
+                                                        // Badge 3: Bright Mint Green / Luminous Lavender ("116 MCQs" with Document/Checklist icon)
+                                                        Surface(
+                                                            shape = RoundedCornerShape(50),
+                                                            color = Color.Transparent,
+                                                            border = BorderStroke(
+                                                                1.dp,
+                                                                if (useLavenderMcqBadge) Color(0xFFC084FC).copy(alpha = 0.75f)
+                                                                else Color(0xFF34D399).copy(alpha = 0.75f)
+                                                            ),
+                                                            shadowElevation = 1.dp,
+                                                            modifier = Modifier.height(26.dp)
+                                                        ) {
                                                             Row(
-                                                                modifier = Modifier.weight(1f),
-                                                                horizontalArrangement = Arrangement.Center,
-                                                                verticalAlignment = Alignment.CenterVertically
+                                                                modifier = Modifier
+                                                                    .background(
+                                                                        Brush.horizontalGradient(
+                                                                            colors = if (useLavenderMcqBadge) {
+                                                                                listOf(Color(0xFFF3E8FF), Color(0xFFD8B4FE))
+                                                                            } else {
+                                                                                listOf(Color(0xFFD1FAE5), Color(0xFF6EE7B7))
+                                                                            }
+                                                                        )
+                                                                    )
+                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.Center
                                                             ) {
-                                                                Text(
-                                                                    text = "$questionCount",
-                                                                    color = Color(0xFFFFD700),
-                                                                    fontSize = 13.sp,
-                                                                    fontWeight = FontWeight.Black
+                                                                Icon(
+                                                                    imageVector = Icons.Default.FactCheck,
+                                                                    contentDescription = null,
+                                                                    tint = if (useLavenderMcqBadge) Color(0xFF6B21A8) else Color(0xFF047857),
+                                                                    modifier = Modifier.size(12.dp)
                                                                 )
                                                                 Spacer(modifier = Modifier.width(4.dp))
                                                                 Text(
-                                                                    text = "MCQs",
-                                                                    color = Color.White.copy(alpha = 0.85f),
+                                                                    text = "$questionCount MCQs",
+                                                                    color = if (useLavenderMcqBadge) Color(0xFF4C1D95) else Color(0xFF064E3B),
                                                                     fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.Medium
+                                                                    fontWeight = FontWeight.ExtraBold,
+                                                                    maxLines = 1
                                                                 )
                                                             }
                                                         }
@@ -942,11 +1010,11 @@ fun HomeScreen(
                                                 }
                                             }
 
-                                            // Expandable Subjects > Units > Topics with Unit & Topic FHD Images
+                                            // Expandable Subjects > Units > Topics with Cascade-Drop Opening Animation
                                             AnimatedVisibility(
                                                 visible = isExpanded,
-                                                enter = expandVertically() + fadeIn(),
-                                                exit = shrinkVertically() + fadeOut()
+                                                enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                                                exit = AppMotionSystem.cascadeContainerExitTransition()
                                             ) {
                                                 Column(
                                                     modifier = Modifier
@@ -972,43 +1040,68 @@ fun HomeScreen(
                                                             fontSize = 12.sp,
                                                             fontWeight = FontWeight.Bold,
                                                             color = Color(0xFF60A5FA),
-                                                            modifier = Modifier.clickable { onNavigateToSubject(subject) }
+                                                            modifier = Modifier
+                                                                .testTag("subject_full_syllabus_${subject.id}")
+                                                                .clickable { onNavigateToSubject(subject) }
                                                         )
                                                     }
 
                                                     val isPremium = SampleData.isUserPremium()
                                                     subject.units.forEachIndexed { unitIndex, unit ->
-                                                        val isUnitLocked = !isPremium && unitIndex > 0
-                                                        HomeUnitPreviewCard(
-                                                            subject = subject,
-                                                            unit = unit,
-                                                            isLocked = isUnitLocked,
-                                                            onOpenUnit = {
-                                                                if (isUnitLocked) {
-                                                                    upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                                                } else if (onNavigateToUnit != null) {
-                                                                    onNavigateToUnit(subject, unit)
-                                                                } else {
-                                                                    onNavigateToSubject(subject)
-                                                                }
-                                                            },
-                                                            onOpenTopic = { selectedTopic ->
-                                                                val topicIndex = unit.topics.indexOf(selectedTopic)
-                                                                val isTopicLocked = !isPremium && (unitIndex > 0 || topicIndex > 0)
-                                                                if (isTopicLocked) {
-                                                                    upgradePromptFeature = "Topic: ${selectedTopic.name}"
-                                                                } else if (onNavigateToTopic != null) {
-                                                                    onNavigateToTopic(subject, unit, selectedTopic)
-                                                                } else {
-                                                                    onNavigateToSubject(subject)
-                                                                }
+                                                        key(unit.id) {
+                                                            val isUnitLocked = !isPremium && unitIndex > 0
+                                                            val isUnitExpanded = expandedUnitId == unit.id
+                                                            com.example.ui.components.CascadeItem(
+                                                                index = unitIndex,
+                                                                visible = isExpanded,
+                                                                triggerKey = "${subject.id}_unit_${unit.id}",
+                                                                initialOffsetY = 28.dp,
+                                                                staggerDelayMs = AppMotionSystem.CASCADE_UNIT_STAGGER_MS,
+                                                                durationMs = AppMotionSystem.CASCADE_DURATION_MS
+                                                            ) {
+                                                                HomeUnitPreviewCard(
+                                                                    subject = subject,
+                                                                    unit = unit,
+                                                                    unitIndex = unitIndex,
+                                                                    isUnitExpanded = isUnitExpanded,
+                                                                    isLocked = isUnitLocked,
+                                                                    onToggleUnitExpand = {
+                                                                        if (isUnitLocked) {
+                                                                            upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
+                                                                        } else {
+                                                                            expandedUnitId = if (expandedUnitId == unit.id) null else unit.id
+                                                                        }
+                                                                    },
+                                                                    onOpenUnit = {
+                                                                        if (isUnitLocked) {
+                                                                            upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
+                                                                        } else if (onNavigateToUnit != null) {
+                                                                            onNavigateToUnit(subject, unit)
+                                                                        } else {
+                                                                            onNavigateToSubject(subject)
+                                                                        }
+                                                                    },
+                                                                    onOpenTopic = { selectedTopic ->
+                                                                        val topicIndex = unit.topics.indexOf(selectedTopic)
+                                                                        val isTopicLocked = !isPremium && (unitIndex > 0 || topicIndex > 0)
+                                                                        if (isTopicLocked) {
+                                                                            upgradePromptFeature = "Topic: ${selectedTopic.name}"
+                                                                        } else if (onNavigateToTopic != null) {
+                                                                            onNavigateToTopic(subject, unit, selectedTopic)
+                                                                        } else {
+                                                                            onNavigateToSubject(subject)
+                                                                        }
+                                                                    },
+                                                                    modifier = Modifier.testTag("unit_card_${unit.id}")
+                                                                )
                                                             }
-                                                        )
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                }
                                 }
                             }
                         }
@@ -2558,13 +2651,18 @@ fun PremiumHeaderIcon(
 fun HomeUnitPreviewCard(
     subject: Subject,
     unit: UnitModel,
+    unitIndex: Int = 0,
+    isUnitExpanded: Boolean = false,
     isLocked: Boolean = false,
+    onToggleUnitExpand: (() -> Unit)? = null,
     onOpenUnit: () -> Unit = {},
-    onOpenTopic: (TopicModel) -> Unit
+    onOpenTopic: (TopicModel) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val richGradient = remember(unit.id, subject.name) {
         com.example.ui.theme.PremiumCardColorSystem.getGradientForUnit(unit.unitNumber, subject.name, unit.name)
     }
+    val unitChevronRotation by animateAccordionChevronRotation(isExpanded = isUnitExpanded)
     val unitBorderBrush = remember(isLocked, richGradient.borderColor) {
         if (isLocked) {
             Brush.linearGradient(
@@ -2597,7 +2695,7 @@ fun HomeUnitPreviewCard(
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         border = BorderStroke(1.75.dp, unitBorderBrush),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .shadow(
                 elevation = 4.dp,
@@ -2616,7 +2714,13 @@ fun HomeUnitPreviewCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(118.dp)
-                    .clickable { onOpenUnit() }
+                    .clickable {
+                        if (onToggleUnitExpand != null) {
+                            onToggleUnitExpand()
+                        } else {
+                            onOpenUnit()
+                        }
+                    }
             ) {
                 UnitFhdCardImage(
                     unit = unit,
@@ -2649,7 +2753,7 @@ fun HomeUnitPreviewCard(
                         .align(Alignment.TopStart)
                 ) {
                     Text(
-                        text = "UNIT ${unit.unitNumber}",
+                        text = "UNIT ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}",
                         color = richGradient.badgeText,
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Black,
@@ -2657,11 +2761,14 @@ fun HomeUnitPreviewCard(
                     )
                 }
 
-                // Top Right Action Pill (Unlock Pro or View Topics)
+                // Top Right Action Pill (Unlock Pro or Expand/Collapse Topics)
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = if (isLocked) Color(0xFF0F172A) else Color(0xDD0F172A),
-                    border = BorderStroke(1.dp, if (isLocked) Color(0xFFFFD700) else Color.White.copy(alpha = 0.3f)),
+                    border = BorderStroke(
+                        1.dp,
+                        if (isLocked || isUnitExpanded) Color(0xFFFFD700) else Color.White.copy(alpha = 0.3f)
+                    ),
                     modifier = Modifier
                         .padding(10.dp)
                         .align(Alignment.TopEnd)
@@ -2686,17 +2793,21 @@ fun HomeUnitPreviewCard(
                             )
                         } else {
                             Text(
-                                text = "View Topics",
+                                text = if (isUnitExpanded) "Hide Topics" else "View Topics",
                                 color = Color(0xFFFDE68A),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (isUnitExpanded) "Collapse Topics" else "Expand Topics",
                                 tint = Color(0xFFFDE68A),
-                                modifier = Modifier.size(12.dp)
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .graphicsLayer {
+                                        rotationZ = unitChevronRotation
+                                    }
                             )
                         }
                     }
@@ -2730,124 +2841,163 @@ fun HomeUnitPreviewCard(
                 }
             }
 
-            // Topic Cards Preview Strip with FHD Topic Images
-            if (unit.topics.isNotEmpty()) {
+            // Unit -> Topics Cascade-Drop Accordion Strip with FHD Topic Images
+            AnimatedVisibility(
+                visible = isUnitExpanded && unit.topics.isNotEmpty(),
+                enter = AppMotionSystem.cascadeContainerEnterTransition(durationMs = 270),
+                exit = AppMotionSystem.cascadeContainerExitTransition(durationMs = 200)
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF0F172A).copy(alpha = 0.85f))
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .background(Color(0xFF0F172A).copy(alpha = 0.88f))
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    unit.topics.forEachIndexed { topicIndex, topic ->
-                        val isTopicLocked = isLocked || (!com.example.data.SampleData.isUserPremium() && (unit.unitNumber > 1 || topicIndex > 0))
-                        val topicGradient = remember(topic.id, topic.name) {
-                            com.example.ui.theme.PremiumCardColorSystem.getGradientForTopic(topicIndex, topic.name, subject.name)
-                        }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "UNIT TOPICS (${unit.topics.size})",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFFDE68A),
+                            letterSpacing = 0.4.sp
+                        )
+                        Text(
+                            text = "Open Unit →",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF93C5FD),
+                            modifier = Modifier.clickable { onOpenUnit() }
+                        )
+                    }
 
-                        Card(
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-                            border = BorderStroke(1.dp, if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.35f) else topicGradient.borderColor.copy(alpha = 0.5f)),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable {
-                                    if (isTopicLocked) {
-                                        onOpenUnit()
-                                    } else {
-                                        onOpenTopic(topic)
+                    unit.topics.forEachIndexed { topicIndex, topic ->
+                        key(topic.id) {
+                            val isTopicLocked = isLocked || (!com.example.data.SampleData.isUserPremium() && (unit.unitNumber > 1 || topicIndex > 0))
+                            val topicGradient = remember(topic.id, topic.name) {
+                                com.example.ui.theme.PremiumCardColorSystem.getGradientForTopic(topicIndex, topic.name, subject.name)
+                            }
+
+                            com.example.ui.components.CascadeItem(
+                                index = topicIndex,
+                                visible = isUnitExpanded,
+                                triggerKey = "${unit.id}_topic_${topic.id}",
+                                initialOffsetY = 22.dp,
+                                staggerDelayMs = AppMotionSystem.CASCADE_TOPIC_STAGGER_MS,
+                                durationMs = 280
+                            ) {
+                            Card(
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                                border = BorderStroke(1.dp, if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.35f) else topicGradient.borderColor.copy(alpha = 0.5f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp)
+                                    .testTag("topic_card_${topic.id}")
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        if (isTopicLocked) {
+                                            onOpenTopic(topic)
+                                        } else {
+                                            onOpenTopic(topic)
+                                        }
                                     }
-                                }
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                TopicFhdCardImage(
-                                    topic = topic,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    Color.Black.copy(alpha = 0.88f),
-                                                    Color.Black.copy(alpha = 0.70f),
-                                                    Color.Black.copy(alpha = 0.40f)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    TopicFhdCardImage(
+                                        topic = topic,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        Color.Black.copy(alpha = 0.88f),
+                                                        Color.Black.copy(alpha = 0.70f),
+                                                        Color.Black.copy(alpha = 0.40f)
+                                                    )
                                                 )
                                             )
-                                        )
-                                )
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                                    )
                                     Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = topicGradient.badgeBg
-                                        ) {
-                                            Text(
-                                                text = "TOPIC ${topicIndex + 1}",
-                                                color = topicGradient.badgeText,
-                                                fontSize = 9.5.sp,
-                                                fontWeight = FontWeight.Black,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
-                                            Text(
-                                                text = topic.name,
-                                                color = Color.White,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Text(
-                                                text = topic.subtitle ?: "${topic.subtopics.size} Subtopics • MCQs",
-                                                color = Color(0xFFFDE68A),
-                                                fontSize = 10.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                    if (isTopicLocked) {
-                                        Icon(
-                                            imageVector = Icons.Default.Lock,
-                                            contentDescription = null,
-                                            tint = Color(0xFFFFD700),
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    } else {
                                         Row(
-                                            verticalAlignment = Alignment.CenterVertically
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
                                         ) {
-                                            Text(
-                                                text = "Practice",
-                                                color = Color(0xFFFDE68A),
-                                                fontSize = 10.5.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Spacer(modifier = Modifier.width(2.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = topicGradient.badgeBg
+                                            ) {
+                                                Text(
+                                                    text = "TOPIC ${topicIndex + 1}",
+                                                    color = topicGradient.badgeText,
+                                                    fontSize = 9.5.sp,
+                                                    fontWeight = FontWeight.Black,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Column {
+                                                Text(
+                                                    text = topic.name,
+                                                    color = Color.White,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = topic.subtitle ?: "${topic.subtopics.size} Subtopics • MCQs",
+                                                    color = Color(0xFFFDE68A),
+                                                    fontSize = 10.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                        if (isTopicLocked) {
                                             Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                imageVector = Icons.Default.Lock,
                                                 contentDescription = null,
-                                                tint = Color(0xFFFDE68A),
-                                                modifier = Modifier.size(11.dp)
+                                                tint = Color(0xFFFFD700),
+                                                modifier = Modifier.size(14.dp)
                                             )
+                                        } else {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "Practice",
+                                                    color = Color(0xFFFDE68A),
+                                                    fontSize = 10.5.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Spacer(modifier = Modifier.width(2.dp))
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFFDE68A),
+                                                    modifier = Modifier.size(11.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
+                            }
                             }
                         }
                     }
@@ -3402,7 +3552,7 @@ fun HomeLiveContentDashboard(
                     modifier = Modifier.weight(1f),
                     title = config.unitsCard.title,
                     count = config.unitsCard.overrideValue ?: totalUnits,
-                    icon = Icons.Default.Layers,
+                    icon = Icons.Default.MenuBook,
                     bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
                     bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.UNITS }
@@ -3413,7 +3563,7 @@ fun HomeLiveContentDashboard(
                     modifier = Modifier.weight(1f),
                     title = config.topicsCard.title,
                     count = config.topicsCard.overrideValue ?: totalTopics,
-                    icon = Icons.Default.AutoStories,
+                    icon = Icons.Default.Layers,
                     bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
                     bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOPICS }
@@ -3435,7 +3585,7 @@ fun HomeLiveContentDashboard(
                     modifier = Modifier.weight(1f),
                     title = config.totalMcqsCard.title,
                     count = config.totalMcqsCard.overrideValue ?: totalMcqs,
-                    icon = Icons.Default.ContactSupport,
+                    icon = Icons.Default.FactCheck,
                     bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
                     bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOTAL_MCQS }

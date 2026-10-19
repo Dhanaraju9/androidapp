@@ -1,79 +1,66 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="360dp"
-    android:height="200dp"
-    android:viewportWidth="360"
-    android:viewportHeight="200">
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="960dp"
+    android:height="540dp"
+    android:viewportWidth="960"
+    android:viewportHeight="540">
 
-    <!-- Deep Royal Amethyst / Velvet Purple Base -->
-    <path
-        android:fillColor="#3B0764"
-        android:pathData="M0,0h360v200h-360z" />
-    <path
-        android:fillColor="#701A75"
-        android:fillAlpha="0.75"
-        android:pathData="M0,0h360v120L0,170z" />
-    <path
-        android:fillColor="#A21CAF"
-        android:fillAlpha="0.25"
-        android:pathData="M0,70 Q180,20 360,80 L360,200 L0,200 Z" />
+    <!-- Bright Royal Amethyst & Warm Rose Community Sunset Sky -->
+    <path android:pathData="M0,0h960v540h-960z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="960"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF7E22CE" />
+                <item android:offset="0.45" android:color="#FFA855F7" />
+                <item android:offset="0.78" android:color="#FFEC4899" />
+                <item android:offset="1.0" android:color="#FF6B21A8" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Cultural Diversity Mandala & Harmony Aura -->
+    <!-- Warm Sunlit Horizon Glow -->
+    <path android:pathData="M720,160m-170,0a170,170 0,1 1,340 0a170,170 0,1 1,-340 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="720"
+                android:centerY="160"
+                android:gradientRadius="170"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#99FCE7F3" />
+                <item android:offset="0.55" android:color="#44F5D0FE" />
+                <item android:offset="1.0" android:color="#00A855F7" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#F472B6"
-        android:fillAlpha="0.16"
-        android:pathData="M180,95 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" />
-    <path
-        android:fillColor="#E879F9"
-        android:fillAlpha="0.20"
-        android:pathData="M180,95 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0" />
+        android:fillColor="#B3FDF4FF"
+        android:pathData="M720,160m-44,0a44,44 0,1 1,88 0a44,44 0,1 1,-88 0" />
 
-    <!-- Protective Social Justice Shield in Center Background -->
+    <!-- Scenic Indian Village & Civic Pavilion Skyline (Right-Center) -->
     <path
-        android:fillColor="#581C87"
-        android:fillAlpha="0.55"
-        android:pathData="M155,50 L205,50 Q205,90 180,115 Q155,90 155,50 Z" />
-    <path
-        android:strokeColor="#F0ABFC"
-        android:strokeAlpha="0.4"
-        android:strokeWidth="1.5"
-        android:pathData="M157,52 L203,52 Q203,88 180,112 Q157,88 157,52 Z" />
+        android:fillColor="#B34A044E"
+        android:pathData="M0,390 L180,355 L360,375 L540,335 L740,360 L960,330 L960,540 L0,540 Z" />
 
-    <!-- Interconnected Human Family & Community Silhouette (Bottom Strip) -->
-    <!-- Center Person (Adult/Leader) -->
+    <!-- Heritage Community Mandapa & Archways -->
     <path
-        android:fillColor="#2E1065"
-        android:pathData="M180,118 m-9,0 a9,9 0 1,1 18,0 a9,9 0 1,1 -18,0 M165,145 Q180,132 195,145 L195,200 L165,200 Z" />
-    <!-- Left Person (Mother / Woman) -->
+        android:fillColor="#D9581C87"
+        android:pathData="M530,385 L530,240 L830,240 L830,385 Z" />
     <path
-        android:fillColor="#240A50"
-        android:pathData="M145,124 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0 M132,148 Q145,136 158,148 L158,200 L132,200 Z" />
-    <!-- Right Person (Youth / Student) -->
+        android:fillColor="#E67E22CE"
+        android:pathData="M515,240 L680,170 L845,240 Z" />
     <path
-        android:fillColor="#240A50"
-        android:pathData="M215,124 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0 M202,148 Q215,136 228,148 L228,200 L202,200 Z" />
-    <!-- Far Left Elder -->
-    <path
-        android:fillColor="#1E0740"
-        android:pathData="M110,132 m-7,0 a7,7 0 1,1 14,0 a7,7 0 1,1 -14,0 M100,154 Q110,144 120,154 L120,200 L100,200 Z" />
-    <!-- Far Right Child -->
-    <path
-        android:fillColor="#1E0740"
-        android:pathData="M250,132 m-7,0 a7,7 0 1,1 14,0 a7,7 0 1,1 -14,0 M240,154 Q250,144 260,154 L260,200 L240,200 Z" />
+        android:fillColor="#B3FDE68A"
+        android:pathData="M565,385v-95c0,-20 40,-20 40,0v95z M660,385v-105c0,-24 44,-24 44,0v105z M755,385v-95c0,-20 40,-20 40,0v95z" />
 
-    <!-- Unity Wave Horizon at Base -->
+    <!-- Ground Terrace -->
     <path
-        android:fillColor="#1A0436"
-        android:pathData="M0,175 Q90,165 180,175 T360,175 L360,200 L0,200 Z" />
-
-    <!-- Scales of Social Justice Emblem (Right Upper) -->
+        android:fillColor="#E63B0764"
+        android:pathData="M0,385h960v155h-960z" />
     <path
-        android:strokeColor="#FBBF24"
-        android:strokeAlpha="0.35"
-        android:strokeWidth="2"
-        android:pathData="M315,40 L315,75 M295,48 L335,48" />
-    <path
-        android:fillColor="#FBBF24"
-        android:fillAlpha="0.35"
-        android:pathData="M290,62 L300,62 L295,54 Z M330,62 L340,62 L335,54 Z" />
+        android:fillColor="#80F5D0FE"
+        android:pathData="M0,385h960v3h-960z" />
 </vector>

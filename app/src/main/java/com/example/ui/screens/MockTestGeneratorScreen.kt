@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.SampleData
 import com.example.model.*
+import com.example.ui.components.AppMotionSystem
+import com.example.ui.components.cascadeDropItem
 import com.example.util.MockTestEngine
 import java.text.SimpleDateFormat
 import java.util.*
@@ -899,7 +902,16 @@ fun MockTestGeneratorScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { expandedSubjects[subject.id] = !isExpanded }
+                                    .clickable {
+                                        if (isExpanded) {
+                                            expandedSubjects.remove(subject.id)
+                                            expandedUnits.clear()
+                                        } else {
+                                            expandedSubjects.clear()
+                                            expandedUnits.clear()
+                                            expandedSubjects[subject.id] = true
+                                        }
+                                    }
                                     .padding(14.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -957,16 +969,25 @@ fun MockTestGeneratorScreen(
                                             checkedColor = mainActionBtnColor
                                         )
                                     )
+                                    val subjChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
+                                        isExpanded = isExpanded,
+                                        label = "MockGenSubjectChevron_${subject.id}"
+                                    )
                                     Icon(
-                                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        imageVector = Icons.Default.ExpandMore,
                                         contentDescription = "Expand",
-                                        tint = Color(0xFF64748B)
+                                        tint = Color(0xFF64748B),
+                                        modifier = Modifier.rotate(subjChevronRotation)
                                     )
                                 }
                             }
 
                             // Subject Expand/Drill-Down Options
-                            AnimatedVisibility(visible = isExpanded) {
+                            AnimatedVisibility(
+                                visible = isExpanded,
+                                enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                                exit = AppMotionSystem.cascadeContainerExitTransition()
+                            ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1026,7 +1047,7 @@ fun MockTestGeneratorScreen(
                                             modifier = Modifier.padding(top = 4.dp)
                                         )
 
-                                        subject.units.forEach { unit ->
+                                        subject.units.forEachIndexed { unitIdx, unit ->
                                             val isUnitSelected = unit.id in selectedUnitIds.value
                                             val isUnitExpanded = expandedUnits[unit.id] == true
                                             val totalInUnit = remember(allQuestions, subject.id, unit.id) {
@@ -1036,6 +1057,7 @@ fun MockTestGeneratorScreen(
                                             Column(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
+                                                    .cascadeDropItem(visible = isExpanded, index = unitIdx)
                                                     .clip(RoundedCornerShape(10.dp))
                                                     .background(Color.White)
                                                     .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
@@ -1043,7 +1065,14 @@ fun MockTestGeneratorScreen(
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .clickable { expandedUnits[unit.id] = !isUnitExpanded }
+                                                        .clickable {
+                                                            if (isUnitExpanded) {
+                                                                expandedUnits.remove(unit.id)
+                                                            } else {
+                                                                expandedUnits.clear()
+                                                                expandedUnits[unit.id] = true
+                                                            }
+                                                        }
                                                         .padding(horizontal = 12.dp, vertical = 10.dp),
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
@@ -1078,17 +1107,27 @@ fun MockTestGeneratorScreen(
                                                                 checkedColor = mainActionBtnColor
                                                             )
                                                         )
+                                                        val unitChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
+                                                            isExpanded = isUnitExpanded,
+                                                            label = "MockGenUnitChevron_${unit.id}"
+                                                        )
                                                         Icon(
-                                                            imageVector = if (isUnitExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                                            imageVector = Icons.Default.ExpandMore,
                                                             contentDescription = "Expand Unit",
                                                             tint = Color(0xFF64748B),
-                                                            modifier = Modifier.size(18.dp)
+                                                            modifier = Modifier
+                                                                .size(18.dp)
+                                                                .rotate(unitChevronRotation)
                                                         )
                                                     }
                                                 }
 
                                                 // Topics Level Drill-down
-                                                AnimatedVisibility(visible = isUnitExpanded) {
+                                                AnimatedVisibility(
+                                                    visible = isUnitExpanded,
+                                                    enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                                                    exit = AppMotionSystem.cascadeContainerExitTransition()
+                                                ) {
                                                     Column(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
@@ -1103,7 +1142,7 @@ fun MockTestGeneratorScreen(
                                                             color = Color(0xFF475569)
                                                         )
 
-                                                        unit.topics.forEach { topic ->
+                                                        unit.topics.forEachIndexed { topicIdx, topic ->
                                                             val isTopicSelected = topic.id in selectedTopicIds.value
                                                             val totalInTopic = remember(allQuestions, subject.id, unit.id, topic.id) {
                                                                 allQuestions.count { it.subjectId == subject.id && it.unitId == unit.id && it.topicId == topic.id && it.isActive }
@@ -1112,6 +1151,7 @@ fun MockTestGeneratorScreen(
                                                             Row(
                                                                 modifier = Modifier
                                                                     .fillMaxWidth()
+                                                                    .cascadeDropItem(visible = isUnitExpanded, index = topicIdx)
                                                                     .padding(start = 6.dp),
                                                                 verticalAlignment = Alignment.CenterVertically,
                                                                 horizontalArrangement = Arrangement.SpaceBetween

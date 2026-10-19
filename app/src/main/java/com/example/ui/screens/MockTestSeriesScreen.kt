@@ -34,6 +34,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -49,7 +50,9 @@ import androidx.compose.ui.window.Dialog
 import com.example.data.SampleData
 import com.example.db.AppDatabase
 import com.example.db.MockTestConfigEntity
+import com.example.ui.components.AppMotionSystem
 import com.example.ui.components.PremiumSubscriptionBadge
+import com.example.ui.components.cascadeDropItem
 import com.example.model.*
 import com.example.util.MockTestEngine
 import java.text.SimpleDateFormat
@@ -1701,10 +1704,12 @@ private fun SubjectSelectionScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    expandedSubjectIds = if (isExpanded) {
-                                        expandedSubjectIds - subject.id
+                                    if (isExpanded) {
+                                        expandedSubjectIds = emptySet()
+                                        expandedUnitIds = emptySet()
                                     } else {
-                                        expandedSubjectIds + subject.id
+                                        expandedSubjectIds = setOf(subject.id)
+                                        expandedUnitIds = emptySet()
                                     }
                                 }
                                 .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -1777,16 +1782,26 @@ private fun SubjectSelectionScreenContent(
                                 modifier = Modifier.padding(end = 4.dp)
                             )
 
+                            val subjChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
+                                isExpanded = isExpanded,
+                                label = "MockSeriesSubjectChevron_${subject.id}"
+                            )
                             Icon(
-                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Toggle Expand",
                                 tint = Color(0xFF64748B),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .rotate(subjChevronRotation)
                             )
                         }
 
                         // 2. NESTED UNITS & TOPICS (EXPANDED CONTENT)
-                        AnimatedVisibility(visible = isExpanded) {
+                        AnimatedVisibility(
+                            visible = isExpanded,
+                            enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                            exit = AppMotionSystem.cascadeContainerExitTransition()
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1803,7 +1818,7 @@ private fun SubjectSelectionScreenContent(
                                         modifier = Modifier.padding(start = 48.dp, top = 8.dp, bottom = 8.dp)
                                     )
                                 } else {
-                                    subject.units.forEach { unit ->
+                                    subject.units.forEachIndexed { unitIdx, unit ->
                                         val unitTopicIds = unit.topics.map { it.id }.toSet()
                                         val selectedUnitTopicsCount = currentSelectedTopics.intersect(unitTopicIds).size
                                         val isUnitFullyChecked = unitTopicIds.isNotEmpty() && selectedUnitTopicsCount == unitTopicIds.size
@@ -1816,16 +1831,20 @@ private fun SubjectSelectionScreenContent(
                                             if (count > 0) count else 450 + (unit.name.hashCode() % 200).let { if (it < 0) -it else it }
                                         }
 
-                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .cascadeDropItem(visible = isExpanded, index = unitIdx)
+                                        ) {
                                             // UNIT ROW
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clickable {
                                                         expandedUnitIds = if (isUnitExpanded) {
-                                                            expandedUnitIds - unit.id
+                                                            emptySet()
                                                         } else {
-                                                            expandedUnitIds + unit.id
+                                                            setOf(unit.id)
                                                         }
                                                     }
                                                     .padding(start = 28.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
@@ -1887,16 +1906,26 @@ private fun SubjectSelectionScreenContent(
                                                     modifier = Modifier.padding(end = 4.dp)
                                                 )
 
+                                                val unitChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
+                                                    isExpanded = isUnitExpanded,
+                                                    label = "MockSeriesUnitChevron_${unit.id}"
+                                                )
                                                 Icon(
-                                                    imageVector = if (isUnitExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                    imageVector = Icons.Default.KeyboardArrowDown,
                                                     contentDescription = "Toggle Unit Topics",
                                                     tint = Color(0xFF64748B),
-                                                    modifier = Modifier.size(18.dp)
+                                                    modifier = Modifier
+                                                        .size(18.dp)
+                                                        .rotate(unitChevronRotation)
                                                 )
                                             }
 
                                             // TOPICS ROW (EXPANDED UNDER UNIT)
-                                            AnimatedVisibility(visible = isUnitExpanded) {
+                                            AnimatedVisibility(
+                                                visible = isUnitExpanded,
+                                                enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                                                exit = AppMotionSystem.cascadeContainerExitTransition()
+                                            ) {
                                                 Column(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
@@ -1910,7 +1939,7 @@ private fun SubjectSelectionScreenContent(
                                                             modifier = Modifier.padding(start = 64.dp, top = 4.dp, bottom = 4.dp)
                                                         )
                                                     } else {
-                                                        unit.topics.forEach { topic ->
+                                                        unit.topics.forEachIndexed { topicIdx, topic ->
                                                             val isTopicChecked = currentSelectedTopics.contains(topic.id)
 
                                                             // Calculate real question count for this Topic
@@ -1922,6 +1951,7 @@ private fun SubjectSelectionScreenContent(
                                                             Row(
                                                                 modifier = Modifier
                                                                     .fillMaxWidth()
+                                                                    .cascadeDropItem(visible = isUnitExpanded, index = topicIdx)
                                                                     .clickable {
                                                                         val updatedTopics = currentSelectedTopics.toMutableSet()
                                                                         if (isTopicChecked) {

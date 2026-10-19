@@ -33,6 +33,37 @@ object AppMotionSystem {
     val StandardEasing: Easing = FastOutSlowInEasing
     val EmphasizedDecelerate: Easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
     val EmphasizedAccelerate: Easing = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
+    val CascadeDropEasing: Easing = CubicBezierEasing(0.22f, 1.0f, 0.36f, 1.0f)
+
+    // Cascade-Drop Accordion Timing Constants
+    const val CASCADE_UNIT_STAGGER_MS: Int = 60
+    const val CASCADE_TOPIC_STAGGER_MS: Int = 50
+    const val CASCADE_DURATION_MS: Int = 320
+    const val CASCADE_MAX_DELAY_MS: Int = 360
+
+    /**
+     * Smooth downward vertical expansion transition for Subject -> Units and Unit -> Topics accordions.
+     */
+    fun cascadeContainerEnterTransition(durationMs: Int = 300): EnterTransition {
+        return expandVertically(
+            expandFrom = androidx.compose.ui.Alignment.Top,
+            animationSpec = tween(durationMillis = durationMs, easing = CascadeDropEasing)
+        ) + fadeIn(
+            animationSpec = tween(durationMillis = (durationMs * 0.75f).toInt(), easing = StandardEasing)
+        )
+    }
+
+    /**
+     * Smooth upward vertical collapse transition for Subject -> Units and Unit -> Topics accordions.
+     */
+    fun cascadeContainerExitTransition(durationMs: Int = 220): ExitTransition {
+        return shrinkVertically(
+            shrinkTowards = androidx.compose.ui.Alignment.Top,
+            animationSpec = tween(durationMillis = durationMs, easing = StandardEasing)
+        ) + fadeOut(
+            animationSpec = tween(durationMillis = (durationMs * 0.7f).toInt(), easing = StandardEasing)
+        )
+    }
 
     /**
      * Standard Forward Enter Transition for Screen Navigation:
@@ -88,6 +119,106 @@ object AppMotionSystem {
         ) + fadeOut(
             animationSpec = tween(DURATION_SCREEN_EXIT, easing = StandardEasing)
         )
+    }
+    /**
+     * Smoothly animates an accordion chevron icon between 0f (collapsed) and 180f (expanded).
+     */
+    @Composable
+    fun animateAccordionChevronRotation(
+        isExpanded: Boolean,
+        durationMs: Int = 260,
+        label: String = "accordionChevronRotation"
+    ): Float {
+        val rotation by animateFloatAsState(
+            targetValue = if (isExpanded) 180f else 0f,
+            animationSpec = tween(
+                durationMillis = durationMs,
+                easing = CascadeDropEasing
+            ),
+            label = label
+        )
+        return rotation
+    }
+}
+
+/**
+ * Smoothly animates an accordion chevron icon between 0f (collapsed) and 180f (expanded).
+ */
+@Composable
+fun animateAccordionChevronRotation(
+    isExpanded: Boolean,
+    durationMs: Int = 260
+): State<Float> {
+    return animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(
+            durationMillis = durationMs,
+            easing = AppMotionSystem.CascadeDropEasing
+        ),
+        label = "accordionChevronRotation"
+    )
+}
+
+/**
+ * Premium Cascade-Drop Opening Animation Modifier for Subject -> Units -> Topics cards.
+ *
+ * Each child card begins slightly above its final resting position (-initialOffsetY),
+ * with subtle scale (initialScale) and 0f alpha, and enters one by one in a cascading
+ * downward sequence before smoothly settling into place.
+ */
+fun Modifier.cascadeDropItem(
+    index: Int,
+    visible: Boolean = true,
+    triggerKey: Any = visible,
+    initialOffsetY: Dp = 26.dp,
+    initialScale: Float = 0.965f,
+    staggerDelayMs: Int = AppMotionSystem.CASCADE_UNIT_STAGGER_MS,
+    durationMs: Int = AppMotionSystem.CASCADE_DURATION_MS,
+    maxTotalDelayMs: Int = AppMotionSystem.CASCADE_MAX_DELAY_MS
+): Modifier = composed {
+    var hasEntered by remember(triggerKey, visible) { mutableStateOf(false) }
+
+    LaunchedEffect(triggerKey, visible) {
+        if (!visible) {
+            hasEntered = false
+            return@LaunchedEffect
+        }
+        hasEntered = false
+        val delayMs = (index.coerceAtLeast(0) * staggerDelayMs)
+            .coerceAtMost(maxTotalDelayMs)
+            .toLong()
+        if (delayMs > 0L) {
+            kotlinx.coroutines.delay(delayMs)
+        }
+        hasEntered = true
+    }
+
+    val dropProgress by animateFloatAsState(
+        targetValue = if (hasEntered && visible) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = durationMs,
+            easing = AppMotionSystem.CascadeDropEasing
+        ),
+        label = "cascadeDropProgress_$index"
+    )
+
+    val alphaProgress by animateFloatAsState(
+        targetValue = if (hasEntered && visible) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = (durationMs * 0.82f).toInt().coerceAtLeast(120),
+            easing = FastOutSlowInEasing
+        ),
+        label = "cascadeDropAlpha_$index"
+    )
+
+    this.graphicsLayer {
+        val offsetPx = initialOffsetY.toPx()
+        // Negative translationY means the card starts above its final position and drops downward to 0f
+        translationY = -(1f - dropProgress) * offsetPx
+        alpha = alphaProgress.coerceIn(0f, 1f)
+        val currentScale = initialScale + (1f - initialScale) * dropProgress
+        scaleX = currentScale
+        scaleY = currentScale
     }
 }
 

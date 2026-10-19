@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -35,9 +36,11 @@ import com.example.data.SampleData
 import com.example.model.Subject
 import com.example.model.TopicModel
 import com.example.model.UnitModel
+import com.example.ui.components.AppMotionSystem
 import com.example.ui.components.SubjectFhdCardImage
 import com.example.ui.components.TopicFhdCardImage
 import com.example.ui.components.UnitFhdCardImage
+import com.example.ui.components.cascadeDropItem
 import com.example.util.OfflineSyncManager
 import com.example.util.SyncStatus
 
@@ -292,7 +295,12 @@ fun OfflineSubjectDetailScreen(
                             isExpanded = isExpanded,
                             isUnitDownloaded = isUnitDownloaded,
                             onToggleExpand = {
-                                expandedUnitsState[unit.id] = !isExpanded
+                                if (isExpanded) {
+                                    expandedUnitsState.remove(unit.id)
+                                } else {
+                                    expandedUnitsState.clear()
+                                    expandedUnitsState[unit.id] = true
+                                }
                             },
                             onDownloadUnit = {
                                 OfflineSyncManager.downloadUnit(
@@ -333,7 +341,9 @@ fun OfflineSubjectDetailScreen(
                             onStartPracticeSet = { topic, setName ->
                                 onStartPractice(subject.id, unit.id, topic.id, setName)
                             },
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .cascadeDropItem(visible = true, index = index)
                         )
                     }
                 }
@@ -719,16 +729,25 @@ private fun UnitHierarchyCard(
                         }
                     }
 
+                    val chevronRotation = AppMotionSystem.animateAccordionChevronRotation(
+                        isExpanded = isExpanded,
+                        label = "OfflineUnitChevron_${unit.id}"
+                    )
                     Icon(
-                        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        imageVector = Icons.Default.ExpandMore,
                         contentDescription = "Toggle",
-                        tint = Color(0xFF64748B)
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.rotate(chevronRotation)
                     )
                 }
             }
 
             // Expanded Child Content (Topics & Sets)
-            AnimatedVisibility(visible = isExpanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = AppMotionSystem.cascadeContainerEnterTransition(),
+                exit = AppMotionSystem.cascadeContainerExitTransition()
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -743,7 +762,9 @@ private fun UnitHierarchyCard(
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .cascadeDropItem(visible = isExpanded, index = tIdx)
                         ) {
                             Column(
                                 modifier = Modifier

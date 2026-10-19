@@ -1,96 +1,81 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="360dp"
-    android:height="200dp"
-    android:viewportWidth="360"
-    android:viewportHeight="200">
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="960dp"
+    android:height="540dp"
+    android:viewportWidth="960"
+    android:viewportHeight="540">
 
-    <!-- Royal Crimson & Ruby Temple Gold Sky -->
-    <path
-        android:fillColor="#4C0519"
-        android:pathData="M0,0h360v200h-360z" />
-    <path
-        android:fillColor="#9F1239"
-        android:fillAlpha="0.75"
-        android:pathData="M0,0h360v120L0,165z" />
-    <path
-        android:fillColor="#BE123C"
-        android:fillAlpha="0.30"
-        android:pathData="M0,50 Q180,10 360,60 L360,200 L0,200 Z" />
+    <!-- Royal Terracotta & Warm Gold Heritage Sunrise Sky -->
+    <path android:pathData="M0,0h960v540h-960z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="960"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF9A3412" />
+                <item android:offset="0.45" android:color="#FFEA580C" />
+                <item android:offset="0.78" android:color="#FFF59E0B" />
+                <item android:offset="1.0" android:color="#FF7C2D12" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Golden Temple Aura Behind Monument -->
+    <!-- Golden Sunburst Glow Over Amaravati & Kakatiya Monuments -->
+    <path android:pathData="M690,165m-180,0a180,180 0,1 1,360 0a180,180 0,1 1,-360 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="690"
+                android:centerY="165"
+                android:gradientRadius="180"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#99FEF3C7" />
+                <item android:offset="0.55" android:color="#44FDE68A" />
+                <item android:offset="1.0" android:color="#00EA580C" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#FBBF24"
-        android:fillAlpha="0.22"
-        android:pathData="M180,85 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" />
-    <path
-        android:fillColor="#FDE68A"
-        android:fillAlpha="0.15"
-        android:pathData="M180,85 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
+        android:fillColor="#B3FFFBEB"
+        android:pathData="M690,165m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
 
-    <!-- River Krishna Gentle Waters Silhouette (Bottom Background) -->
+    <!-- Amaravati Maha Stupa Dome (Right-Center) -->
     <path
-        android:fillColor="#881337"
-        android:fillAlpha="0.45"
-        android:pathData="M0,150 Q90,135 180,150 T360,140 L360,200 L0,200 Z" />
+        android:fillColor="#D97C2D12"
+        android:pathData="M430,380 C430,240 650,240 650,380 Z" />
+    <!-- Stupa Harmika & Chatra Spire -->
+    <path
+        android:fillColor="#FFFDE68A"
+        android:pathData="M515,258h50v18h-50z M536,215h8v43h-8z M518,225h44v6h-44z M525,213h30v5h-30z" />
+    <!-- Ayaka Pillars (5 Symbolic Andhra Stupa Pillars) -->
+    <path
+        android:fillColor="#CCFEF3C7"
+        android:pathData="M498,380v-68h8v68z M517,380v-74h8v74z M536,380v-78h8v78z M555,380v-74h8v74z M574,380v-68h8v68z" />
 
-    <!-- Amaravati Buddhist Stupa Dome Silhouette (Left Side) -->
-    <!-- Base Platform -->
+    <!-- Iconic Kakatiya / Lepakshi Stone Torana Archway (Right) -->
     <path
-        android:fillColor="#350411"
-        android:pathData="M25,185 H105 V175 H25 Z" />
-    <!-- Rounded Stupa Dome (Anda) -->
+        android:fillColor="#E67C2D12"
+        android:pathData="M715,380v-185h22v185z M845,380v-185h22v185z M692,195h192v18h-192z M706,174h164v16h-164z" />
     <path
-        android:fillColor="#3D0615"
-        android:pathData="M35,175 C35,125 95,125 95,175 Z" />
-    <!-- Harmika Square Box on top -->
-    <path
-        android:fillColor="#F59E0B"
-        android:fillAlpha="0.6"
-        android:pathData="M58,125 H72 V118 H58 Z" />
-    <!-- Chhatra Umbrella Spire -->
-    <path
-        android:fillColor="#FDE68A"
-        android:fillAlpha="0.75"
-        android:pathData="M64,118 H66 V108 H64 Z M57,108 H73 V105 H57 Z M61,105 H69 V102 H61 Z" />
+        android:fillColor="#B3FDE68A"
+        android:pathData="M737,213h108v8h-108z M752,174 L765,148 L778,174 Z M804,174 L817,148 L830,174 Z" />
 
-    <!-- Kakatiya Kirti Thoranam (Warangal Ornamental Archway - Center-Right Monument) -->
-    <!-- Left Pillar -->
+    <!-- Sandstone Heritage Courtyard Base -->
+    <path android:pathData="M0,380h960v160h-960z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="480"
+                android:startY="380"
+                android:endX="480"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#D97C2D12" />
+                <item android:offset="1.0" android:color="#FF431407" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#28030D"
-        android:pathData="M175,195 H190 V90 H175 Z" />
-    <!-- Left Pillar Capital -->
-    <path
-        android:fillColor="#350411"
-        android:pathData="M170,90 H195 V82 H170 Z" />
-    <!-- Right Pillar -->
-    <path
-        android:fillColor="#28030D"
-        android:pathData="M245,195 H260 V90 H245 Z" />
-    <!-- Right Pillar Capital -->
-    <path
-        android:fillColor="#350411"
-        android:pathData="M240,90 H265 V82 H240 Z" />
-    <!-- Curved Ornamental Double Crossbeam (Architrave) -->
-    <path
-        android:fillColor="#4C0519"
-        android:pathData="M160,82 Q217,65 275,82 L275,74 Q217,57 160,74 Z" />
-    <path
-        android:fillColor="#F59E0B"
-        android:fillAlpha="0.5"
-        android:pathData="M165,74 Q217,58 270,74 L270,68 Q217,52 165,68 Z" />
-    <!-- Center Lotus Crest / Finial -->
-    <path
-        android:fillColor="#FBBF24"
-        android:pathData="M213,58 L217,46 L221,58 Z" />
-
-    <!-- Vijayanagara Gopuram Spires (Far Right Silhouette) -->
-    <path
-        android:fillColor="#1F020A"
-        android:pathData="M305,200 L320,135 L324,135 L328,110 L332,135 L336,135 L350,200 Z" />
-
-    <!-- Golden River Delta Shoreline Foreground -->
-    <path
-        android:fillColor="#180108"
-        android:pathData="M0,178 Q90,165 180,180 T360,172 L360,200 L0,200 Z" />
+        android:fillColor="#80FDE68A"
+        android:pathData="M0,380h960v3h-960z" />
 </vector>

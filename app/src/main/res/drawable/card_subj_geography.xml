@@ -1,75 +1,94 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="360dp"
-    android:height="200dp"
-    android:viewportWidth="360"
-    android:viewportHeight="200">
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="960dp"
+    android:height="540dp"
+    android:viewportWidth="960"
+    android:viewportHeight="540">
 
-    <!-- Sky Base Layer (Deep Oceanic Teal & Atmosphere) -->
-    <path
-        android:fillColor="#022C22"
-        android:pathData="M0,0h360v200h-360z" />
-    <path
-        android:fillColor="#064E3B"
-        android:fillAlpha="0.8"
-        android:pathData="M0,0h360v130L0,160z" />
-    <path
-        android:fillColor="#047857"
-        android:fillAlpha="0.35"
-        android:pathData="M0,40 Q180,90 360,30 L360,160 L0,160 Z" />
+    <!-- Bright Cyan-Sky to Lush Emerald Scenic Landscape Sky -->
+    <path android:pathData="M0,0h960v540h-960z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="960"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF0284C7" />
+                <item android:offset="0.38" android:color="#FF0EA5E9" />
+                <item android:offset="0.68" android:color="#FF10B981" />
+                <item android:offset="1.0" android:color="#FF047857" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Atmospheric Sun / Celestial Glow -->
+    <!-- Warm Morning Sun & Atmospheric Glow Over the Mountains -->
+    <path android:pathData="M750,120m-160,0a160,160 0,1 1,320 0a160,160 0,1 1,-320 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="750"
+                android:centerY="120"
+                android:gradientRadius="160"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#99FEF9C3" />
+                <item android:offset="0.55" android:color="#44BAE6FD" />
+                <item android:offset="1.0" android:color="#000EA5E9" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#6EE7B7"
-        android:fillAlpha="0.22"
-        android:pathData="M270,60 m-50,0 a50,50 0 1,1 100,0 a50,50 0 1,1 -100,0" />
+        android:fillColor="#CCFEFCE8"
+        android:pathData="M750,120m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0" />
 
-    <!-- Himalayan Mountain Snow-Capped Background Peaks -->
+    <!-- Majestic Snow-Capped Himalayan & Eastern Ghats Mountain Range -->
     <path
-        android:fillColor="#065F46"
-        android:pathData="M20,130 L75,55 L130,130 L185,45 L240,125 L300,65 L360,130 L360,200 L0,200 L0,130 Z" />
-    <!-- Snow Caps -->
-    <path
-        android:fillColor="#ECFDF5"
-        android:fillAlpha="0.85"
-        android:pathData="M75,55 L65,75 L85,75 Z M185,45 L170,72 L185,68 L200,72 Z M300,65 L290,82 L310,82 Z" />
+        android:fillColor="#800369A1"
+        android:pathData="M0,330 L140,210 L270,295 L430,155 L590,285 L730,140 L900,265 L960,225 L960,420 L0,420 Z" />
 
-    <!-- Middle Mountain Ridge (Eastern Ghats & Deccan Plateau) -->
+    <!-- Snow Caps on High Peaks -->
     <path
-        android:fillColor="#044E3B"
-        android:pathData="M0,140 Q60,105 130,130 T270,120 T360,135 L360,200 L0,200 Z" />
+        android:fillColor="#D9F0F9FF"
+        android:pathData="M430,155 L385,205 L412,198 L430,212 L450,196 L475,205 Z M730,140 L682,195 L710,186 L730,204 L752,185 L782,195 Z M140,210 L110,245 L132,238 L145,248 L168,242 Z" />
 
-    <!-- River Valley Basin (Krishna & Godavari River Delta Meander) -->
-    <!-- Broad River Ribbon -->
-    <path
-        android:fillColor="#38BDF8"
-        android:fillAlpha="0.65"
-        android:pathData="M185,130 Q160,145 190,160 Q230,175 140,200 L180,200 Q270,175 220,158 Q190,145 205,130 Z" />
-    <!-- River Reflection Glow -->
-    <path
-        android:fillColor="#BAE6FD"
-        android:fillAlpha="0.45"
-        android:pathData="M190,132 Q168,146 195,160 Q225,174 155,200 L165,200 Q235,174 205,160 Q178,146 198,132 Z" />
+    <!-- Midground Lush Emerald Forests & Eastern Ghats Hills -->
+    <path android:pathData="M0,350 C180,275 340,365 530,295 C700,235 840,310 960,275 L960,540 L0,540 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="480"
+                android:startY="260"
+                android:endX="480"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF059669" />
+                <item android:offset="0.55" android:color="#FF047857" />
+                <item android:offset="1.0" android:color="#FF064E3B" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Coastal Plains / Fertile Delta Foreground -->
+    <!-- Rolling Green Forest Valley Foreground -->
     <path
-        android:fillColor="#022C22"
-        android:pathData="M0,160 Q90,140 180,165 T360,155 L360,200 L0,200 Z" />
+        android:fillColor="#D9065F46"
+        android:pathData="M0,415 C240,370 460,445 710,385 C820,360 900,375 960,390 L960,540 L0,540 Z" />
 
-    <!-- Topographical Contour Curves & Compass Rose Watermark (Top Left) -->
+    <!-- Winding Godavari / Krishna Turquoise River Valley -->
+    <path android:pathData="M530,295 C500,345 610,375 565,425 C525,470 360,495 270,540 L485,540 C560,495 675,465 655,415 C640,370 555,340 560,295 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="530"
+                android:startY="295"
+                android:endX="420"
+                android:endY="540"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF7DD3FC" />
+                <item android:offset="0.5" android:color="#FF38BDF8" />
+                <item android:offset="1.0" android:color="#FF0284C7" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Sunlit River Shimmer Lines -->
     <path
-        android:strokeColor="#34D399"
-        android:strokeAlpha="0.25"
-        android:strokeWidth="1.5"
-        android:pathData="M30,30 m-18,0 a18,18 0 1,1 36,0 a18,18 0 1,1 -36,0" />
-    <!-- Compass Pointer Star -->
-    <path
-        android:fillColor="#10B981"
-        android:fillAlpha="0.4"
-        android:pathData="M30,16 L33,27 L44,30 L33,33 L30,44 L27,33 L16,30 L27,27 Z" />
-    <!-- North Pointer highlight -->
-    <path
-        android:fillColor="#A7F3D0"
-        android:fillAlpha="0.7"
-        android:pathData="M30,16 L33,27 L30,27 Z" />
+        android:fillColor="#99E0F2FE"
+        android:pathData="M545,355h35v3h-35zM575,390h48v3h-48zM540,435h65v4h-65zM450,480h85v4h-85z" />
 </vector>

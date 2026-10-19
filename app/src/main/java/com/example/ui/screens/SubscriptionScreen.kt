@@ -82,6 +82,7 @@ fun SubscriptionScreen(
         .collectAsState(initial = null)
     val detectedUpiApps = remember(context) { com.example.model.UpiAppDetector.getInstalledUpiApps(context) }
     var showLegalDialog by remember { mutableStateOf<String?>(null) }
+    var showSupportDialog by remember { mutableStateOf(false) }
 
     // Initialize Play Billing connection & PurchaseObserver
     LaunchedEffect(Unit) {
@@ -326,7 +327,7 @@ fun SubscriptionScreen(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(Color.White.copy(alpha = 0.15f))
                                     .clickable {
-                                        Toast.makeText(context, "Support Hotline: 1800-APPSC-2026", Toast.LENGTH_LONG).show()
+                                        showSupportDialog = true
                                     }
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
@@ -1027,6 +1028,14 @@ fun SubscriptionScreen(
                 onDismiss = { showLegalDialog = null }
             )
         }
+
+        if (showSupportDialog) {
+            SmartSupportIssueDialog(
+                issueCategory = "Subscription & Payment Issue",
+                extraContext = "Subscription Screen • Selected Plan: ${currentPlan.durationLabel} (₹${currentPlan.price})",
+                onDismiss = { showSupportDialog = false }
+            )
+        }
       }
     }
   }
@@ -1593,12 +1602,16 @@ private fun LegalPolicyModal(
         else -> "Refund & Cancellation Policy"
     }
 
+    val activeApp = remember { com.example.data.SampleData.getActiveApp() }
+    val appTitle = activeApp.name.ifBlank { "Exam Prep Portal" }
+    val examName = activeApp.examName.ifBlank { "Competitive Exams" }
+
     val content = when (policyType) {
         "terms" -> """
-            APPSC Prep Portal - Subscription Terms & Conditions
+            $appTitle - Subscription Terms & Conditions
             
             1. Entitlement & Access:
-            Premium subscriptions grant non-transferable, instant digital access to comprehensive syllabus MCQs, full-length mock tests, current affairs test series, and performance analytics for Andhra Pradesh competitive exams.
+            Premium subscriptions grant non-transferable, instant digital access to comprehensive syllabus MCQs, full-length mock tests, current affairs test series, and performance analytics for $examName.
             
             2. Payment Processors:
             Subscriptions can be purchased via Google Play Billing or approved India Alternative Billing (Razorpay). Both payment methods grant the identical Premium entitlement across all devices logged into the user's account.
@@ -1610,7 +1623,7 @@ private fun LegalPolicyModal(
             In accordance with Google Play policies in India, eligible users are presented with a choice between Google Play Billing and Razorpay Alternative Billing. Service fees and transaction reporting conform with Play Console declarations.
         """.trimIndent()
         "privacy" -> """
-            APPSC Prep Portal - Privacy Policy & Data Safety
+            $appTitle - Privacy Policy & Data Safety
             
             1. Information Collection:
             We collect basic contact details (email, phone number) for authentication, account synchronization, and transaction verification. Payment credentials (card numbers, UPI PINs, bank details) are processed directly by certified PCI-DSS compliant gateways (Razorpay, Google Play) and are never stored on our servers.
@@ -1622,7 +1635,7 @@ private fun LegalPolicyModal(
             Verified payment transaction identifiers and entitlement periods are retained securely to fulfill subscription renewals, receipt lookup, and customer support inquiries.
         """.trimIndent()
         else -> """
-            APPSC Prep Portal - Refund & Cancellation Policy
+            $appTitle - Refund & Cancellation Policy
             
             1. Digital Content Policy:
             Subscriptions provide immediate access to digital study materials, test series, and analytical tools. 
@@ -1634,7 +1647,7 @@ private fun LegalPolicyModal(
             If a payment was debited but the transaction failed or duplicate charges occurred due to network interruption, refunds are processed automatically to the original payment source (UPI/Bank/Card) within 5 to 7 business days.
             
             4. Support Inquiries:
-            For refund queries, reach out to academic support at support@appscprep.com with your verified Transaction ID.
+            For refund queries, reach out to official candidate support at Sobhadhanaraju1@gmail.com or WhatsApp +91 94935 12768 with your verified Transaction ID.
         """.trimIndent()
     }
 

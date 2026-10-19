@@ -71,10 +71,11 @@ fun ReportIssueDialog(
     var submitSuccess by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val primaryColor = if (isDark) Color(0xFFEF4444) else Color(0xFFDC2626)
-    val surfaceColor = if (isDark) Color(0xFF1E293B) else Color.White
-    val textPrimary = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
-    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val primaryColor = Color(0xFFB45309)
+    val goldBorder = Color(0xFFD4AF37)
+    val surfaceColor = Color(0xFFFFFDF9)
+    val textPrimary = Color(0xFF1E293B)
+    val textSecondary = Color(0xFF64748B)
 
     Dialog(
         onDismissRequest = { if (!isSubmitting) onDismiss() },
@@ -83,17 +84,28 @@ fun ReportIssueDialog(
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = surfaceColor),
-            border = BorderStroke(1.2.dp, if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)),
+            border = BorderStroke(1.5.dp, goldBorder.copy(alpha = 0.65f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 14.dp),
             modifier = Modifier
                 .fillMaxWidth(0.92f)
-                .padding(vertical = 24.dp)
+                .widthIn(max = 500.dp)
+                .padding(vertical = 20.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFFBEB),
+                                Color(0xFFFFFDF9),
+                                Color(0xFFFAF6EE)
+                            )
+                        )
+                    )
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Header with icon and close button
                 Row(
@@ -107,29 +119,30 @@ fun ReportIssueDialog(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
-                                .background(if (isDark) Color(0xFFEF4444).copy(alpha = 0.22f) else Color(0xFFFEE2E2)),
+                                .background(Color(0xFFFEF3C7)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.BugReport,
-                                contentDescription = "Report Issue",
+                                imageVector = Icons.Default.SupportAgent,
+                                contentDescription = "Support & Issue Report",
                                 tint = primaryColor,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
                         Column {
                             Text(
-                                text = "Report Issue",
+                                text = "Priority Support & Bug Report",
                                 fontWeight = FontWeight.ExtraBold,
-                                fontSize = 19.sp,
+                                fontSize = 17.5.sp,
                                 color = textPrimary
                             )
                             Text(
-                                text = "Feedback & Bug Reports",
-                                fontSize = 12.sp,
-                                color = textSecondary
+                                text = "${config.appName} • Instant Resolution Desk",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF9A7B2C)
                             )
                         }
                     }
@@ -147,7 +160,7 @@ fun ReportIssueDialog(
                     }
                 }
 
-                HorizontalDivider(color = if (isDark) Color(0xFF334155) else Color(0xFFF1F5F9))
+                HorizontalDivider(color = Color(0xFFE8DCC4))
 
                 if (submitSuccess) {
                     // Success View
@@ -200,10 +213,10 @@ fun ReportIssueDialog(
 
                     // 1. Issue Category
                     Text(
-                        text = "Issue Category",
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = textSecondary
+                        text = "Select Support Category",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF9A7B2C)
                     )
 
                     FlowRow(
@@ -216,10 +229,18 @@ fun ReportIssueDialog(
                             FilterChip(
                                 selected = isSelected,
                                 onClick = { selectedCategory = cat },
-                                label = { Text(cat, fontSize = 12.sp) },
+                                label = { Text(cat, fontSize = 11.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = if (isDark) Color(0xFF7F1D1D) else Color(0xFFFEE2E2),
-                                    selectedLabelColor = if (isDark) Color(0xFFFCA5A5) else Color(0xFFB91C1C)
+                                    selectedContainerColor = Color(0xFFFEF3C7),
+                                    selectedLabelColor = Color(0xFF92400E),
+                                    containerColor = Color.White,
+                                    labelColor = Color(0xFF475569)
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSelected,
+                                    borderColor = Color(0xFFE8DCC4),
+                                    selectedBorderColor = Color(0xFFD4AF37)
                                 )
                             )
                         }
@@ -235,8 +256,13 @@ fun ReportIssueDialog(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = primaryColor,
-                            focusedLabelColor = primaryColor
+                            focusedBorderColor = Color(0xFFC59B27),
+                            unfocusedBorderColor = Color(0xFFE2D5B8),
+                            focusedLabelColor = primaryColor,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary
                         )
                     )
 
@@ -248,13 +274,18 @@ fun ReportIssueDialog(
                         placeholder = { Text("Please describe what happened, expected behavior, or steps to reproduce...") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 100.dp),
+                            .heightIn(min = 90.dp),
                         minLines = 3,
-                        maxLines = 6,
+                        maxLines = 5,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = primaryColor,
-                            focusedLabelColor = primaryColor
+                            focusedBorderColor = Color(0xFFC59B27),
+                            unfocusedBorderColor = Color(0xFFE2D5B8),
+                            focusedLabelColor = primaryColor,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary
                         )
                     )
 
@@ -268,16 +299,108 @@ fun ReportIssueDialog(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = primaryColor,
-                            focusedLabelColor = primaryColor
+                            focusedBorderColor = Color(0xFFC59B27),
+                            unfocusedBorderColor = Color(0xFFE2D5B8),
+                            focusedLabelColor = primaryColor,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = textPrimary,
+                            unfocusedTextColor = textPrimary
                         )
                     )
 
+                    // Direct Official Channels Strip
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xFFFBF7EE),
+                        border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "OR CONNECT INSTANTLY WITH OFFICIAL SUPPORT",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF9A7B2C),
+                                letterSpacing = 0.6.sp
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        com.example.util.ContactSupportManager.openWhatsAppSupport(
+                                            context = context,
+                                            issueCategory = selectedCategory,
+                                            customDetails = listOfNotNull(title.takeIf { it.isNotBlank() }, description.takeIf { it.isNotBlank() }).joinToString(" - ")
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFFECFDF5),
+                                        contentColor = Color(0xFF047857)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 6.dp),
+                                    modifier = Modifier.weight(1f).height(38.dp)
+                                ) {
+                                    Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("WhatsApp", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        com.example.util.ContactSupportManager.openEmailSupport(
+                                            context = context,
+                                            issueCategory = selectedCategory,
+                                            customDetails = listOfNotNull(title.takeIf { it.isNotBlank() }, description.takeIf { it.isNotBlank() }).joinToString(" - ")
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.6f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFFFEF9E7),
+                                        contentColor = Color(0xFF92400E)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 6.dp),
+                                    modifier = Modifier.weight(1f).height(38.dp)
+                                ) {
+                                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Email", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        com.example.util.ContactSupportManager.openTelegramSupport(context = context)
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, Color(0xFF0EA5E9).copy(alpha = 0.5f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFFF0F9FF),
+                                        contentColor = Color(0xFF0369A1)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 6.dp),
+                                    modifier = Modifier.weight(1f).height(38.dp)
+                                ) {
+                                    Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Telegram", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
                     // Device & System Info Badge
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isDark) Color(0xFF0F172A) else Color(0xFFF8FAFC),
-                        border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFFAF6EE),
+                        border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -288,11 +411,11 @@ fun ReportIssueDialog(
                             Icon(
                                 imageVector = Icons.Default.PhoneAndroid,
                                 contentDescription = null,
-                                tint = textSecondary,
-                                modifier = Modifier.size(16.dp)
+                                tint = Color(0xFF9A7B2C),
+                                modifier = Modifier.size(15.dp)
                             )
                             Text(
-                                text = "Device: ${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+                                text = "Device: ${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE}",
                                 fontSize = 11.sp,
                                 color = textSecondary
                             )
@@ -303,8 +426,9 @@ fun ReportIssueDialog(
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage ?: "",
-                            color = Color(0xFFEF4444),
+                            color = Color(0xFFDC2626),
                             fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
@@ -318,9 +442,11 @@ fun ReportIssueDialog(
                             onClick = onDismiss,
                             enabled = !isSubmitting,
                             shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFFD6C7A9)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF475569)),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Cancel")
+                            Text("Cancel", fontWeight = FontWeight.SemiBold)
                         }
 
                         Button(
@@ -372,7 +498,6 @@ fun ReportIssueDialog(
                                         submitSuccess = true
                                         Toast.makeText(context, "✅ Issue report submitted to support!", Toast.LENGTH_SHORT).show()
                                     } catch (e: Exception) {
-                                        // Fallback: If network error or firestore offline, log and inform user gracefully
                                         android.util.Log.e("ReportIssueDialog", "Firestore submission error: ${e.message}", e)
                                         submitSuccess = true
                                         Toast.makeText(context, "✅ Report queued. Thank you for your feedback!", Toast.LENGTH_SHORT).show()
@@ -401,7 +526,7 @@ fun ReportIssueDialog(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Submit Report", fontWeight = FontWeight.Bold)
+                                Text("Submit Ticket", fontWeight = FontWeight.Bold)
                             }
                         }
                     }

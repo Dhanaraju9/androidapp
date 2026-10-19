@@ -241,8 +241,19 @@ fun LegalSupportCenterScreen(
         LegalDocType.DISCLAIMER -> "Disclaimer"
         LegalDocType.COPYRIGHT_POLICY -> "Copyright Policy"
         LegalDocType.REPORTING_POLICY -> "Question Reporting Policy"
-        null -> "Infinity Help & Support"
+        null -> "${config.appName.ifBlank { "Official" }} Help & Support"
     }
+
+    if (currentSection == LegalDocType.CONTACT_US) {
+        ContactUsScreen(
+            onBack = handleBack,
+            onNavigateToFaq = { currentSection = LegalDocType.FAQ },
+            onNavigateToHelpCenter = { currentSection = LegalDocType.HELP_CENTER }
+        )
+        return
+    }
+
+    val goldAccent = Color(0xFFB45309)
 
     Scaffold(
         topBar = {
@@ -255,15 +266,16 @@ fun LegalSupportCenterScreen(
                         val headerIcon = activeDoc?.iconName?.let { getIconForName(it) } ?: currentSection?.let { getIconForType(it) } ?: Icons.Default.Support
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(accentColor.copy(alpha = 0.12f)),
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFFEF3C7))
+                                .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = headerIcon,
                                 contentDescription = null,
-                                tint = accentColor,
+                                tint = goldAccent,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -271,17 +283,19 @@ fun LegalSupportCenterScreen(
                         Column {
                             Text(
                                 text = currentTitle,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = Color(0xFF1E293B),
                                 fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "Infinity Premium Portal",
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF64748B),
-                                fontSize = 11.sp
+                                text = "${config.appName.ifBlank { "Exam Prep" }} • Official Support & Legal",
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF9A7B2C),
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -308,23 +322,32 @@ fun LegalSupportCenterScreen(
                             Icon(
                                 imageVector = Icons.Default.Home,
                                 contentDescription = "Home",
-                                tint = Color(0xFF2563EB)
+                                tint = goldAccent
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    scrolledContainerColor = Color.White
+                    containerColor = Color(0xFFFFFDF9),
+                    scrolledContainerColor = Color(0xFFFFFDF9)
                 ),
                 modifier = Modifier.shadow(2.dp)
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = Color(0xFFFAF8F3)
     ) { paddingVals ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFFDF9),
+                            Color(0xFFFAF7F0),
+                            Color(0xFFF6F1E6)
+                        )
+                    )
+                )
                 .padding(paddingVals)
         ) {
             AnimatedContent(
@@ -337,13 +360,17 @@ fun LegalSupportCenterScreen(
             ) { targetSection ->
                 when (targetSection) {
                     LegalDocType.FAQ -> {
-                        DedicatedFaqView(faqs = appFaqs, accentColor = accentColor)
+                        DedicatedFaqView(
+                            faqs = appFaqs,
+                            accentColor = goldAccent,
+                            onNavigateToContact = { currentSection = LegalDocType.CONTACT_US }
+                        )
                     }
                     LegalDocType.CONTACT_US -> {
-                        DedicatedContactView(
-                            config = config,
-                            doc = activeDoc,
-                            accentColor = accentColor
+                        ContactUsScreen(
+                            onBack = handleBack,
+                            onNavigateToFaq = { currentSection = LegalDocType.FAQ },
+                            onNavigateToHelpCenter = { currentSection = LegalDocType.HELP_CENTER }
                         )
                     }
                     LegalDocType.HELP_CENTER -> {
@@ -352,7 +379,7 @@ fun LegalSupportCenterScreen(
                             doc = activeDoc,
                             onNavigateToFaqs = { currentSection = LegalDocType.FAQ },
                             onNavigateToContact = { currentSection = LegalDocType.CONTACT_US },
-                            accentColor = accentColor
+                            accentColor = goldAccent
                         )
                     }
                     LegalDocType.ACCOUNT_DELETION -> {
@@ -360,15 +387,15 @@ fun LegalSupportCenterScreen(
                             config = config,
                             doc = activeDoc,
                             onDeleteClick = { showDeletionDialog = true },
-                            onWebPortalClick = { uriHandler.openUri("https://example.com/delete-account?app=${config.appId}") },
-                            accentColor = accentColor
+                            onWebPortalClick = { uriHandler.openUri("https://t.me/DHANARAJU0") },
+                            accentColor = goldAccent
                         )
                     }
                     LegalDocType.ABOUT_US -> {
                         DedicatedAboutUsView(
                             config = config,
                             doc = activeDoc,
-                            accentColor = accentColor
+                            accentColor = goldAccent
                         )
                     }
                     null -> {
@@ -388,7 +415,7 @@ fun LegalSupportCenterScreen(
                         DedicatedLegalDocumentView(
                             doc = targetDoc,
                             appName = config.appName,
-                            accentColor = accentColor,
+                            accentColor = goldAccent,
                             onNavigateToContact = { currentSection = LegalDocType.CONTACT_US }
                         )
                     }
@@ -399,7 +426,7 @@ fun LegalSupportCenterScreen(
 
     if (showDeletionDialog) {
         DeletionRequestDialog(
-            accentColor = accentColor,
+            accentColor = goldAccent,
             onDismiss = { showDeletionDialog = false },
             onConfirm = {
                 showDeletionDialog = false
@@ -418,9 +445,10 @@ private fun DedicatedLegalDocumentView(
     onNavigateToContact: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val processedContent = remember(doc.content, appName) {
-        doc.content.replace("{{APP_NAME}}", "Infinity")
-            .replace("{{COMPANY_NAME}}", "Infinity Exam Systems")
+    val resolvedAppName = appName.ifBlank { "Official Exam Prep" }
+    val processedContent = remember(doc.content, resolvedAppName) {
+        doc.content.replace("{{APP_NAME}}", resolvedAppName)
+            .replace("{{COMPANY_NAME}}", "$resolvedAppName Academic Systems")
     }
 
     val sections = remember(doc.sectionsJson) {
@@ -444,32 +472,32 @@ private fun DedicatedLegalDocumentView(
                 DocSection("ref_4", "4. Cancellation of Active Subscriptions", "You can cancel your subscription plan renewal at any moment. Your premium features will stay active until the current billing cycle expires."),
                 DocSection("ref_5", "5. Refund Gateway & Processing Cycle", "All authorized refunds are processed through Razorpay back into the source banking account. This generally takes 5-7 business working days."),
                 DocSection("ref_6", "6. Fraudulent Dispute Submissions", "Initiating false payment chargebacks or chargeback fraud on genuine active subscriptions will lead to automatic, instant candidate profile bans."),
-                DocSection("ref_7", "7. Dedicated Billing Support Helpdesk", "Need clarification regarding a billing deduction? Reach out directly to our candidate support helpline at billing@infinityprep.com.")
+                DocSection("ref_7", "7. Dedicated Billing Support Helpdesk", "Need clarification regarding a billing deduction? Reach out directly to our official candidate support desk at Sobhadhanaraju1@gmail.com or WhatsApp +91 94935 12768.")
             )
             LegalDocType.PRIVACY_POLICY -> listOf(
                 DocSection("priv_1", "1. Information We Collect", "We gather specific data including your display name, registered email address, mobile number, and chosen state/exam filters to set up your account profile."),
                 DocSection("priv_2", "2. Academic Performance Tracking", "To generate premium mock insights, dynamic score grids, and daily streaks, we record and store your answered question histories."),
                 DocSection("priv_3", "3. Device Logs & Unique ID", "To prevent subscription abuse (such as sharing login details with unentitled users), we lock registration logs to your primary active device ID."),
-                DocSection("priv_4", "4. Bank-Grade Encryption Security", "All data transfer between your smartphone and the Infinity databases is shielded using AES-256 and HTTPS secure network protocols."),
+                DocSection("priv_4", "4. Bank-Grade Encryption Security", "All data transfer between your smartphone and our cloud databases is shielded using AES-256 and HTTPS secure network protocols."),
                 DocSection("priv_5", "5. No Third-Party Selling or Trading", "We adhere to a strict policy: we never sell, rent, lease, or trade your personal email, profile details, or phone contact lists to advertising brokers."),
                 DocSection("priv_6", "6. System Cookie Storage usage", "We utilize small secure session keys local to your device to preserve login states and specific dark/light theme choices."),
                 DocSection("priv_7", "7. Your Access & Rectification Rights", "You retain absolute control to view, correct, update, export, or permanently erase your user credentials directly from our profile control panel."),
                 DocSection("priv_8", "8. Specific Data Retention Guidelines", "We retain mock performance databases as long as your candidate account remains registered and active to keep analytics charts accurate."),
                 DocSection("priv_9", "9. Safety of Candidate Children", "Our educational materials are engineered exclusively for adult candidates preparing for governmental recruitment examinations."),
                 DocSection("priv_10", "10. Major Policy Revision Notifications", "Whenever we revise privacy steps, we notify you transparently via high-priority push messages or dynamic main screen pop-up notifications."),
-                DocSection("priv_11", "11. Dedicated Privacy Support Desk", "For serious privacy inquiries, reach our official data security officer at privacy@infinityprep.com.")
+                DocSection("priv_11", "11. Dedicated Privacy Support Desk", "For privacy inquiries or data assistance, reach our official support desk at Sobhadhanaraju1@gmail.com or WhatsApp +91 94935 12768.")
             )
             LegalDocType.TERMS_CONDITIONS -> listOf(
-                DocSection("t_1", "1. Binding Agreement Acceptance", "By downloading, registering, or using Infinity, you agree to comply with and be bound by these legal, governing terms."),
-                DocSection("t_2", "2. Single Candidate User License", "We grant you a individual, non-exclusive, non-transferable license to access premium exam questions strictly for personal preparation."),
+                DocSection("t_1", "1. Binding Agreement Acceptance", "By downloading, registering, or using $resolvedAppName, you agree to comply with and be bound by these legal, governing terms."),
+                DocSection("t_2", "2. Single Candidate User License", "We grant you an individual, non-exclusive, non-transferable license to access premium exam questions strictly for personal preparation."),
                 DocSection("t_3", "3. Candidate Account Security", "You are fully responsible for guarding your mobile OTPs and login details. Do not share your credentials with anyone."),
-                DocSection("t_4", "4. Intellectual Property Rights", "The entire bank of MCQs, mock test structures, subject descriptions, explanations, and visual icons are property of Infinity."),
+                DocSection("t_4", "4. Intellectual Property Rights", "The entire bank of MCQs, mock test structures, subject descriptions, explanations, and visual icons are protected intellectual property."),
                 DocSection("t_5", "5. Billing Gateways & Paid Plans", "Subscription charges are managed safely through encrypted third-party processors. Active plans are non-refundable."),
                 DocSection("t_6", "6. Play Store Auto-Renewal Cycle", "Auto-recurring packages renew automatically at the end of the term. You can disable auto-renewal directly inside the Google Play account."),
                 DocSection("t_7", "7. Strictly Prohibited Platform Usage", "Redistributing, scraping, screen-recording, or publishing our proprietary question banks onto other websites will trigger legal notices."),
                 DocSection("t_8", "8. Accuracy & Material 'As-Is' Warranty", "Our teachers verify questions with extreme care. However, exam materials are delivered 'as-is' without legal warranties of absolute success."),
                 DocSection("t_9", "9. Uptime & Server Maintenance Windows", "We aim for 99.9% server availability. Regular system security checks are scheduled during off-peak hours with brief prior notifications."),
-                DocSection("t_10", "10. Comprehensive Liability Limitations", "Infinity is not liable for mock score fluctuations, exam results, or smartphone hardware performance compatibility limitations."),
+                DocSection("t_10", "10. Comprehensive Liability Limitations", "$resolvedAppName is not liable for mock score fluctuations, exam results, or smartphone hardware performance compatibility limitations."),
                 DocSection("t_11", "11. Terms Breach Account Termination", "Violating intellectual property agreements or attempting system attacks will result in immediate profile bans with no refund of active plans."),
                 DocSection("t_12", "12. Governing Jurisdiction & Regulations", "These terms are interpreted and governed under state and federal educational guidelines and laws of the country."),
                 DocSection("t_13", "13. Scheduled Amendments & Variations", "We periodically update and vary terms to support new exam features. Continuous usage of the app implies agreement to updated terms.")
@@ -688,24 +716,26 @@ private fun DedicatedLegalDocumentView(
 @Composable
 private fun DedicatedFaqView(
     faqs: List<SupportFaq>,
-    accentColor: Color
+    accentColor: Color,
+    onNavigateToContact: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
+    var selectedIssueDialog by remember { mutableStateOf<String?>(null) }
 
-    val categories = listOf("All", "Account", "Subscription", "Payments", "Mock Tests", "Current Affairs", "App Usage", "Technical", "Refunds")
+    val categories = listOf("All", "Account", "Subscription", "Payments", "Mock Tests", "Current Affairs", "Technical", "Refunds")
 
-    // Fallback default FAQs if database list is empty
     val defaultFaqs = remember {
         listOf(
-            SupportFaq("df_1", "Can I log in on multiple devices?", "No. To protect candidate account integrity and prevent subscription leakage, Infinity licenses are strictly restricted to one active smartphone device at any given time.", order = 1),
-            SupportFaq("df_2", "How do I reset my account password?", "You can perform password resets easily by clicking on 'Forgot Password' directly in the Login portal or raising a quick ticket with support.", order = 2),
-            SupportFaq("df_3", "Are there free trial mock tests available?", "Yes, indeed! We provide multiple free full-length mock tests, topical practice sets, and daily current affairs digests to help you explore before upgrading.", order = 3),
-            SupportFaq("df_4", "How do I upgrade to the PRO plan?", "Simply tap on the subscription card in your main screen dashboard or profile screen. Select your targets to pay instantly.", order = 4),
-            SupportFaq("df_5", "What secure payment gateways are supported?", "We fully support payments via UPI (Google Pay, PhonePe, Paytm), Credit/Debit cards, and Net Banking networks, processed securely through Razorpay.", order = 5),
-            SupportFaq("df_6", "Payment was cut but subscription not unlocked.", "Don't worry. Sometimes communication lags occur between banking networks. The amount is automatically unlocked or reversed within 12-24 hours. Ping support for help.", order = 6),
-            SupportFaq("df_7", "How is the mock test negative marking computed?", "Negative marking relies on your set metrics. By default, standard governmental APPSC rules apply, subtracting 0.33 marks for each incorrect MCQ.", order = 7),
-            SupportFaq("df_8", "Can I pause an active mock test and resume?", "Yes! Infinity is equipped with an auto-save local engine. If your app closes, your mock test remains paused so you can resume exactly where you left off.", order = 8)
+            SupportFaq("df_1", "Can I log in on multiple devices?", "No. To protect candidate account integrity and prevent subscription leakage, licenses are strictly restricted to one active smartphone device at any given time.", order = 1),
+            SupportFaq("df_2", "How do I reset my account or resolve OTP issues?", "Ensure your mobile number has active SMS network reception. If OTP is delayed, tap 'Resend OTP' or tap 'Contact Support' to message our WhatsApp support desk (+91 94935 12768).", order = 2),
+            SupportFaq("df_3", "Are there free trial mock tests available?", "Yes! We provide free full-length mock tests, subject-wise practice sets, and daily current affairs digests so you can experience the platform before upgrading.", order = 3),
+            SupportFaq("df_4", "How do I upgrade to the PRO plan?", "Tap on the Subscription card on your dashboard or Profile screen, choose your preferred validity plan, and complete payment via UPI, Card, or Google Play.", order = 4),
+            SupportFaq("df_5", "What secure payment gateways are supported?", "We support UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit cards, Net Banking via Razorpay, and Google Play Billing.", order = 5),
+            SupportFaq("df_6", "Payment was debited but subscription is not unlocked.", "Tap the WhatsApp Support card (+91 94935 12768) or email Sobhadhanaraju1@gmail.com with your UPI Reference / Transaction ID for priority manual activation.", order = 6),
+            SupportFaq("df_7", "How do I report an error in an MCQ or Mock Test?", "Inside any practice or mock test screen, tap the Flag icon on the question card to submit a report to our academic verification team or message us on WhatsApp.", order = 7),
+            SupportFaq("df_8", "Can I pause an active mock test and resume later?", "Yes! Practice and mock sessions auto-save locally so you can resume right where you left off.", order = 8)
         )
     }
 
@@ -716,14 +746,13 @@ private fun DedicatedFaqView(
             val matchesSearch = it.question.contains(searchQuery, ignoreCase = true) ||
                     it.answer.contains(searchQuery, ignoreCase = true)
             val matchesCat = if (selectedCategory == "All") true else {
-                // Approximate category matching based on question/answer text keywords
                 when (selectedCategory) {
-                    "Account" -> it.question.contains("account", ignoreCase = true) || it.question.contains("login", ignoreCase = true) || it.question.contains("reset", ignoreCase = true)
-                    "Subscription" -> it.question.contains("subscription", ignoreCase = true) || it.question.contains("pro", ignoreCase = true) || it.question.contains("trial", ignoreCase = true)
-                    "Payments" -> it.question.contains("payment", ignoreCase = true) || it.question.contains("gateway", ignoreCase = true) || it.question.contains("charge", ignoreCase = true)
-                    "Mock Tests" -> it.question.contains("mock", ignoreCase = true) || it.question.contains("marking", ignoreCase = true) || it.question.contains("resume", ignoreCase = true)
+                    "Account" -> it.question.contains("account", ignoreCase = true) || it.question.contains("login", ignoreCase = true) || it.question.contains("otp", ignoreCase = true) || it.question.contains("device", ignoreCase = true)
+                    "Subscription" -> it.question.contains("subscription", ignoreCase = true) || it.question.contains("pro", ignoreCase = true) || it.question.contains("trial", ignoreCase = true) || it.question.contains("upgrade", ignoreCase = true)
+                    "Payments" -> it.question.contains("payment", ignoreCase = true) || it.question.contains("gateway", ignoreCase = true) || it.question.contains("debited", ignoreCase = true)
+                    "Mock Tests" -> it.question.contains("mock", ignoreCase = true) || it.question.contains("mcq", ignoreCase = true) || it.question.contains("resume", ignoreCase = true)
                     "Current Affairs" -> it.question.contains("current", ignoreCase = true) || it.question.contains("affairs", ignoreCase = true)
-                    "Refunds" -> it.question.contains("refund", ignoreCase = true) || it.question.contains("reversal", ignoreCase = true)
+                    "Refunds" -> it.question.contains("refund", ignoreCase = true) || it.question.contains("debited", ignoreCase = true)
                     else -> true
                 }
             }
@@ -738,6 +767,59 @@ private fun DedicatedFaqView(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
+        // Luxury Header Banner
+        item {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color(0xFFFFFDF9),
+                border = BorderStroke(1.2.dp, Color(0xFFD4AF37).copy(alpha = 0.55f)),
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFFFFFBEB),
+                                    Color(0xFFFFFDF9),
+                                    Color(0xFFFDF8EC)
+                                )
+                            )
+                        )
+                        .padding(18.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFFEF3C7))
+                                .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Quiz, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(22.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Frequently Asked Questions",
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF1E293B)
+                            )
+                            Text(
+                                text = "Instant answers for aspirants • Verified Help Center",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF9A7B2C)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Search Input Card
         item {
             OutlinedTextField(
@@ -745,9 +827,9 @@ private fun DedicatedFaqView(
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(1.dp, RoundedCornerShape(12.dp)),
+                    .shadow(2.dp, RoundedCornerShape(14.dp)),
                 placeholder = { Text("Search frequently asked questions...", color = Color(0xFF94A3B8), fontSize = 13.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = accentColor) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFFB45309)) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
@@ -755,12 +837,12 @@ private fun DedicatedFaqView(
                         }
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = accentColor,
-                    unfocusedBorderColor = Color(0xFFCBD5E1),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = Color(0xFFC59B27),
+                    unfocusedBorderColor = Color(0xFFE8DCC4),
+                    focusedContainerColor = Color(0xFFFFFDF9),
+                    unfocusedContainerColor = Color(0xFFFFFDF9),
                     focusedTextColor = Color(0xFF1E293B),
                     unfocusedTextColor = Color(0xFF1E293B)
                 ),
@@ -783,19 +865,19 @@ private fun DedicatedFaqView(
                         onClick = { selectedCategory = category },
                         label = { Text(category, fontSize = 12.sp, fontWeight = FontWeight.Bold) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = accentColor,
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
+                            selectedContainerColor = Color(0xFFFEF3C7),
+                            selectedLabelColor = Color(0xFF92400E),
+                            containerColor = Color(0xFFFFFDF9),
                             labelColor = Color(0xFF475569)
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = true,
                             selected = isSelected,
-                            borderColor = if (isSelected) Color.Transparent else Color(0xFFE2E8F0),
-                            selectedBorderColor = Color.Transparent
+                            borderColor = Color(0xFFE8DCC4),
+                            selectedBorderColor = Color(0xFFD4AF37)
                         ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.height(32.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(34.dp)
                     )
                 }
             }
@@ -804,57 +886,58 @@ private fun DedicatedFaqView(
         // FAQs Results List
         if (filteredFaqs.isEmpty()) {
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(40.dp),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFFFFDF9),
+                    border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Quiz, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("No matching FAQs found", color = Color(0xFF64748B), fontSize = 13.5.sp, fontWeight = FontWeight.Medium)
+                    Column(
+                        modifier = Modifier.padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Quiz, contentDescription = null, tint = Color(0xFFC59B27), modifier = Modifier.size(42.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("No matching FAQs found", color = Color(0xFF1E293B), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Connect directly with our candidate support team on WhatsApp or Email.", color = Color(0xFF64748B), fontSize = 12.sp, textAlign = TextAlign.Center)
                     }
                 }
             }
         } else {
             items(filteredFaqs) { faq ->
-                FaqAccordionItem(faq, accentColor = accentColor)
+                FaqAccordionItem(faq, accentColor = Color(0xFFB45309))
             }
         }
 
-        // Still Need Help Card
+        // Direct Contact Channels Card inside FAQ
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.15f)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .shadow(1.dp, RoundedCornerShape(16.dp))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(accentColor.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Help, contentDescription = null, tint = accentColor, modifier = Modifier.size(20.dp))
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Still have questions?", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        Text("Submit an ticket directly to our candidate desk.", fontSize = 11.sp, color = Color(0xFF64748B))
-                    }
-                }
-            }
+            LuxuryDirectChannelsStrip(
+                onEmailClick = {
+                    com.example.util.ContactSupportManager.openEmailSupport(
+                        context = context,
+                        issueCategory = "FAQ & General Help Inquiry"
+                    )
+                },
+                onWhatsAppClick = {
+                    com.example.util.ContactSupportManager.openWhatsAppSupport(
+                        context = context,
+                        issueCategory = "FAQ & General Help Inquiry"
+                    )
+                },
+                onTelegramClick = {
+                    com.example.util.ContactSupportManager.openTelegramSupport(context = context)
+                },
+                onOpenContactHub = onNavigateToContact
+            )
         }
+    }
+
+    if (selectedIssueDialog != null) {
+        SmartSupportIssueDialog(
+            issueCategory = selectedIssueDialog!!,
+            onDismiss = { selectedIssueDialog = null }
+        )
     }
 }
 
@@ -931,16 +1014,16 @@ private fun DedicatedContactView(
                     Box(modifier = Modifier.weight(1f)) {
                         ContactChannelCard(
                             title = "Email Support",
-                            value = email.ifBlank { "support@infinity.com" },
+                            value = email.ifBlank { "Sobhadhanaraju1@gmail.com" },
                             buttonText = "Send Email",
                             accentColor = accentColor,
                             icon = Icons.Default.Email,
                             onClick = {
-                                val targetMail = email.ifBlank { "support@infinity.com" }
+                                val targetMail = email.ifBlank { "Sobhadhanaraju1@gmail.com" }
                                 try {
                                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                                         data = Uri.parse("mailto:$targetMail")
-                                        putExtra(Intent.EXTRA_SUBJECT, "Infinity Support Request")
+                                        putExtra(Intent.EXTRA_SUBJECT, "[${config.appName}] Support Request")
                                     }
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
@@ -951,18 +1034,18 @@ private fun DedicatedContactView(
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         ContactChannelCard(
-                            title = "WhatsApp Desk",
-                            value = whatsappVal.ifBlank { "+91 98765 43210" },
+                            title = "WhatsApp Support",
+                            value = whatsappVal.ifBlank { "+91 94935 12768" },
                             buttonText = "Chat Now",
                             accentColor = Color(0xFF10B981),
                             icon = Icons.Default.Chat,
                             onClick = {
-                                val cleanNum = whatsappVal.ifBlank { "919876543210" }.replace(Regex("[^0-9]"), "")
+                                val cleanNum = whatsappVal.ifBlank { "919493512768" }.replace(Regex("[^0-9]"), "")
                                 val targetWa = whatsappLink.ifBlank { "https://wa.me/$cleanNum" }
                                 try {
                                     uriHandler.openUri(targetWa)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "WhatsApp is unavailable", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "WhatsApp: +91 94935 12768", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
@@ -976,39 +1059,36 @@ private fun DedicatedContactView(
                     Box(modifier = Modifier.weight(1f)) {
                         ContactChannelCard(
                             title = "Call Helpline",
-                            value = phone.ifBlank { "+91 98765 43210" },
+                            value = phone.ifBlank { "+91 94935 12768" },
                             buttonText = "Call Now",
                             accentColor = accentColor,
                             icon = Icons.Default.Phone,
                             onClick = {
-                                val num = phone.ifBlank { "+919876543210" }
+                                val num = phone.ifBlank { "+919493512768" }
                                 try {
                                     val intent = Intent(Intent.ACTION_DIAL).apply {
                                         data = Uri.parse("tel:$num")
                                     }
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Calling is not supported", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Call: +91 94935 12768", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         ContactChannelCard(
-                            title = "Business Query",
-                            value = "biz@infinity.com",
-                            buttonText = "Contact Biz",
-                            accentColor = Color(0xFF6366F1),
-                            icon = Icons.Default.Business,
+                            title = "Telegram Support",
+                            value = telegramVal.ifBlank { "@DHANARAJU0" },
+                            buttonText = "Open Telegram",
+                            accentColor = Color(0xFF0088CC),
+                            icon = Icons.Default.Send,
                             onClick = {
+                                val targetTg = telegramLink.ifBlank { "https://t.me/DHANARAJU0" }
                                 try {
-                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                        data = Uri.parse("mailto:biz@infinity.com")
-                                        putExtra(Intent.EXTRA_SUBJECT, "Infinity Business Inquiry")
-                                    }
-                                    context.startActivity(intent)
+                                    uriHandler.openUri(targetTg)
                                 } catch (e: Exception) {
-                                    uriHandler.openUri("mailto:biz@infinity.com")
+                                    Toast.makeText(context, "Telegram: t.me/DHANARAJU0", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
@@ -1281,120 +1361,380 @@ private fun DedicatedHelpCenterView(
     onNavigateToContact: () -> Unit,
     accentColor: Color
 ) {
-    var searchQuery by remember { mutableStateOf("") }
     val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedIssueCategory by remember { mutableStateOf<String?>(null) }
+    var expandedQuestionIndex by remember { mutableStateOf<Int?>(0) }
 
-    val popularTopics = listOf(
-        Pair("Getting Started", Icons.Default.Verified),
-        Pair("Account & Login", Icons.Default.AccountBox),
-        Pair("Mock Tests", Icons.Default.Timer),
-        Pair("Subjects & Topics", Icons.Default.MenuBook),
-        Pair("Current Affairs", Icons.Default.History),
-        Pair("Subscriptions", Icons.Default.Star),
-        Pair("Payments", Icons.Default.CurrencyExchange),
-        Pair("Refunds", Icons.Default.CurrencyExchange),
-        Pair("Technical Issues", Icons.Default.Settings)
+    LaunchedEffect(Unit) {
+        com.example.util.ContactSupportManager.init(context)
+    }
+    val supportConfig by com.example.util.ContactSupportManager.configState
+    val activeApp = remember { com.example.data.SampleData.getActiveApp() }
+    val appTitle = activeApp.name.ifBlank { config.appName.ifBlank { "Exam Prep" } }
+
+    data class HelpCenterTopic(
+        val title: String,
+        val subtitle: String,
+        val icon: ImageVector,
+        val iconTint: Color,
+        val iconBg: Color
     )
+
+    val popularTopics = remember {
+        listOf(
+            HelpCenterTopic("Subscription & Billing", "PRO unlock, receipts & validity", Icons.Default.WorkspacePremium, Color(0xFFB45309), Color(0xFFFEF3C7)),
+            HelpCenterTopic("Payment Issue", "UPI debit, failed order or refund", Icons.Default.Payment, Color(0xFF047857), Color(0xFFECFDF5)),
+            HelpCenterTopic("Login / Account Help", "OTP delay, mobile change & sync", Icons.Default.LockPerson, Color(0xFF1D4ED8), Color(0xFFEFF6FF)),
+            HelpCenterTopic("Mock Test / Practice Issue", "Timer, rank, score or pause help", Icons.Default.Timer, Color(0xFF7C3AED), Color(0xFFF5F3FF)),
+            HelpCenterTopic("Report Question Mistake", "Wrong answer key or translation", Icons.Default.Flag, Color(0xFFBE123C), Color(0xFFFFF1F2)),
+            HelpCenterTopic("Current Affairs & Notes", "Daily digests, PDFs & bilingual sets", Icons.Default.MenuBook, Color(0xFF0F766E), Color(0xFFF0FDFA)),
+            HelpCenterTopic("Technical Bug / Crash", "Slow loading, display or audio issue", Icons.Default.BugReport, Color(0xFFB45309), Color(0xFFFEF3C7)),
+            HelpCenterTopic("Feature Request / Feedback", "Suggest new exams or improvements", Icons.Default.AutoAwesome, Color(0xFF9A7B2C), Color(0xFFFEF9E7))
+        )
+    }
+
+    val filteredTopics = remember(popularTopics, searchQuery) {
+        if (searchQuery.isBlank()) popularTopics
+        else popularTopics.filter {
+            it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.subtitle.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    val popularQs = remember {
+        listOf(
+            Pair(
+                "My payment was debited via UPI, how do I unlock PRO immediately?",
+                "If your payment was deducted and your plan hasn't activated automatically within 2 minutes, tap the WhatsApp Support card (+91 94935 12768) or Email (Sobhadhanaraju1@gmail.com) with your 12-digit UPI Reference ID for priority activation."
+            ),
+            Pair(
+                "How do I switch between English and Bilingual/Regional language in Mock Tests?",
+                "You can switch your preferred exam medium anytime from the Language switcher in the Top Bar, Profile settings, or directly inside the Practice Arena header."
+            ),
+            Pair(
+                "How do I report an incorrect answer key or translation error in a question?",
+                "Tap 'Report Question Mistake' above or tap the Flag icon on any MCQ card during practice. Your report is sent with the Question ID directly to our academic verification team."
+            ),
+            Pair(
+                "Can I access my subscription if I change my phone?",
+                "Yes! Simply sign in with the same registered mobile number or Google account on your new device and tap 'Restore Purchases' in the Subscription screen."
+            )
+        )
+    }
+
+    val filteredQs = remember(popularQs, searchQuery) {
+        if (searchQuery.isBlank()) popularQs
+        else popularQs.filter {
+            it.first.contains(searchQuery, ignoreCase = true) ||
+                    it.second.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
+        contentPadding = PaddingValues(top = 16.dp, bottom = 36.dp)
     ) {
-        // Topic Banners
+        // 1. Luxury Champagne-Gold Hero Header Card
         item {
-            Column {
-                Text(
-                    text = "Infinity Support Desk",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xFFFFFDF9),
+                border = BorderStroke(1.4.dp, Color(0xFFD4AF37).copy(alpha = 0.65f)),
+                shadowElevation = 6.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFFFFFBEB),
+                                    Color(0xFFFFFDF9),
+                                    Color(0xFFFBF5E6)
+                                )
+                            )
+                        )
+                        .padding(20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFEF3C7),
+                            border = BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Verified,
+                                    contentDescription = null,
+                                    tint = Color(0xFFB45309),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "$appTitle • Official Help Center",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF92400E)
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = Color(0xFFECFDF5),
+                            border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.35f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF10B981))
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "Live Support",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF047857)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "How can we assist your preparation today?",
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B),
+                        lineHeight = 24.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Reach our dedicated candidate care team via Email, WhatsApp, or Telegram, or select an issue category below for guided assistance.",
+                        fontSize = 12.5.sp,
+                        color = Color(0xFF64748B),
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Search Bar inside Hero Card
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = {
+                            Text(
+                                "Search help topics, billing, mock tests, OTP...",
+                                color = Color(0xFF94A3B8),
+                                fontSize = 12.5.sp
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = null,
+                                tint = Color(0xFFB45309)
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF64748B))
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFC59B27),
+                            unfocusedBorderColor = Color(0xFFE2D5B8),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color(0xFF1E293B),
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        ),
+                        singleLine = true
+                    )
+                }
+            }
+        }
+
+        // 2. Responsive Direct Contact Action Cards (Email, WhatsApp, Telegram)
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Direct Official Support Channels",
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = supportConfig.fastSupportBadge,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF9A7B2C)
+                    )
+                }
+
+                // 3 Responsive Luxury Channel Cards
+                HelpCenterLuxuryChannelCard(
+                    title = "WhatsApp Priority Support",
+                    subtitle = "Instant chat for payment, OTP & technical help",
+                    contactValue = supportConfig.whatsappNumber.ifBlank { "+91 94935 12768" },
+                    badgeText = "FASTEST • < 15 MIN",
+                    icon = Icons.Default.Chat,
+                    iconTint = Color(0xFF047857),
+                    iconBg = Color(0xFFECFDF5),
+                    buttonText = "Chat on WhatsApp",
+                    buttonColor = Color(0xFF059669),
+                    onClick = {
+                        com.example.util.ContactSupportManager.openWhatsAppSupport(
+                            context = context,
+                            issueCategory = "Help Center Inquiry"
+                        )
+                    }
                 )
-                Text(
-                    text = "Search popular assistance guidelines and tutorials.",
-                    fontSize = 12.sp,
-                    color = Color(0xFF64748B)
+
+                HelpCenterLuxuryChannelCard(
+                    title = "Official Email Support Desk",
+                    subtitle = "Detailed queries, billing receipts & feedback",
+                    contactValue = supportConfig.supportEmail.ifBlank { "Sobhadhanaraju1@gmail.com" },
+                    badgeText = "OFFICIAL DESK",
+                    icon = Icons.Default.Email,
+                    iconTint = Color(0xFFB45309),
+                    iconBg = Color(0xFFFEF3C7),
+                    buttonText = "Send Email",
+                    buttonColor = Color(0xFFB45309),
+                    onClick = {
+                        com.example.util.ContactSupportManager.openEmailSupport(
+                            context = context,
+                            issueCategory = "Help Center Inquiry"
+                        )
+                    }
+                )
+
+                HelpCenterLuxuryChannelCard(
+                    title = "Telegram Updates & Support",
+                    subtitle = "Exam alerts, daily PDFs & aspirant support channel",
+                    contactValue = "t.me/DHANARAJU0",
+                    badgeText = "COMMUNITY & HELP",
+                    icon = Icons.Default.Send,
+                    iconTint = Color(0xFF0369A1),
+                    iconBg = Color(0xFFF0F9FF),
+                    buttonText = "Join Telegram",
+                    buttonColor = Color(0xFF0284C7),
+                    onClick = {
+                        com.example.util.ContactSupportManager.openTelegramSupport(context = context)
+                    }
                 )
             }
         }
 
-        // Search Bar
-        item {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(1.dp, RoundedCornerShape(12.dp)),
-                placeholder = { Text("Search for help topics, guides...", color = Color(0xFF94A3B8), fontSize = 13.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = accentColor) },
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = accentColor,
-                    unfocusedBorderColor = Color(0xFFCBD5E1),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedTextColor = Color(0xFF1E293B),
-                    unfocusedTextColor = Color(0xFF1E293B)
-                ),
-                singleLine = true
-            )
-        }
-
-        // Popular Help Topics Grid heading
-        item {
-            Text("Popular Help Topics", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-        }
-
-        // Topics Items
+        // 3. Interactive Support Categories Grid (2 columns)
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                for (i in popularTopics.indices step 3) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Select Issue Category for Guided Help",
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = "Tap any topic",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF9A7B2C)
+                    )
+                }
+
+                for (i in filteredTopics.indices step 2) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        for (j in 0..2) {
+                        for (j in 0..1) {
                             val index = i + j
-                            if (index < popularTopics.size) {
-                                val item = popularTopics[index]
-                                Card(
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            if (index < filteredTopics.size) {
+                                val topic = filteredTopics[index]
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color(0xFFFFFDF9),
+                                    border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+                                    shadowElevation = 2.dp,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(84.dp)
+                                        .clip(RoundedCornerShape(16.dp))
                                         .clickable {
-                                            onNavigateToFaqs()
+                                            selectedIssueCategory = topic.title
                                         }
-                                        .shadow(1.dp, RoundedCornerShape(12.dp))
                                 ) {
-                                    Column(
+                                    Row(
                                         modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(8.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(
-                                            imageVector = item.second,
-                                            contentDescription = null,
-                                            tint = accentColor,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = item.first,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF334155),
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(topic.iconBg),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = topic.icon,
+                                                contentDescription = null,
+                                                tint = topic.iconTint,
+                                                modifier = Modifier.size(19.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = topic.title,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color(0xFF1E293B),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = topic.subtitle,
+                                                fontSize = 10.5.sp,
+                                                color = Color(0xFF64748B),
+                                                maxLines = 2,
+                                                lineHeight = 13.5.sp,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
                                     }
                                 }
                             } else {
@@ -1406,68 +1746,323 @@ private fun DedicatedHelpCenterView(
             }
         }
 
-        // Popular Questions
+        // 4. Expandable Popular Questions
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Popular Questions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Top Candidate Questions",
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B)
+                    )
+                    TextButton(
+                        onClick = onNavigateToFaqs,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "View All FAQs →",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFB45309)
+                        )
+                    }
+                }
 
-                val popularQs = listOf(
-                    "Can I log in on multiple devices?",
-                    "My secure payment failed but transaction was debited.",
-                    "How to reset my support credentials?",
-                    "Can I cancel my ongoing subscription package?"
-                )
-
-                popularQs.forEach { q ->
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                filteredQs.forEachIndexed { idx, pair ->
+                    val isExpanded = expandedQuestionIndex == idx
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFFFDF9),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isExpanded) Color(0xFFD4AF37) else Color(0xFFE8DCC4)
+                        ),
+                        shadowElevation = 2.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onNavigateToFaqs() }
-                            .shadow(1.dp, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                expandedQuestionIndex = if (isExpanded) null else idx
+                            }
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(q, fontSize = 12.5.sp, color = Color(0xFF334155), fontWeight = FontWeight.Medium)
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = pair.first,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF1E293B),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = Color(0xFFB45309),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            AnimatedVisibility(visible = isExpanded) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    HorizontalDivider(color = Color(0xFFE8DCC4))
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        text = pair.second,
+                                        fontSize = 12.5.sp,
+                                        color = Color(0xFF475569),
+                                        lineHeight = 18.5.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Didn't find support footer
+        // 5. Support Hours & Dedicated Contact Us CTA Footer
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.15f)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(16.dp))
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFFFFFDF9),
+                border = BorderStroke(1.2.dp, Color(0xFFD4AF37).copy(alpha = 0.55f)),
+                shadowElevation = 3.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
+                    modifier = Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color(0xFFFFFBEB), Color(0xFFFFFDF9))
+                            )
+                        )
+                        .padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Didn't find what you're looking for?", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                    Text(
+                        text = "Candidate Care Hours: ${supportConfig.supportTimingsLine1}",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF92400E)
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Connect with our direct support assistants immediately.", fontSize = 11.sp, color = Color(0xFF64748B))
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Open the full Contact Us & Support Concierge screen to copy contact details or submit a custom support ticket.",
+                        fontSize = 11.5.sp,
+                        color = Color(0xFF64748B),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 16.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = onNavigateToContact,
-                        colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                        shape = RoundedCornerShape(10.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB45309)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
                     ) {
-                        Text("Connect Contact Support", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.SupportAgent, contentDescription = null, modifier = Modifier.size(17.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open Full Contact Us Concierge", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+            }
+        }
+    }
+
+    if (selectedIssueCategory != null) {
+        SmartSupportIssueDialog(
+            issueCategory = selectedIssueCategory!!,
+            onDismiss = { selectedIssueCategory = null }
+        )
+    }
+}
+
+@Composable
+private fun HelpCenterLuxuryChannelCard(
+    title: String,
+    subtitle: String,
+    contactValue: String,
+    badgeText: String,
+    icon: ImageVector,
+    iconTint: Color,
+    iconBg: Color,
+    buttonText: String,
+    buttonColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFFFFFDF9),
+        border = BorderStroke(1.2.dp, Color(0xFFE8DCC4)),
+        shadowElevation = 3.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(iconBg)
+                    .border(1.dp, iconTint.copy(alpha = 0.25f), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1E293B),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = contactValue,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = iconTint,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.height(36.dp)
+            ) {
+                Text(buttonText, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LuxuryDirectChannelsStrip(
+    onEmailClick: () -> Unit,
+    onWhatsAppClick: () -> Unit,
+    onTelegramClick: () -> Unit,
+    onOpenContactHub: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFFFFFDF9),
+        border = BorderStroke(1.2.dp, Color(0xFFD4AF37).copy(alpha = 0.55f)),
+        shadowElevation = 3.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFFFFBEB), Color(0xFFFFFDF9))
+                    )
+                )
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.SupportAgent, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Still need help? Connect directly with us",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF1E293B)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onWhatsAppClick,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFECFDF5),
+                        contentColor = Color(0xFF047857)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 6.dp),
+                    modifier = Modifier.weight(1f).height(38.dp)
+                ) {
+                    Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("WhatsApp", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+
+                OutlinedButton(
+                    onClick = onEmailClick,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.6f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFFEF9E7),
+                        contentColor = Color(0xFF92400E)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 6.dp),
+                    modifier = Modifier.weight(1f).height(38.dp)
+                ) {
+                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Email", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+
+                OutlinedButton(
+                    onClick = onTelegramClick,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFF0EA5E9).copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFF0F9FF),
+                        contentColor = Color(0xFF0369A1)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 6.dp),
+                    modifier = Modifier.weight(1f).height(38.dp)
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Telegram", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1787,16 +2382,10 @@ private fun LegalSupportHubView(
     appDocs: List<LegalDocument>,
     onSelectItem: (LegalDocType) -> Unit
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
-
-    val privacyDoc = appDocs.find { it.type == LegalDocType.PRIVACY_POLICY }
-    val termsDoc = appDocs.find { it.type == LegalDocType.TERMS_CONDITIONS }
-    val refundDoc = appDocs.find { it.type == LegalDocType.REFUND_CANCELLATION }
-    val aboutDoc = appDocs.find { it.type == LegalDocType.ABOUT_US }
-
-    val faqDoc = appDocs.find { it.type == LegalDocType.FAQ }
-    val helpDoc = appDocs.find { it.type == LegalDocType.HELP_CENTER }
-    val contactDoc = appDocs.find { it.type == LegalDocType.CONTACT_US }
+    val activeApp = remember { com.example.data.SampleData.getActiveApp() }
+    val appTitle = activeApp.name.ifBlank { "Official Exam Prep" }
 
     Column(
         modifier = Modifier
@@ -1805,41 +2394,140 @@ private fun LegalSupportHubView(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Welcoming Card
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(2.dp, RoundedCornerShape(16.dp))
+        // Welcoming Champagne-Gold Hero Card
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.3.dp, Color(0xFFD4AF37).copy(alpha = 0.6f)),
+            shadowElevation = 4.dp,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFFFFBEB),
+                                Color(0xFFFFFDF9),
+                                Color(0xFFFDF8EC)
+                            )
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFEF3C7))
+                            .border(1.dp, Color(0xFFD4AF37).copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SupportAgent,
+                            contentDescription = null,
+                            tint = Color(0xFFB45309),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "$appTitle Support & Legal Hub",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Text(
+                            text = "Official Candidate Assistance & Policy Center",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF9A7B2C)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Welcome to Infinity Support Desk",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Find solutions regarding digital refunds, privacy safeguards, subscription agreements, academic helplines, or submit direct tickets.",
+                    text = "Access our priority candidate support channels (WhatsApp +91 94935 12768, Email Sobhadhanaraju1@gmail.com, Telegram), interactive Help Center, and official legal policies.",
                     fontSize = 12.sp,
-                    color = Color(0xFF64748B),
+                    color = Color(0xFF475569),
                     lineHeight = 18.sp
                 )
             }
         }
 
+        // Direct Channels Strip inside Hub
+        LuxuryDirectChannelsStrip(
+            onEmailClick = {
+                com.example.util.ContactSupportManager.openEmailSupport(
+                    context = context,
+                    issueCategory = "Support & Legal Hub Inquiry"
+                )
+            },
+            onWhatsAppClick = {
+                com.example.util.ContactSupportManager.openWhatsAppSupport(
+                    context = context,
+                    issueCategory = "Support & Legal Hub Inquiry"
+                )
+            },
+            onTelegramClick = {
+                com.example.util.ContactSupportManager.openTelegramSupport(context = context)
+            },
+            onOpenContactHub = { onSelectItem(LegalDocType.CONTACT_US) }
+        )
+
+        // Section support
+        Text(
+            "Candidate Help & Assistance Desk",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF1E293B)
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            LegalMenuCard(
+                title = "Contact Us & Support Concierge",
+                subtitle = "WhatsApp (+91 94935 12768), Email & Telegram support",
+                icon = Icons.Default.ContactSupport,
+                accentColor = Color(0xFFB45309),
+                badgeText = "PRIORITY",
+                onClick = { onSelectItem(LegalDocType.CONTACT_US) }
+            )
+
+            LegalMenuCard(
+                title = "Help Center & Guided Support",
+                subtitle = "Interactive issue resolution, billing & mock guides",
+                icon = Icons.Default.Help,
+                accentColor = Color(0xFF047857),
+                badgeText = "HUB",
+                onClick = { onSelectItem(LegalDocType.HELP_CENTER) }
+            )
+
+            LegalMenuCard(
+                title = "Frequently Asked Questions (FAQs)",
+                subtitle = "Instant answers for account, OTP, payments & mocks",
+                icon = Icons.Default.Quiz,
+                accentColor = Color(0xFF7C3AED),
+                badgeText = "Q&A",
+                onClick = { onSelectItem(LegalDocType.FAQ) }
+            )
+        }
+
         // Section header
-        Text("Legal Policies & Agreements", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+        Text(
+            "Legal Policies & Agreements",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF1E293B)
+        )
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             LegalMenuCard(
                 title = "Refund & Cancellation Policy",
                 subtitle = "Rules for digital packages, double transactions",
                 icon = Icons.Default.CurrencyExchange,
-                accentColor = Color(0xFF2563EB),
+                accentColor = Color(0xFFB45309),
                 badgeText = "BILLING",
                 onClick = { onSelectItem(LegalDocType.REFUND_CANCELLATION) }
             )
@@ -1855,7 +2543,7 @@ private fun LegalSupportHubView(
 
             LegalMenuCard(
                 title = "Terms & Conditions Agreement",
-                subtitle = "Aspirant license, scraping rules, payments",
+                subtitle = "Aspirant license, content rules & payments",
                 icon = Icons.Default.Assignment,
                 accentColor = Color(0xFFD97706),
                 badgeText = "RULES",
@@ -1863,53 +2551,26 @@ private fun LegalSupportHubView(
             )
 
             LegalMenuCard(
-                title = "About Infinity Applet",
+                title = "About $appTitle",
                 subtitle = "Our exam vision, core features, and version",
                 icon = Icons.Default.Business,
-                accentColor = Color(0xFF4F46E5),
+                accentColor = Color(0xFF9A7B2C),
                 badgeText = "BRAND",
                 onClick = { onSelectItem(LegalDocType.ABOUT_US) }
             )
         }
 
-        // Section support
-        Text("Candidate Help & Assistance Desk", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            LegalMenuCard(
-                title = "Frequently Asked Questions (FAQs)",
-                subtitle = "Instant answers, login reset guidelines",
-                icon = Icons.Default.Quiz,
-                accentColor = Color(0xFF7C3AED),
-                badgeText = "Q&A",
-                onClick = { onSelectItem(LegalDocType.FAQ) }
-            )
-
-            LegalMenuCard(
-                title = "Help Centre Guides",
-                subtitle = "App tutorials, exam syllabi guides",
-                icon = Icons.Default.Help,
-                accentColor = Color(0xFF0D9488),
-                badgeText = "HUB",
-                onClick = { onSelectItem(LegalDocType.HELP_CENTER) }
-            )
-
-            LegalMenuCard(
-                title = "Contact Support Desk",
-                subtitle = "Active call helpline, academic WhatsApp support",
-                icon = Icons.Default.ContactSupport,
-                accentColor = Color(0xFFE11D48),
-                badgeText = "24/7",
-                onClick = { onSelectItem(LegalDocType.CONTACT_US) }
-            )
-        }
-
         // Danger Deletion
-        Text("Account Safety Center", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+        Text(
+            "Account Safety Center",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF1E293B)
+        )
 
         LegalMenuCard(
             title = "Account & Profile Deletion",
-            subtitle = "Initiate instant deletion of candidate profile",
+            subtitle = "Initiate permanent deletion of candidate profile",
             icon = Icons.Default.Delete,
             accentColor = Color(0xFFDC2626),
             badgeText = "DANGER",
@@ -1929,14 +2590,15 @@ private fun LegalMenuCard(
     badgeText: String,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        color = Color(0xFFFFFDF9),
+        border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+        shadowElevation = 2.dp,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
-            .shadow(1.dp, RoundedCornerShape(16.dp))
     ) {
         Row(
             modifier = Modifier
@@ -1946,12 +2608,13 @@ private fun LegalMenuCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(accentColor.copy(alpha = 0.08f)),
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.1f))
+                    .border(1.dp, accentColor.copy(alpha = 0.25f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(18.dp))
+                Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -1962,17 +2625,17 @@ private fun LegalMenuCard(
                     Text(
                         text = title,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = Color(0xFF1E293B)
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = accentColor.copy(alpha = 0.08f),
-                        border = BorderStroke(0.5.dp, accentColor.copy(alpha = 0.2f))
+                        shape = RoundedCornerShape(6.dp),
+                        color = accentColor.copy(alpha = 0.1f),
+                        border = BorderStroke(0.8.dp, accentColor.copy(alpha = 0.25f))
                     ) {
                         Text(
                             text = badgeText,
-                            fontSize = 8.sp,
+                            fontSize = 8.5.sp,
                             fontWeight = FontWeight.Black,
                             color = accentColor,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1988,7 +2651,7 @@ private fun LegalMenuCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -1997,14 +2660,15 @@ private fun LegalMenuCard(
 private fun FaqAccordionItem(faq: SupportFaq, accentColor: Color) {
     var expanded by remember { mutableStateOf(false) }
 
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, if (expanded) accentColor.copy(alpha = 0.35f) else Color(0xFFE2E8F0)),
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFFFFDF9),
+        border = BorderStroke(1.dp, if (expanded) Color(0xFFD4AF37) else Color(0xFFE8DCC4)),
+        shadowElevation = 2.dp,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .clickable { expanded = !expanded }
-            .shadow(1.dp, RoundedCornerShape(14.dp))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -2022,7 +2686,7 @@ private fun FaqAccordionItem(faq: SupportFaq, accentColor: Color) {
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = if (expanded) accentColor else Color(0xFF64748B),
+                    tint = Color(0xFFB45309),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -2034,7 +2698,7 @@ private fun FaqAccordionItem(faq: SupportFaq, accentColor: Color) {
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(10.dp))
-                    HorizontalDivider(color = Color(0xFFE2E8F0))
+                    HorizontalDivider(color = Color(0xFFE8DCC4))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = faq.answer,

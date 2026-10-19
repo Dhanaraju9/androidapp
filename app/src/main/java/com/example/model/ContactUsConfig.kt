@@ -11,15 +11,18 @@ data class ContactUsConfig(
     val supportEmail: String = "Sobhadhanaraju1@gmail.com",
     val emailTitle: String = "Email Support",
     val emailSubtext: String = "Send us your questions or technical issues",
+    val isEmailSupportEnabled: Boolean = true,
     
     val whatsappNumber: String = "+91 94935 12768",
     val whatsappTitle: String = "WhatsApp Support",
     val whatsappSubtext: String = "Contact us directly for assistance",
     val whatsappLink: String = "https://wa.me/919493512768",
+    val isWhatsAppEnabled: Boolean = true,
     
     val telegramLink: String = "https://t.me/DHANARAJU0",
     val telegramTitle: String = "Telegram Support",
     val telegramSubtext: String = "Contact us through our Telegram account",
+    val isTelegramEnabled: Boolean = true,
     
     val phoneNumber: String = "+91 94935 12768",
     
@@ -51,7 +54,7 @@ data class ContactUsConfig(
     
     val communityTitle: String = "Community",
     val communitySubtitle: String = "Learn Together",
-    val communityUrl: String = "https://t.me/infinitylabs",
+    val communityUrl: String = "https://t.me/DHANARAJU0",
     
     // Bottom Motivational Strip
     val motivationalQuote: String = "“We are here to support your journey. Keep Learning, Keep Growing.”",

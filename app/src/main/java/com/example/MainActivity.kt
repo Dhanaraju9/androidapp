@@ -34,6 +34,7 @@ sealed class AppScreen {
     data object MockTests : AppScreen()
     data object Performance : AppScreen()
     data object ContactUs : AppScreen()
+    data class LegalSupport(val initialSection: String? = null) : AppScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -102,7 +103,16 @@ fun AppNavigationHost() {
                     navigateTo(AppScreen.Subscription)
                 },
                 onNavigateToScientificCalculator = {},
-                onNavigateToPrivacy = {},
+                onNavigateToPrivacy = {
+                    navigateTo(AppScreen.ContactUs)
+                },
+                onNavigateToPrivacySection = { section ->
+                    if (section == "contact_us") {
+                        navigateTo(AppScreen.ContactUs)
+                    } else {
+                        navigateTo(AppScreen.LegalSupport(section))
+                    }
+                },
                 onNavigateToMockTests = {
                     navigateTo(AppScreen.MockTests)
                 },
@@ -216,14 +226,21 @@ fun AppNavigationHost() {
                 onNavigateToLogin = { navigateTo(AppScreen.Login) },
                 onNavigateToSavedQuestions = { navigateTo(AppScreen.SavedQuestions) },
                 onNavigateToContact = { navigateTo(AppScreen.ContactUs) },
-                onNavigateToPrivacy = { navigateTo(AppScreen.ContactUs) }
+                onNavigateToPrivacy = { navigateTo(AppScreen.LegalSupport("privacy_policy")) }
             )
         }
         is AppScreen.ContactUs -> {
             ContactUsScreen(
                 onBack = { goBack() },
-                onNavigateToFaq = { navigateTo(AppScreen.Profile) },
-                onNavigateToHelpCenter = { navigateTo(AppScreen.Profile) }
+                onNavigateToFaq = { navigateTo(AppScreen.LegalSupport("faq")) },
+                onNavigateToHelpCenter = { navigateTo(AppScreen.LegalSupport("help_center")) }
+            )
+        }
+        is AppScreen.LegalSupport -> {
+            LegalSupportCenterScreen(
+                initialSection = screen.initialSection,
+                onBack = { goBack() },
+                onNavigateToHome = { currentScreen = AppScreen.Home }
             )
         }
         is AppScreen.SavedQuestions -> {

@@ -53,7 +53,7 @@ fun AdminLegalSupportTab() {
     val allDocs by repository.allLegalDocuments.collectAsStateWithLifecycle()
     val allFaqs by repository.allFaqs.collectAsStateWithLifecycle()
 
-    var subTab by remember { mutableIntStateOf(0) } // 0: Documents, 1: FAQs
+    var subTab by remember { mutableIntStateOf(0) } // 0: Contact & Channels, 1: Legal Documents, 2: Support FAQs
     var showEditDocDialog by remember { mutableStateOf<LegalDocument?>(null) }
     var showEditFaqDialog by remember { mutableStateOf<SupportFaq?>(null) }
     var previewDoc by remember { mutableStateOf<LegalDocument?>(null) }
@@ -68,24 +68,30 @@ fun AdminLegalSupportTab() {
             // Sub-navigation
             TabRow(
                 selectedTabIndex = subTab,
-                containerColor = Color.White,
-                contentColor = Color(0xFF2563EB)
+                containerColor = Color(0xFFFFFDF9),
+                contentColor = Color(0xFFB45309)
             ) {
                 Tab(
                     selected = subTab == 0,
                     onClick = { subTab = 0 },
-                    text = { Text("Legal Documents", fontWeight = FontWeight.Bold) }
+                    text = { Text("Contact & Channels", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
                 )
                 Tab(
                     selected = subTab == 1,
                     onClick = { subTab = 1 },
-                    text = { Text("Support FAQs", fontWeight = FontWeight.Bold) }
+                    text = { Text("Legal Documents", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
+                )
+                Tab(
+                    selected = subTab == 2,
+                    onClick = { subTab = 2 },
+                    text = { Text("Support FAQs", fontWeight = FontWeight.Bold, fontSize = 12.5.sp) }
                 )
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                if (subTab == 0) {
-                    LegalDocsList(
+                when (subTab) {
+                    0 -> AdminContactChannelsEditor()
+                    1 -> LegalDocsList(
                         docs = allDocs.sortedBy { it.order },
                         onEdit = { showEditDocDialog = it },
                         onPreview = { previewDoc = it },
@@ -104,8 +110,7 @@ fun AdminLegalSupportTab() {
                             )
                         }
                     )
-                } else {
-                    FaqList(
+                    else -> FaqList(
                         faqs = allFaqs.sortedBy { it.order },
                         onEdit = { showEditFaqDialog = it },
                         onDelete = {
@@ -1353,5 +1358,339 @@ private fun EmptyStateView(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp)
         )
+    }
+}
+
+@Composable
+private fun AdminContactChannelsEditor() {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        com.example.util.ContactSupportManager.init(context)
+    }
+    val currentConfig by com.example.util.ContactSupportManager.configState
+
+    var supportEmail by remember(currentConfig) { mutableStateOf(currentConfig.supportEmail) }
+    var isEmailEnabled by remember(currentConfig) { mutableStateOf(currentConfig.isEmailSupportEnabled) }
+
+    var whatsappNumber by remember(currentConfig) { mutableStateOf(currentConfig.whatsappNumber) }
+    var whatsappLink by remember(currentConfig) { mutableStateOf(currentConfig.whatsappLink) }
+    var isWhatsAppEnabled by remember(currentConfig) { mutableStateOf(currentConfig.isWhatsAppEnabled) }
+
+    var communityUrl by remember(currentConfig) { mutableStateOf(currentConfig.communityUrl) }
+    var isTelegramEnabled by remember(currentConfig) { mutableStateOf(currentConfig.isTelegramEnabled) }
+
+    var supportHours by remember(currentConfig) { mutableStateOf(currentConfig.supportTimingsLine1) }
+    var responseTimeText by remember(currentConfig) { mutableStateOf(currentConfig.fastSupportBadge) }
+    var bannerTitle by remember(currentConfig) { mutableStateOf(currentConfig.bannerTitle) }
+    var bannerSubtext by remember(currentConfig) { mutableStateOf(currentConfig.bannerSubtitle) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFAF8F3))
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Header Card
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.2.dp, Color(0xFFD4AF37).copy(alpha = 0.6f)),
+            shadowElevation = 3.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFFFFFBEB), Color(0xFFFFFDF9))
+                        )
+                    )
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFEF3C7)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SupportAgent,
+                            contentDescription = null,
+                            tint = Color(0xFFB45309),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Support & Contact Channels",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Text(
+                            text = "Manage WhatsApp, Email, Telegram, Hours & Support Banner",
+                            fontSize = 11.5.sp,
+                            color = Color(0xFF9A7B2C),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+
+        // 1. WhatsApp Support Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Chat, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("WhatsApp Support Channel", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color(0xFF1E293B))
+                    }
+                    Switch(
+                        checked = isWhatsAppEnabled,
+                        onCheckedChange = { isWhatsAppEnabled = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF059669))
+                    )
+                }
+
+                OutlinedTextField(
+                    value = whatsappNumber,
+                    onValueChange = { whatsappNumber = it },
+                    label = { Text("WhatsApp Phone Number") },
+                    placeholder = { Text("+91 94935 12768") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = whatsappLink,
+                    onValueChange = { whatsappLink = it },
+                    label = { Text("WhatsApp Direct Link (wa.me)") },
+                    placeholder = { Text("https://wa.me/919493512768") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // 2. Email Support Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Official Email Support", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color(0xFF1E293B))
+                    }
+                    Switch(
+                        checked = isEmailEnabled,
+                        onCheckedChange = { isEmailEnabled = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFB45309))
+                    )
+                }
+
+                OutlinedTextField(
+                    value = supportEmail,
+                    onValueChange = { supportEmail = it },
+                    label = { Text("Official Support Email Address") },
+                    placeholder = { Text("Sobhadhanaraju1@gmail.com") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // 3. Telegram Community & Support Card
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF0284C7), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Telegram Support & Channel", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color(0xFF1E293B))
+                    }
+                    Switch(
+                        checked = isTelegramEnabled,
+                        onCheckedChange = { isTelegramEnabled = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF0284C7))
+                    )
+                }
+
+                OutlinedTextField(
+                    value = communityUrl,
+                    onValueChange = { communityUrl = it },
+                    label = { Text("Telegram Channel / Support URL") },
+                    placeholder = { Text("https://t.me/DHANARAJU0") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // 4. Support Hours & Banner Configuration
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFFFFFDF9),
+            border = BorderStroke(1.dp, Color(0xFFE8DCC4)),
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Schedule, contentDescription = null, tint = Color(0xFF9A7B2C), modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Support Hours & Banner Message", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = Color(0xFF1E293B))
+                }
+
+                OutlinedTextField(
+                    value = supportHours,
+                    onValueChange = { supportHours = it },
+                    label = { Text("Support Operating Hours") },
+                    placeholder = { Text("Monday – Saturday: 9:00 AM – 8:00 PM IST") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = responseTimeText,
+                    onValueChange = { responseTimeText = it },
+                    label = { Text("Response Time Badge Text") },
+                    placeholder = { Text("Usually responds within 2–4 hours") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = bannerTitle,
+                    onValueChange = { bannerTitle = it },
+                    label = { Text("Support Banner Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = bannerSubtext,
+                    onValueChange = { bannerSubtext = it },
+                    label = { Text("Support Banner Subtext") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // Save & Reset Actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    com.example.util.ContactSupportManager.resetToDefaults(context)
+                    Toast.makeText(context, "Reset to official default contact details", Toast.LENGTH_SHORT).show()
+                },
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color(0xFFD4AF37)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF92400E)),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+            ) {
+                Icon(Icons.Default.Restore, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Reset Defaults", fontWeight = FontWeight.Bold)
+            }
+
+            Button(
+                onClick = {
+                    val updated = currentConfig.copy(
+                        supportEmail = supportEmail.trim().ifBlank { "Sobhadhanaraju1@gmail.com" },
+                        isEmailSupportEnabled = isEmailEnabled,
+                        whatsappNumber = whatsappNumber.trim().ifBlank { "+91 94935 12768" },
+                        whatsappLink = whatsappLink.trim().ifBlank { "https://wa.me/919493512768" },
+                        isWhatsAppEnabled = isWhatsAppEnabled,
+                        telegramLink = communityUrl.trim().ifBlank { "https://t.me/DHANARAJU0" },
+                        communityUrl = communityUrl.trim().ifBlank { "https://t.me/DHANARAJU0" },
+                        isTelegramEnabled = isTelegramEnabled,
+                        supportTimingsLine1 = supportHours.trim().ifBlank { "Monday – Saturday: 9:00 AM – 8:00 PM IST" },
+                        fastSupportBadge = responseTimeText.trim().ifBlank { "Usually responds within 2–4 hours" },
+                        bannerTitle = bannerTitle.trim().ifBlank { "Have a question or facing an issue?" },
+                        bannerSubtitle = bannerSubtext.trim().ifBlank { "Reach out to our support team anytime." }
+                    )
+                    com.example.util.ContactSupportManager.saveConfig(context, updated)
+                    Toast.makeText(context, "✅ Support & Contact settings saved across all screens!", Toast.LENGTH_SHORT).show()
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB45309)),
+                modifier = Modifier
+                    .weight(1.3f)
+                    .height(48.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Save Contact Config", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

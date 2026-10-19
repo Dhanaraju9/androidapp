@@ -36,21 +36,30 @@ object ContactSupportManager {
         val prefs = getPrefs(context)
         val default = ContactUsConfig()
 
+        val rawEmail = prefs.getString("support_email", default.supportEmail) ?: default.supportEmail
+        val rawWaNum = prefs.getString("whatsapp_number", default.whatsappNumber) ?: default.whatsappNumber
+        val rawWaLink = prefs.getString("whatsapp_link", default.whatsappLink) ?: default.whatsappLink
+        val rawTgLink = prefs.getString("telegram_link", default.telegramLink) ?: default.telegramLink
+        val rawPhone = prefs.getString("phone_number", default.phoneNumber) ?: default.phoneNumber
+
         return ContactUsConfig(
-            supportEmail = prefs.getString("support_email", default.supportEmail) ?: default.supportEmail,
+            supportEmail = if (rawEmail == "support@infinitylabs.in" || rawEmail.isBlank()) default.supportEmail else rawEmail,
             emailTitle = prefs.getString("email_title", default.emailTitle) ?: default.emailTitle,
             emailSubtext = prefs.getString("email_subtext", default.emailSubtext) ?: default.emailSubtext,
+            isEmailSupportEnabled = prefs.getBoolean("is_email_enabled", default.isEmailSupportEnabled),
 
-            whatsappNumber = prefs.getString("whatsapp_number", default.whatsappNumber) ?: default.whatsappNumber,
+            whatsappNumber = if (rawWaNum == "+91 98765 43210" || rawWaNum.isBlank()) default.whatsappNumber else rawWaNum,
             whatsappTitle = prefs.getString("whatsapp_title", default.whatsappTitle) ?: default.whatsappTitle,
             whatsappSubtext = prefs.getString("whatsapp_subtext", default.whatsappSubtext) ?: default.whatsappSubtext,
-            whatsappLink = prefs.getString("whatsapp_link", default.whatsappLink) ?: default.whatsappLink,
+            whatsappLink = if (rawWaLink.contains("9876543210") || rawWaLink.isBlank()) default.whatsappLink else rawWaLink,
+            isWhatsAppEnabled = prefs.getBoolean("is_whatsapp_enabled", default.isWhatsAppEnabled),
 
-            telegramLink = prefs.getString("telegram_link", default.telegramLink) ?: default.telegramLink,
+            telegramLink = if (rawTgLink.contains("infinitylabs") || rawTgLink.isBlank()) default.telegramLink else rawTgLink,
             telegramTitle = prefs.getString("telegram_title", default.telegramTitle) ?: default.telegramTitle,
             telegramSubtext = prefs.getString("telegram_subtext", default.telegramSubtext) ?: default.telegramSubtext,
+            isTelegramEnabled = prefs.getBoolean("is_telegram_enabled", default.isTelegramEnabled),
 
-            phoneNumber = prefs.getString("phone_number", default.phoneNumber) ?: default.phoneNumber,
+            phoneNumber = if (rawPhone == "+91 98765 43210" || rawPhone.isBlank()) default.phoneNumber else rawPhone,
 
             supportTimingsTitle = prefs.getString("support_timings_title", default.supportTimingsTitle) ?: default.supportTimingsTitle,
             supportTimingsLine1 = prefs.getString("support_timings_line1", default.supportTimingsLine1) ?: default.supportTimingsLine1,
@@ -126,15 +135,18 @@ object ContactSupportManager {
             putString("support_email", config.supportEmail)
             putString("email_title", config.emailTitle)
             putString("email_subtext", config.emailSubtext)
+            putBoolean("is_email_enabled", config.isEmailSupportEnabled)
 
             putString("whatsapp_number", config.whatsappNumber)
             putString("whatsapp_title", config.whatsappTitle)
             putString("whatsapp_subtext", config.whatsappSubtext)
             putString("whatsapp_link", config.whatsappLink)
+            putBoolean("is_whatsapp_enabled", config.isWhatsAppEnabled)
 
             putString("telegram_link", config.telegramLink)
             putString("telegram_title", config.telegramTitle)
             putString("telegram_subtext", config.telegramSubtext)
+            putBoolean("is_telegram_enabled", config.isTelegramEnabled)
 
             putString("phone_number", config.phoneNumber)
 
@@ -209,5 +221,103 @@ object ContactSupportManager {
     fun resetToDefaults(context: Context) {
         val default = ContactUsConfig()
         saveConfig(context, default)
+    }
+
+    fun buildPrefilledMessage(
+        issueCategory: String,
+        customDetails: String = "",
+        extraContext: String = ""
+    ): String {
+        val activeApp = com.example.data.SampleData.getActiveApp()
+        val profile = com.example.data.SampleData.sampleUserProfile
+        val stateLabel = activeApp.region.ifBlank { activeApp.category }.ifBlank { "Central / National" }
+        return buildString {
+            appendLine("Hello Support Team,")
+            appendLine()
+            appendLine("• App Name: ${activeApp.name}")
+            appendLine("• Exam / State: ${activeApp.examName} ($stateLabel)")
+            appendLine("• Issue Category: $issueCategory")
+            if (profile.phone.isNotBlank()) {
+                appendLine("• User Mobile: ${profile.phone}")
+            }
+            if (profile.email.isNotBlank()) {
+                appendLine("• User Email: ${profile.email}")
+            }
+            if (extraContext.isNotBlank()) {
+                appendLine("• Context: $extraContext")
+            }
+            if (customDetails.isNotBlank()) {
+                appendLine()
+                appendLine("Details:")
+                appendLine(customDetails.trim())
+            } else {
+                appendLine()
+                appendLine("Please assist me with this issue.")
+            }
+        }
+    }
+
+    fun openWhatsAppSupport(
+        context: Context,
+        issueCategory: String = "General Assistance",
+        customDetails: String = "",
+        extraContext: String = ""
+    ) {
+        val cfg = getConfig(context)
+        val cleanNumber = cfg.whatsappNumber.replace(Regex("[^0-9]"), "").ifBlank { "919493512768" }
+        val message = buildPrefilledMessage(issueCategory, customDetails, extraContext)
+        val encodedText = android.net.Uri.encode(message)
+        val baseUrl = if (cfg.whatsappLink.isNotBlank() && cfg.whatsappLink.startsWith("http")) {
+            cfg.whatsappLink.substringBefore("?")
+        } else {
+            "https://wa.me/$cleanNumber"
+        }
+        val finalUrl = "$baseUrl?text=$encodedText"
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(finalUrl)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "WhatsApp Support: ${cfg.whatsappNumber}", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun openEmailSupport(
+        context: Context,
+        issueCategory: String = "General Assistance",
+        customDetails: String = "",
+        extraContext: String = ""
+    ) {
+        val cfg = getConfig(context)
+        val activeApp = com.example.data.SampleData.getActiveApp()
+        val email = cfg.supportEmail.trim().ifBlank { "Sobhadhanaraju1@gmail.com" }
+        val subject = "[${activeApp.name}] Support: $issueCategory"
+        val body = buildPrefilledMessage(issueCategory, customDetails, extraContext)
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                data = android.net.Uri.parse("mailto:$email")
+                putExtra(android.content.Intent.EXTRA_SUBJECT, subject)
+                putExtra(android.content.Intent.EXTRA_TEXT, body)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Support Email: $email", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun openTelegramSupport(context: Context) {
+        val cfg = getConfig(context)
+        val rawLink = cfg.telegramLink.trim().ifBlank { "https://t.me/DHANARAJU0" }
+        val targetUrl = if (rawLink.startsWith("http://") || rawLink.startsWith("https://")) rawLink else "https://$rawLink"
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(targetUrl)).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Telegram Support: $targetUrl", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 }

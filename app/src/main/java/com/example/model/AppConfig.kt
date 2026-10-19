@@ -27,12 +27,12 @@ data class AppBranding(
     val buttonCornerRadiusDp: Int = 10,
     val chipCornerRadiusDp: Int = 16,
     val fontPreset: String = "Modern",
-    val supportEmail: String = "",
-    val supportPhone: String = "",
-    val whatsappNumber: String = "",
-    val whatsappLink: String = "",
-    val telegramId: String = "",
-    val telegramLink: String = "",
+    val supportEmail: String = "Sobhadhanaraju1@gmail.com",
+    val supportPhone: String = "+91 94935 12768",
+    val whatsappNumber: String = "+91 94935 12768",
+    val whatsappLink: String = "https://wa.me/919493512768",
+    val telegramId: String = "@DHANARAJU0",
+    val telegramLink: String = "https://t.me/DHANARAJU0",
     val websiteUrl: String = "",
     val copyrightText: String = ""
 ) {

@@ -578,10 +578,19 @@ fun UserProfileScreen(
                                 HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(horizontal = 14.dp))
                                 SettingsItemRow(
                                     icon = Icons.Default.ContactSupport,
-                                    iconTint = brandPrimary,
-                                    title = "Support Desk & FAQs",
-                                    subtitle = "Contact us directly via Email or Support link",
+                                    iconTint = Color(0xFFB45309),
+                                    title = "Contact Us & Help Center",
+                                    subtitle = "WhatsApp (+91 94935 12768), Email & Telegram Support",
                                     onClick = onNavigateToContact,
+                                    isDark = isDark
+                                )
+                                HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(horizontal = 14.dp))
+                                SettingsItemRow(
+                                    icon = Icons.Default.Help,
+                                    iconTint = brandPrimary,
+                                    title = "Support Hub & FAQs",
+                                    subtitle = "Interactive Help Center, guides & policy hub",
+                                    onClick = onNavigateToPrivacy,
                                     isDark = isDark
                                 )
                                 HorizontalDivider(color = cardBorderColor, modifier = Modifier.padding(horizontal = 14.dp))
@@ -1288,42 +1297,6 @@ fun PrepStatisticsCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AssignmentTurnedIn,
-                        contentDescription = null,
-                        tint = accentBlue,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = "Prep Analytics",
-                        fontSize = 14.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
-                }
-                TextButton(
-                    onClick = onNavigateToPerformance,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text(
-                        text = "Full Analytics →",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(10.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),

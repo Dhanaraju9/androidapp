@@ -72,8 +72,15 @@ fun ContactUsScreen(
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
 
+    LaunchedEffect(Unit) {
+        ContactSupportManager.init(context)
+    }
+
     // Observe dynamic configuration from ContactSupportManager (persisted & configurable via Admin Panel)
     val config by ContactSupportManager.configState
+    val activeApp = com.example.data.SampleData.getActiveApp()
+    var selectedIssueCategory by remember { mutableStateOf<String?>(null) }
+    var customIssueDetails by remember { mutableStateOf("") }
 
     // Parse configurable colors with safe fallbacks matching the reference
     val screenBg = remember(config.screenBgHex) {
@@ -137,53 +144,15 @@ fun ContactUsScreen(
 
     // Handlers
     val handleEmailClick = {
-        try {
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse("mailto:${config.supportEmail.trim()}")
-                putExtra(Intent.EXTRA_SUBJECT, "Support Request - ${config.headerTitle}")
-            }
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            try {
-                uriHandler.openUri("mailto:${config.supportEmail.trim()}")
-            } catch (ex: Exception) {
-                Toast.makeText(context, "Email: ${config.supportEmail}", Toast.LENGTH_LONG).show()
-            }
-        }
+        ContactSupportManager.openEmailSupport(context, "General Support Inquiry")
     }
 
     val handleWhatsAppClick = {
-        val cleanNumber = config.whatsappNumber.replace(Regex("[^0-9+]"), "").removePrefix("+")
-        val link = if (config.whatsappLink.isNotBlank()) config.whatsappLink else "https://wa.me/$cleanNumber"
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            try {
-                uriHandler.openUri(link)
-            } catch (ex: Exception) {
-                Toast.makeText(context, "WhatsApp: ${config.whatsappNumber}", Toast.LENGTH_LONG).show()
-            }
-        }
+        ContactSupportManager.openWhatsAppSupport(context, "General Support Inquiry")
     }
 
     val handleTelegramClick = {
-        val rawLink = config.telegramLink.trim()
-        val targetUrl = if (rawLink.startsWith("http://") || rawLink.startsWith("https://")) {
-            rawLink
-        } else {
-            "https://$rawLink"
-        }
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl))
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            try {
-                uriHandler.openUri(targetUrl)
-            } catch (ex: Exception) {
-                Toast.makeText(context, "Telegram: $rawLink", Toast.LENGTH_LONG).show()
-            }
-        }
+        ContactSupportManager.openTelegramSupport(context)
     }
 
     val handleCallClick = {
@@ -375,6 +344,20 @@ fun ContactUsScreen(
 
                         // Banner Texts
                         Column(modifier = Modifier.weight(1f)) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFFFEF3C7),
+                                border = BorderStroke(0.5.dp, Color(0xFFFCD34D)),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            ) {
+                                Text(
+                                    text = "${activeApp.name} • ${activeApp.region.ifBlank { activeApp.category }.ifBlank { "National" }}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF92400E),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
                             Text(
                                 text = config.bannerTitle,
                                 fontSize = 15.5.sp,
@@ -420,241 +403,394 @@ fun ContactUsScreen(
             }
 
             // ==========================================
-            // 3. EMAIL CARD ("Email Us")
+            // 3. WHATSAPP CARD ("WhatsApp Support")
             // ==========================================
-            Surface(
-                onClick = handleEmailClick,
-                shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
-                color = Color.Transparent,
-                border = BorderStroke(1.dp, emailBorder),
-                shadowElevation = 1.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .contactCardPressAnimation()
-            ) {
-                Box(
+            if (config.isWhatsAppEnabled) {
+                Surface(
+                    onClick = handleWhatsAppClick,
+                    shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, whatsappBorder),
+                    shadowElevation = 1.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(emailBgStart, emailBgEnd)
-                            )
-                        )
-                        .padding(horizontal = 14.dp, vertical = 14.dp)
+                        .contactCardPressAnimation()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(whatsappBgStart, whatsappBgEnd)
+                                )
+                            )
+                            .padding(horizontal = 14.dp, vertical = 14.dp)
                     ) {
-                        // Blue Email Icon Box
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0284C7)),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Email",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            // Green WhatsApp Icon Box
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color(0xFF22C55E)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_whatsapp),
+                                    contentDescription = "WhatsApp",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(25.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            // Texts
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = config.whatsappTitle,
+                                    fontSize = 15.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryTextColor
+                                )
+                                Text(
+                                    text = config.whatsappSubtext,
+                                    fontSize = 11.5.sp,
+                                    color = secondaryTextColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = config.whatsappNumber,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = whatsappAccent
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFF16A34A),
+                                modifier = Modifier.padding(start = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Chat Now",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
                         }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        // Texts
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = config.emailTitle,
-                                fontSize = 15.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = primaryTextColor
-                            )
-                            Text(
-                                text = config.emailSubtext,
-                                fontSize = 11.5.sp,
-                                color = secondaryTextColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = config.supportEmail,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = emailAccent
-                            )
-                        }
-
-                        // Right Arrow
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = emailAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
                     }
                 }
             }
 
             // ==========================================
-            // 4. WHATSAPP CARD ("Chat on WhatsApp")
+            // 4. EMAIL CARD ("Email Support")
             // ==========================================
-            Surface(
-                onClick = handleWhatsAppClick,
-                shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
-                color = Color.Transparent,
-                border = BorderStroke(1.dp, whatsappBorder),
-                shadowElevation = 1.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .contactCardPressAnimation()
-            ) {
-                Box(
+            if (config.isEmailSupportEnabled) {
+                Surface(
+                    onClick = handleEmailClick,
+                    shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, emailBorder),
+                    shadowElevation = 1.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(whatsappBgStart, whatsappBgEnd)
-                            )
-                        )
-                        .padding(horizontal = 14.dp, vertical = 14.dp)
+                        .contactCardPressAnimation()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(emailBgStart, emailBgEnd)
+                                )
+                            )
+                            .padding(horizontal = 14.dp, vertical = 14.dp)
                     ) {
-                        // Green WhatsApp Icon Box
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF22C55E)),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_whatsapp),
-                                contentDescription = "WhatsApp",
-                                tint = Color.White,
-                                modifier = Modifier.size(25.dp)
-                            )
+                            // Blue Email Icon Box
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color(0xFF0284C7)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "Email",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            // Texts
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = config.emailTitle,
+                                    fontSize = 15.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryTextColor
+                                )
+                                Text(
+                                    text = config.emailSubtext,
+                                    fontSize = 11.5.sp,
+                                    color = secondaryTextColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = config.supportEmail,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = emailAccent
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFF0284C7),
+                                modifier = Modifier.padding(start = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Send Email",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
                         }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        // Texts
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = config.whatsappTitle,
-                                fontSize = 15.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = primaryTextColor
-                            )
-                            Text(
-                                text = config.whatsappSubtext,
-                                fontSize = 11.5.sp,
-                                color = secondaryTextColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = config.whatsappNumber,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = whatsappAccent
-                            )
-                        }
-
-                        // Right Arrow
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = whatsappAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
                     }
                 }
             }
 
             // ==========================================
-            // 5. TELEGRAM CARD ("Join our Telegram")
+            // 5. TELEGRAM CARD ("Telegram Support")
             // ==========================================
-            Surface(
-                onClick = handleTelegramClick,
-                shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
-                color = Color.Transparent,
-                border = BorderStroke(1.dp, telegramBorder),
-                shadowElevation = 1.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .contactCardPressAnimation()
-            ) {
-                Box(
+            if (config.isTelegramEnabled) {
+                Surface(
+                    onClick = handleTelegramClick,
+                    shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, telegramBorder),
+                    shadowElevation = 1.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(telegramBgStart, telegramBgEnd)
+                        .contactCardPressAnimation()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(telegramBgStart, telegramBgEnd)
+                                )
                             )
-                        )
-                        .padding(horizontal = 14.dp, vertical = 14.dp)
+                            .padding(horizontal = 14.dp, vertical = 14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Blue Telegram Icon Box
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color(0xFF0088CC)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_telegram),
+                                    contentDescription = "Telegram",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(25.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            // Texts
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = config.telegramTitle,
+                                    fontSize = 15.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = primaryTextColor
+                                )
+                                Text(
+                                    text = config.telegramSubtext,
+                                    fontSize = 11.5.sp,
+                                    color = secondaryTextColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "@DHANARAJU0 • t.me/DHANARAJU0",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = telegramAccent
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = Color(0xFF0088CC),
+                                modifier = Modifier.padding(start = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Open Telegram",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ==========================================
+            // 5B. SUPPORT CATEGORIES & ISSUE SELECTOR
+            // ==========================================
+            Surface(
+                shape = RoundedCornerShape(config.cardCornerRadiusDp.dp),
+                color = Color(0xFFFFFDF9),
+                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                shadowElevation = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Blue Telegram Icon Box
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0088CC)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_telegram),
-                                contentDescription = "Telegram",
-                                tint = Color.White,
-                                modifier = Modifier.size(25.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        // Texts
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column {
                             Text(
-                                text = config.telegramTitle,
-                                fontSize = 15.5.sp,
+                                text = "Select Support Topic",
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = primaryTextColor
                             )
                             Text(
-                                text = config.telegramSubtext,
+                                text = "Tap an issue category for instant pre-filled assistance",
                                 fontSize = 11.5.sp,
-                                color = secondaryTextColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = config.telegramLink,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = telegramAccent
+                                color = secondaryTextColor
                             )
                         }
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFFEF3C7),
+                            border = BorderStroke(1.dp, Color(0xFFFCD34D))
+                        ) {
+                            Text(
+                                text = "8 Topics",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF92400E),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
 
-                        // Right Arrow
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = telegramAccent,
-                            modifier = Modifier.size(22.dp)
+                    val supportCategories = remember {
+                        listOf(
+                            Triple("Login & OTP Issues", "OTP delay, mobile number login", Icons.Default.LockOpen),
+                            Triple("Account & Profile Help", "Profile update, exam medium", Icons.Default.ManageAccounts),
+                            Triple("Subscription & Plan Activation", "VIP/PRO plan unlock & validity", Icons.Default.WorkspacePremium),
+                            Triple("Payments & Billing Support", "UPI/Razorpay status & receipts", Icons.Default.ReceiptLong),
+                            Triple("MCQs & Content Correction", "Question doubt or key error", Icons.Default.FactCheck),
+                            Triple("Mock Tests & Results Help", "Scoring, rank & timer help", Icons.Default.Assessment),
+                            Triple("Technical Bug / App Not Working", "Loading, sync or crash issue", Icons.Default.BugReport),
+                            Triple("General Enquiry / Feedback", "Suggestions & exam queries", Icons.Default.ChatBubbleOutline)
                         )
+                    }
+
+                    for (i in supportCategories.indices step 2) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            for (j in 0..1) {
+                                val idx = i + j
+                                if (idx < supportCategories.size) {
+                                    val cat = supportCategories[idx]
+                                    Surface(
+                                        onClick = {
+                                            selectedIssueCategory = cat.first
+                                            customIssueDetails = ""
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = Color.White,
+                                        border = BorderStroke(1.dp, Color(0xFFF3E8D2)),
+                                        shadowElevation = 0.5.dp,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(34.dp)
+                                                    .clip(RoundedCornerShape(10.dp))
+                                                    .background(Color(0xFFFFFBEB)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = cat.third,
+                                                    contentDescription = cat.first,
+                                                    tint = Color(0xFFD97706),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = cat.first,
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = primaryTextColor,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = cat.second,
+                                                    fontSize = 9.5.sp,
+                                                    color = secondaryTextColor,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -923,6 +1059,192 @@ fun ContactUsScreen(
             }
         }
     }
+
+    if (selectedIssueCategory != null) {
+        SmartSupportIssueDialog(
+            issueCategory = selectedIssueCategory!!,
+            initialDetails = customIssueDetails,
+            onDismiss = { selectedIssueCategory = null }
+        )
+    }
+}
+
+/**
+ * Reusable Smart Support Issue Assistant Dialog that pre-fills App Name, Exam/State,
+ * Issue Category, User Phone/Email, and optional Question/Payment context.
+ */
+@Composable
+fun SmartSupportIssueDialog(
+    issueCategory: String,
+    initialDetails: String = "",
+    extraContext: String = "",
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val config by ContactSupportManager.configState
+    val activeApp = com.example.data.SampleData.getActiveApp()
+    var details by remember(issueCategory, initialDetails) { mutableStateOf(initialDetails) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFFFFFDF9),
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFFEF3C7),
+                    border = BorderStroke(1.dp, Color(0xFFFCD34D))
+                ) {
+                    Text(
+                        text = "${activeApp.name} • Direct Support",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF92400E),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Text(
+                    text = issueCategory,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFFFBEB),
+                    border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "Auto-Attached Support Context:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF92400E)
+                        )
+                        Text(
+                            text = "• App: ${activeApp.name}\n• Exam/Region: ${activeApp.examName} (${activeApp.region.ifBlank { activeApp.category }})" +
+                                if (extraContext.isNotBlank()) "\n• Ref: $extraContext" else "",
+                            fontSize = 11.sp,
+                            color = Color(0xFF475569),
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = details,
+                    onValueChange = { details = it },
+                    label = { Text("Describe your issue (optional)", fontSize = 12.sp) },
+                    placeholder = { Text("Add mobile number, transaction ID, or question details...", fontSize = 12.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFD97706),
+                        unfocusedBorderColor = Color(0xFFE2E8F0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    )
+                )
+
+                Text(
+                    text = "Choose how you want to send this support request:",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF475569)
+                )
+
+                if (config.isWhatsAppEnabled) {
+                    Button(
+                        onClick = {
+                            ContactSupportManager.openWhatsAppSupport(
+                                context = context,
+                                issueCategory = issueCategory,
+                                customDetails = details,
+                                extraContext = extraContext
+                            )
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_whatsapp),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Send via WhatsApp (${config.whatsappNumber})", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                if (config.isEmailSupportEnabled) {
+                    Button(
+                        onClick = {
+                            ContactSupportManager.openEmailSupport(
+                                context = context,
+                                issueCategory = issueCategory,
+                                customDetails = details,
+                                extraContext = extraContext
+                            )
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Send via Email (${config.supportEmail})", fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+
+                if (config.isTelegramEnabled) {
+                    OutlinedButton(
+                        onClick = {
+                            ContactSupportManager.openTelegramSupport(context)
+                            onDismiss()
+                        },
+                        border = BorderStroke(1.dp, Color(0xFF0088CC)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_telegram),
+                            contentDescription = null,
+                            tint = Color(0xFF0088CC),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open Telegram (@DHANARAJU0)", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0088CC))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }
 
 /**

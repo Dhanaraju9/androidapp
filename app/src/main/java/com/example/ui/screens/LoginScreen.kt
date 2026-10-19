@@ -227,6 +227,8 @@ fun LoginScreen(
         }
     }
 
+    var showSupportDialog by remember { mutableStateOf(false) }
+
     // Countdown timer for OTP
     LaunchedEffect(currentStep, remainingSeconds) {
         if (currentStep == LoginStep.VERIFY_OTP && remainingSeconds > 0) {
@@ -441,7 +443,8 @@ fun LoginScreen(
                             }
                         },
                         onBack = onBack,
-                        onAdminPanelClick = { showAdminLoginDialog = true }
+                        onAdminPanelClick = { showAdminLoginDialog = true },
+                        onSupportClick = { showSupportDialog = true }
                     )
                 }
                 LoginStep.VERIFY_OTP -> {
@@ -482,7 +485,7 @@ fun LoginScreen(
                             Toast.makeText(context, "🔄 OTP Resent successfully to +91 $phoneNumber", Toast.LENGTH_SHORT).show()
                         },
                         onNeedHelp = {
-                            Toast.makeText(context, "Helpline: ${config.supportPhone} (${config.appName} Support)", Toast.LENGTH_LONG).show()
+                            showSupportDialog = true
                         },
                         onBack = { currentStep = LoginStep.ENTER_PHONE }
                     )
@@ -496,6 +499,14 @@ fun LoginScreen(
                         showAdminLoginDialog = false
                         onNavigateToAdminDashboard()
                     }
+                )
+            }
+
+            if (showSupportDialog) {
+                SmartSupportIssueDialog(
+                    issueCategory = "Login & OTP Issues",
+                    extraContext = if (phoneNumber.isNotBlank()) "Mobile: +91 $phoneNumber" else "Login Screen",
+                    onDismiss = { showSupportDialog = false }
                 )
             }
         }
@@ -1317,7 +1328,8 @@ fun PhoneLoginContent(
     onContinueWithOtp: () -> Unit,
     onGoogleLogin: () -> Unit,
     onBack: () -> Unit,
-    onAdminPanelClick: () -> Unit
+    onAdminPanelClick: () -> Unit,
+    onSupportClick: () -> Unit = {}
 ) {
     val config = LocalAppConfig.current
     val context = LocalContext.current
@@ -1875,28 +1887,56 @@ fun PhoneLoginContent(
                 }
             }
 
-            // 5. ADMIN PANEL
+            // 5. ADMIN PANEL & LOGIN SUPPORT
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onAdminPanelClick)
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null,
-                    tint = Color(0xFF38BDF8),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Admin Panel",
-                    color = Color(0xFFFCD34D),
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onSupportClick)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContactSupport,
+                        contentDescription = null,
+                        tint = Color(0xFF34D399),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = "Login / OTP Help",
+                        color = Color(0xFFA7F3D0),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onAdminPanelClick)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = Color(0xFF38BDF8),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Admin Panel",
+                        color = Color(0xFFFCD34D),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             // 6. FOOTER MOTTO

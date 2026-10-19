@@ -259,7 +259,7 @@ fun PremiumTopBar(
             )
     ) {
         val screenWidth = maxWidth
-        val isCompactWidth = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact
+        val isCompactWidth = windowSizeClass == WindowWidthSizeClass.Compact
         val isMobileScreen = isCompactWidth || screenWidth < 480.dp
         val isVeryNarrow = screenWidth < 380.dp
 

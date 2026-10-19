@@ -1,5 +1,10 @@
 package com.example.ui.screens
 
+
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -56,6 +61,15 @@ import com.example.ui.theme.PremiumCardColorSystem
 import com.example.util.FontSettingsManager
 import com.example.util.PracticeAppearanceManager
 import com.example.util.PracticeSessionManager
+
+data class TopicSubtopicItem(
+    val id: String,
+    val code: String,
+    val title: String,
+    val questions: List<Question>,
+    val practiceSet: PracticeSetModel
+)
+
 
 // =========================================================================
 // 1. PALETTES FOR EXACT RECREATION OF REFERENCE DESIGN
@@ -162,6 +176,7 @@ private fun resolveTopicQuestions(
 // 3. FULL-SCREEN SETS SCREEN FOR A TOPIC (Level 3 -> Level 4)
 // =========================================================================
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicSetsScreen(
@@ -174,12 +189,12 @@ fun TopicSetsScreen(
     onBack: () -> Unit,
     onNavigateToHome: (() -> Unit)? = null,
     onSelectSet: (PracticeSetModel, List<PracticeSetModel>) -> Unit,
+    onSelectSubtopic: (PracticeSetModel, String) -> Unit = { pSet, _ -> onSelectSet(pSet, emptyList()) },
     testResults: List<com.example.model.TestResult> = emptyList(),
     onNavigateToSubscription: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val setsListState = rememberLazyListState()
-
     val (subject, unit, activeTopicVal) = remember(
         subjectId,
         unitId,
@@ -188,11 +203,9 @@ fun TopicSetsScreen(
     ) {
         resolveHierarchyContext(subjectId, unitId, topicId, fallbackSubject, fallbackUnit, fallbackTopic)
     }
-
     val topicQuestions = remember(activeTopicVal.id, subject.id, unit?.id, SampleData.questionsState.size) {
         resolveTopicQuestions(subject, unit, activeTopicVal)
     }
-
     val subtopicsList = remember(activeTopicVal.subtopics, topicQuestions) {
         val explicit = activeTopicVal.subtopics.filter { it.isNotBlank() }
         val fromQuestions = topicQuestions.map { it.subtopic }.filter { it.isNotBlank() }.distinct()
@@ -200,13 +213,41 @@ fun TopicSetsScreen(
             if (topicQuestions.isNotEmpty()) listOf("${activeTopicVal.name} – Core Concepts") else emptyList()
         }
     }
-
     val setsList = remember(topicQuestions, subject.id, unit?.id, activeTopicVal.id) {
         generateSetsForQuestionsList(
             questions = topicQuestions,
             baseId = "set-${subject.id}-${unit?.id ?: ""}-${activeTopicVal.id}-all"
         )
     }
+
+    val topicSubtopics = remember(subtopicsList, topicQuestions, activeTopicVal) {
+        subtopicsList.mapIndexed { index, subTitle ->
+            val assignedQuestions = topicQuestions.filter { it.subtopic.equals(subTitle, ignoreCase = true) }.ifEmpty {
+                topicQuestions
+            }
+            val subId = "topic-sub-${activeTopicVal.id}-${index + 1}-${subTitle.hashCode()}"
+            val code = "%02d".format(index + 1)
+            TopicSubtopicItem(
+                id = subId,
+                code = code,
+                title = subTitle,
+                questions = assignedQuestions,
+                practiceSet = PracticeSetModel(
+                    id = subId,
+                    title = subTitle,
+                    subtitle = "${assignedQuestions.size} Questions",
+                    setNumber = index + 1,
+                    questionsCount = assignedQuestions.size,
+                    startQuestionNumber = 1,
+                    endQuestionNumber = assignedQuestions.size.coerceAtLeast(1),
+                    questions = assignedQuestions,
+                    badge = activeTopicVal.name
+                )
+            )
+        }
+    }
+
+    var selectedTab by remember { mutableStateOf("SETS") }
 
     val topicHeaderGradient = remember(activeTopicVal.id, activeTopicVal.name, subject.name) {
         val topicIdx = unit?.topics?.indexOfFirst { it.id == activeTopicVal.id }?.takeIf { it >= 0 } ?: 0
@@ -269,9 +310,7 @@ fun TopicSetsScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                // =========================================================
                 // 1. TOPIC HERO SUMMARY CARD
-                // =========================================================
                 item(key = "topic_header_${activeTopicVal.id}") {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -296,7 +335,6 @@ fun TopicSetsScreen(
                                 topic = activeTopicVal,
                                 modifier = Modifier.fillMaxSize()
                             )
-
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -310,7 +348,6 @@ fun TopicSetsScreen(
                                         )
                                     )
                             )
-
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -335,7 +372,6 @@ fun TopicSetsScreen(
                                         )
                                     }
                                 }
-
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -354,167 +390,276 @@ fun TopicSetsScreen(
                                         modifier = Modifier.weight(1f),
                                         isCompact = true
                                     )
-                                    StatBadge(
-                                        label = "Subtopics",
-                                        value = "${subtopicsList.size}",
-                                        color = Color(0xFF2563EB),
-                                        modifier = Modifier.weight(1f),
-                                        isCompact = true
-                                    )
                                 }
                             }
                         }
                     }
                 }
 
-                // =========================================================
-                // 2. SECTION HEADER FOR PRACTICE SETS
-                // =========================================================
-                item(key = "sets_section_header") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "PRACTICE SETS (${setsList.size})",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 0.5.sp
-                                ),
-                                color = Color(0xFF1E293B)
-                            )
-                            Text(
-                                text = "Tap any set card to open its full-screen subtopics page",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
+                // 2. TOP ROW: TWO OPTIONS SIDE BY SIDE (SETS & SUBTOPICS)
+                item(key = "topic_tabs_bar") {
+                    TopicSideBySideTabsBar(
+                        selectedTab = selectedTab,
+                        setsCount = setsList.size,
+                        subtopicsCount = topicSubtopics.size,
+                        onTabSelected = { selectedTab = it }
+                    )
                 }
 
-                // =========================================================
-                // 3. 2-COLUMN GRID DISPLAY FOR SETS
-                // =========================================================
-                if (setsList.isEmpty()) {
-                    item(key = "empty_sets_state") {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
+                if (selectedTab == "SETS") {
+                    // SECTION HEADER FOR PRACTICE SETS
+                    item(key = "sets_section_header") {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .premiumTargetAnimation(
-                                    target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
-                                    index = 0,
-                                    screenKey = "Topic Sets"
-                                )
+                                .padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier.padding(28.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.HourglassEmpty,
-                                    contentDescription = null,
-                                    tint = Color(0xFF94A3B8),
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
+                            Column {
                                 Text(
-                                    text = "No Sets Available",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = Color(0xFF334155)
+                                    text = "PRACTICE SETS (${setsList.size})",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp
+                                    ),
+                                    color = Color(0xFF1E293B)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Practice questions are being prepared for this topic.",
-                                    fontSize = 12.sp,
+                                    text = "Tap any set card to open practice",
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF64748B)
                                 )
                             }
                         }
                     }
-                } else {
-                    val solidColors = listOf(
-                        Color(0xFF059669), // Emerald green
-                        Color(0xFF7C3AED), // Vibrant purple
-                        Color(0xFFD97706), // Golden orange
-                        Color(0xFF2563EB), // Bright blue
-                        Color(0xFFE11D48), // Rich pink
-                        Color(0xFF0D9488)  // Teal
-                    )
-                    val chunkedSets = setsList.chunked(2)
-                    itemsIndexed(chunkedSets, key = { rowIndex, _ -> "set_row_$rowIndex" }) { rowIndex, rowSets ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            rowSets.forEachIndexed { colIndex, pSet ->
-                                val globalIndex = rowIndex * 2 + colIndex
-                                val bgCol = solidColors[globalIndex % solidColors.size]
-                                val serialNumber = "%02d".format(pSet.setNumber)
-                                val setSubtitle = "${pSet.questionsCount} Questions • Q${pSet.startQuestionNumber}–Q${pSet.endQuestionNumber}"
 
-                                val hasDbCompleted = testResults.any { it.testName.contains(pSet.title, ignoreCase = true) }
-                                val status = remember(pSet.id, testResults) {
-                                    PracticeSessionManager.getSessionStatus(context, pSet.id, hasDbCompleted)
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("set_card_${pSet.id}")
-                                        .cascadeDropItem(
-                                            visible = true,
-                                            index = globalIndex,
-                                            target = com.example.model.AnimatableTarget.SETS_CARDS,
-                                            screenKey = "Topic Sets"
-                                        )
+                    // 2-COLUMN GRID DISPLAY FOR SETS
+                    if (setsList.isEmpty()) {
+                        item(key = "empty_sets_state") {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(28.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
-                                    CompactGridSetCard(
-                                        serialNumber = serialNumber,
-                                        title = "Set $serialNumber",
-                                        subtitle = setSubtitle,
-                                        status = status,
-                                        backgroundColor = bgCol,
-                                        onClick = { onSelectSet(pSet, setsList) }
+                                    Icon(
+                                        imageVector = Icons.Default.HourglassEmpty,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        text = "No Sets Available",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Practice questions are being prepared for this topic.",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF64748B)
                                     )
                                 }
                             }
-                            if (rowSets.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
+                        }
+                    } else {
+                        val solidColors = listOf(
+                            Color(0xFF059669), Color(0xFF7C3AED), Color(0xFFD97706),
+                            Color(0xFF2563EB), Color(0xFFE11D48), Color(0xFF0D9488)
+                        )
+                        val chunkedSets = setsList.chunked(2)
+                        itemsIndexed(chunkedSets, key = { rowIndex, _ -> "set_row_$rowIndex" }) { rowIndex, rowSets ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                rowSets.forEachIndexed { colIndex, pSet ->
+                                    val globalIndex = rowIndex * 2 + colIndex
+                                    val bgCol = solidColors[globalIndex % solidColors.size]
+                                    val serialNumber = "%02d".format(pSet.setNumber)
+                                    val setSubtitle = "${pSet.questionsCount} Questions • Q${pSet.startQuestionNumber}–Q${pSet.endQuestionNumber}"
+                                    val hasDbCompleted = testResults.any { it.testName.contains(pSet.title, ignoreCase = true) }
+                                    val status = PracticeSessionManager.getSessionStatus(context, pSet.id, hasDbCompleted)
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag("set_card_${pSet.id}")
+                                            .cascadeDropItem(
+                                                visible = true,
+                                                index = globalIndex,
+                                                target = com.example.model.AnimatableTarget.SETS_CARDS,
+                                                screenKey = "Topic Sets"
+                                            )
+                                    ) {
+                                        CompactGridSetCard(
+                                            serialNumber = serialNumber,
+                                            title = "Set $serialNumber",
+                                            subtitle = setSubtitle,
+                                            status = status,
+                                            backgroundColor = bgCol,
+                                            onClick = { onSelectSet(pSet, setsList) }
+                                        )
+                                    }
+                                }
+                                if (rowSets.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }
-                }
 
-                // =========================================================
-                // 4. BOTTOM STATUS LEGEND
-                // =========================================================
-                item(key = "sets_status_legend") {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    // BOTTOM STATUS LEGEND
+                    item(key = "sets_status_legend") {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
+                                LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
+                                LegendItem(color = Color(0xFF10B981), label = "Completed")
+                            }
+                        }
+                    }
+                } else {
+                    // SECTION HEADER FOR SUBTOPICS
+                    item(key = "subtopics_section_header") {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                                .padding(vertical = 2.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
-                            LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
-                            LegendItem(color = Color(0xFF10B981), label = "Completed")
+                            Column {
+                                Text(
+                                    text = "SUBTOPICS (${topicSubtopics.size})",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp
+                                    ),
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "Vertically ordered serial list, one card per row",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+
+                    // VERTICALLY ORDERED LIST OF SUBTOPICS (ONE FULL-WIDTH CARD PER ROW)
+                    if (topicSubtopics.isEmpty()) {
+                        item(key = "empty_subtopics_state") {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(28.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.HourglassEmpty,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        text = "No Subtopics Available",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Subtopic content for this topic is currently being updated.",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF64748B)
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        val solidColors = listOf(
+                            Color(0xFF2563EB), Color(0xFF059669), Color(0xFF7C3AED),
+                            Color(0xFFEA580C), Color(0xFFE11D48), Color(0xFF0891B2)
+                        )
+                        itemsIndexed(topicSubtopics, key = { _, subItem -> subItem.id }) { globalIndex, subItem ->
+                            val bgCol = solidColors[globalIndex % solidColors.size]
+                            val hasDbCompletedSub = testResults.any {
+                                it.testName.contains(subItem.title, ignoreCase = true)
+                            }
+                            val status = PracticeSessionManager.getSessionStatus(context, subItem.id, hasDbCompletedSub)
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("subtopic_card_${subItem.id}")
+                                    .cascadeDropItem(
+                                        visible = true,
+                                        index = globalIndex,
+                                        target = com.example.model.AnimatableTarget.SUBTOPIC_CARDS,
+                                        screenKey = "Topic Sets"
+                                    )
+                            ) {
+                                CompactGridSubtopicCard(
+                                    code = subItem.code,
+                                    title = subItem.title,
+                                    questionsCount = subItem.questions.size,
+                                    status = status,
+                                    backgroundColor = bgCol,
+                                    onClick = {
+                                        onSelectSubtopic(subItem.practiceSet, subItem.title)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // BOTTOM STATUS LEGEND FOR SUBTOPICS
+                    item(key = "subtopics_status_legend") {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
+                                LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
+                                LegendItem(color = Color(0xFF10B981), label = "Completed")
+                            }
                         }
                     }
                 }
@@ -571,6 +716,7 @@ fun TopicSetsScreen(
     onBack: () -> Unit,
     onNavigateToHome: (() -> Unit)? = null,
     onStartSet: (PracticeSetModel, List<PracticeSetModel>) -> Unit,
+    onSelectSubtopic: (PracticeSetModel, String) -> Unit = { pSet, _ -> onStartSet(pSet, emptyList()) },
     testResults: List<com.example.model.TestResult> = emptyList(),
     onNavigateToSubscription: () -> Unit = {}
 ) {
@@ -584,11 +730,11 @@ fun TopicSetsScreen(
         onBack = onBack,
         onNavigateToHome = onNavigateToHome,
         onSelectSet = onStartSet,
+        onSelectSubtopic = onSelectSubtopic,
         testResults = testResults,
         onNavigateToSubscription = onNavigateToSubscription
     )
 }
-
 // =========================================================================
 // 4. FULL-SCREEN SUBTOPICS SCREEN FOR A SELECTED SET (Level 4 -> Level 5)
 // =========================================================================
@@ -1522,12 +1668,14 @@ fun CompactGridSetCard(
                             tint = if (isCompleted) Color(0xFF15803D) else Color.White,
                             modifier = Modifier.size(11.dp)
                         )
-                        Text(
-                            text = if (isCompleted) "Done" else "Subtopics",
-                            color = if (isCompleted) Color(0xFF15803D) else Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (isCompleted) {
+                            Text(
+                                text = "Done",
+                                color = Color(0xFF15803D),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

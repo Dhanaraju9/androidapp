@@ -262,8 +262,8 @@ fun FullLengthMockTestScreen(
     }
 
     val windowSizeClass = LocalWindowSizeClass.current
-    val isTabletExpanded = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
-    val isMediumOrExpanded = windowSizeClass?.widthSizeClass != WindowWidthSizeClass.Compact
+    val isTabletExpanded = windowSizeClass == WindowWidthSizeClass.Expanded
+    val isMediumOrExpanded = windowSizeClass != WindowWidthSizeClass.Compact
 
     Scaffold(
         containerColor = if (hasCustomAppearance) Color(mockTestAppearanceSettings.screenBgColor) else Color(0xFFF8FAFC),
@@ -728,7 +728,7 @@ fun FullLengthMockTestScreen(
                     }
                 )
         ) {
-            val isWideScreen = (windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded) || maxWidth >= 840.dp
+            val isWideScreen = (windowSizeClass == WindowWidthSizeClass.Expanded) || maxWidth >= 840.dp
             val selectedOption = userAnswers[currentQuestion.id]
 
             if (isWideScreen && isPaletteExpanded) {

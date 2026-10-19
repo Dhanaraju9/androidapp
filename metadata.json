@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Syllabus Pro",
+  "description": "Comprehensive syllabus management, topics, sets, subtopics, and interactive practice arena.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

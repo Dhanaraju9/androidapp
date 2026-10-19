@@ -20,7 +20,7 @@ import com.example.model.Subject
 import com.example.model.TopicModel
 import com.example.model.UnitModel
 import com.example.ui.screens.*
-import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.SyllabusProTheme
 import java.util.UUID
 
 sealed class AppScreen {
@@ -208,7 +208,7 @@ class MainActivity : ComponentActivity() {
         com.example.util.AnimationConfigManager.initialize(this)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
+            SyllabusProTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -435,16 +435,29 @@ fun AppNavigationHost() {
                         onNavigateToHome = { navigateToHome() },
                         onSelectSet = { practiceSet, _ ->
                             navigateTo(
-                                AppScreen.SetSubtopics(
+                                AppScreen.PracticeArena(
                                     subjectId = screen.subjectId,
                                     unitId = screen.unitId,
                                     topicId = screen.topicId,
+                                    setName = practiceSet.title,
                                     setId = practiceSet.id,
-                                    setNumber = practiceSet.setNumber,
-                                    setTitle = practiceSet.title,
-                                    fallbackSubject = screen.fallbackSubject,
-                                    fallbackUnit = screen.fallbackUnit,
-                                    fallbackTopic = screen.fallbackTopic
+                                    subtopicId = "",
+                                    subtopicTitle = "",
+                                    preloadedQuestions = practiceSet.questions
+                                )
+                            )
+                        },
+                        onSelectSubtopic = { subtopicPracticeSet, subtopicTitle ->
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = screen.subjectId,
+                                    unitId = screen.unitId,
+                                    topicId = screen.topicId,
+                                    setName = subtopicTitle,
+                                    setId = "",
+                                    subtopicId = subtopicPracticeSet.id,
+                                    subtopicTitle = subtopicTitle,
+                                    preloadedQuestions = subtopicPracticeSet.questions
                                 )
                             )
                         },

@@ -243,7 +243,7 @@ fun UserProfileScreen(
                     enter = fadeIn(animationSpec = tween(400)) + slideInVertically(initialOffsetY = { 30 }, animationSpec = tween(400))
                 ) {
                     val windowSize = LocalWindowSizeClass.current
-                    val isTablet = windowSize?.widthSizeClass == WindowWidthSizeClass.Medium || windowSize?.widthSizeClass == WindowWidthSizeClass.Expanded
+                    val isTablet = windowSize == WindowWidthSizeClass.Medium || windowSize == WindowWidthSizeClass.Expanded
 
                     // Prep Stats Data
                     val allSubjects = SampleData.getSubjectsForApp(config.appId)

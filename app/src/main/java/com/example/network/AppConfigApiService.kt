@@ -142,7 +142,7 @@ object AppConfigStartupManager {
         return try {
             val remoteConfig = apiService.getAppConfiguration(
                 appId = appId,
-                versionCode = BuildConfig.APP_VERSION_CODE
+                versionCode = 1
             )
 
             // Cache remote configuration locally

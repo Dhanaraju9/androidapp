@@ -57,25 +57,27 @@ object FirebaseSyncManager {
     fun initializeFcm(context: Context, onTokenReceived: ((String) -> Unit)? = null) {
         try {
             messaging.isAutoInitEnabled = false
-            messaging.token.addOnCompleteListener { task ->
+            messaging.token.addOnCompleteListener(com.google.android.gms.tasks.OnCompleteListener { task: com.google.android.gms.tasks.Task<String> ->
                 try {
                     if (!task.isSuccessful) {
-                        val ex = task.exception
+                        val ex = (task as com.google.android.gms.tasks.Task<*>).exception
                         val msg = ex?.message ?: ""
                         if (msg.contains("TOO_MANY_REGISTRATIONS", ignoreCase = true)) {
                             Log.w(TAG, "FCM registration limits exceeded on shared IP (TOO_MANY_REGISTRATIONS). Skipping token fetch.")
                         } else {
                             Log.w(TAG, "Fetching FCM registration token completed: $msg")
                         }
-                        return@addOnCompleteListener
+                        return@OnCompleteListener
                     }
                     val token = task.result
-                    Log.d(TAG, "FCM Device Token: $token")
-                    onTokenReceived?.invoke(token)
+                    if (token != null) {
+                        Log.d(TAG, "FCM Device Token: $token")
+                        onTokenReceived?.invoke(token)
+                    }
                 } catch (t: Throwable) {
                     Log.w(TAG, "Soft handled FCM inner exception: ${t.message}")
                 }
-            }
+            })
         } catch (e: Exception) {
             Log.w(TAG, "Soft handled FCM initialization: ${e.message}")
         }
@@ -111,12 +113,13 @@ object FirebaseSyncManager {
         try {
             val ref = storage.reference.child("current_affairs_pdfs/$fileName")
             ref.putBytes(fileBytes)
-                .continueWithTask { task ->
+                .continueWithTask(com.google.android.gms.tasks.Continuation<com.google.firebase.storage.UploadTask.TaskSnapshot, com.google.android.gms.tasks.Task<android.net.Uri>> { task ->
                     if (!task.isSuccessful) {
-                        task.exception?.let { throw it }
+                        val ex = (task as com.google.android.gms.tasks.Task<*>).exception
+                        if (ex != null) throw ex
                     }
                     ref.downloadUrl
-                }
+                })
                 .addOnSuccessListener { uri ->
                     onSuccess(uri.toString())
                 }

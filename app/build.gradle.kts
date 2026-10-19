@@ -1,151 +1,104 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-
 plugins {
-  alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.compose)
-  alias(libs.plugins.google.devtools.ksp)
-  alias(libs.plugins.secrets)
-  alias(libs.plugins.google.services)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.ksp)
 }
 
 android {
-  namespace = "com.example"
-  compileSdk = 36
+    namespace = "com.example"
+    compileSdk = 35
 
-  defaultConfig {
-    val targetAppId = (project.findProperty("appId") as? String) ?: "andhra-pradesh-appsc-group-2"
-    val targetTenantId = (project.findProperty("tenantId") as? String) ?: "APP001"
-    val defaultPackage = "com.aistudio.appscprep.fhdqkx"
-    applicationId = (project.findProperty("appPackage") as? String) ?: defaultPackage
-    minSdk = 24
-    targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    defaultConfig {
+        applicationId = "com.aistudio.syllabus.abcde"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
 
-    buildConfigField("String", "APP_ID", "\"$targetAppId\"")
-    buildConfigField("String", "TENANT_ID", "\"$targetTenantId\"")
-    buildConfigField("int", "APP_VERSION_CODE", "1")
-    buildConfigField("String", "APP_VERSION_NAME", "\"1.0\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    buildConfigField("String", "APP_CATEGORY", "\"STATE_PSC\"")
-    buildConfigField("String", "APP_CATEGORY_NAME", "\"State Public Service Exams\"")
-    buildConfigField("String", "APP_TIER", "\"PRO\"")
-    buildConfigField("boolean", "FEATURE_AI_MENTOR_ENABLED", "true")
-    buildConfigField("boolean", "FEATURE_OFFLINE_VAULT_ENABLED", "true")
-    buildConfigField("boolean", "FEATURE_UNLIMITED_MOCKS_ENABLED", "true")
-
-    resValue("string", "app_category_id", "STATE_PSC")
-    resValue("string", "app_category_name", "State Public Service Exams")
-    resValue("string", "app_tier_label", "Professional Pro Edition")
-
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+        buildConfigField("String", "APP_ID", "\"com.example.syllabus\"")
+        buildConfigField("String", "TENANT_ID", "\"tenant_default\"")
+        buildConfigField("int", "APP_VERSION_CODE", "1")
+        buildConfigField("String", "APP_VERSION_NAME", "\"1.0\"")
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
-    }
-  }
 
-  buildTypes {
-    release {
-      isCrunchPngs = false
-      isMinifyEnabled = false
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
-  }
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-  }
-  buildFeatures {
-    compose = true
-    buildConfig = true
-    resValues = true
-  }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
-  dependenciesInfo {
-    includeInApk = false
-    includeInBundle = true
-  }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
-
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-  ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
-}
-
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 dependencies {
-  implementation("com.google.code.gson:gson:2.10.1")
-  implementation(platform(libs.androidx.compose.bom))
-  implementation(platform(libs.firebase.bom))
-  implementation(libs.androidx.activity.compose)
-  implementation(libs.androidx.compose.material.icons.core)
-  implementation(libs.androidx.compose.material.icons.extended)
-  implementation(libs.androidx.compose.material3)
-  implementation("androidx.compose.material3:material3-window-size-class")
-  implementation(libs.androidx.compose.ui)
-  implementation(libs.androidx.compose.ui.graphics)
-  implementation(libs.androidx.compose.ui.tooling.preview)
-  implementation(libs.androidx.core.ktx)
-  implementation("androidx.work:work-runtime-ktx:2.10.0")
-  implementation("com.android.billingclient:billing-ktx:7.1.1")
-  implementation("net.objecthunter:exp4j:0.4.8")
-  implementation(libs.androidx.lifecycle.runtime.compose)
-  implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
-  implementation(libs.androidx.navigation.compose)
-  implementation(libs.androidx.room.ktx)
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.coil.compose)
-  implementation(libs.converter.moshi)
-  implementation(libs.firebase.ai)
-  implementation(libs.firebase.firestore)
-  implementation(libs.firebase.auth)
-  implementation("com.google.firebase:firebase-storage")
-  implementation("com.google.firebase:firebase-messaging")
-  implementation("com.google.firebase:firebase-analytics")
-  implementation(libs.firebase.perf)
-  implementation(libs.androidx.credentials)
-  implementation(libs.androidx.credentials.play.services)
-  implementation(libs.googleid)
-  implementation(libs.firebase.appcheck.recaptcha)
-  implementation(libs.firebase.appcheck.debug)
-  implementation(libs.kotlinx.coroutines.android)
-  implementation(libs.kotlinx.coroutines.core)
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
-  implementation(libs.logging.interceptor)
-  implementation(libs.moshi.kotlin)
-  implementation(libs.okhttp)
-  implementation(libs.retrofit)
-  testImplementation(libs.androidx.compose.ui.test.junit4)
-  testImplementation(libs.androidx.core)
-  testImplementation(libs.androidx.junit)
-  testImplementation(libs.junit)
-  testImplementation(libs.kotlinx.coroutines.test)
-  testImplementation(libs.robolectric)
-  androidTestImplementation(platform(libs.androidx.compose.bom))
-  androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-  androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.androidx.junit)
-  androidTestImplementation(libs.androidx.runner)
-  debugImplementation(libs.androidx.compose.ui.test.manifest)
-  debugImplementation(libs.androidx.compose.ui.tooling)
-  "ksp"(libs.androidx.room.compiler)
-  "ksp"(libs.moshi.kotlin.codegen)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material3.windowsize)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.coil.compose)
+    implementation(libs.accompanist.permissions)
+
+    // Room & WorkManager
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Play Billing
+    implementation(libs.billing.ktx)
+
+    // Retrofit, OkHttp, Moshi, Gson
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.moshi)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.gson)
+    implementation("net.objecthunter:exp4j:0.4.8")
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.storage)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

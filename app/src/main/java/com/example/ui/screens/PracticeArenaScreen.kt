@@ -381,8 +381,8 @@ fun PracticeArenaScreen(
     }
 
     val windowSizeClass = LocalWindowSizeClass.current
-    val isTabletLayout = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded || 
-                         windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Medium
+    val isTabletLayout = windowSizeClass == WindowWidthSizeClass.Expanded || 
+                         windowSizeClass == WindowWidthSizeClass.Medium
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

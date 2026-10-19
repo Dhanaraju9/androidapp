@@ -101,14 +101,14 @@ interface TenantConfigApiService {
     @GET("api/v1/tenants/{tenantId}/config")
     suspend fun getTenantConfiguration(
         @Path("tenantId") tenantId: String,
-        @Query("versionCode") versionCode: Int = BuildConfig.APP_VERSION_CODE,
+        @Query("versionCode") versionCode: Int = 1,
         @Header("X-Tenant-ID") headerTenantId: String = tenantId
     ): TenantConfigNetworkDto
 
     @GET("api/apps/{tenantId}/configuration")
     suspend fun getAppConfigurationFallback(
         @Path("tenantId") tenantId: String,
-        @Query("versionCode") versionCode: Int = BuildConfig.APP_VERSION_CODE,
+        @Query("versionCode") versionCode: Int = 1,
         @Header("X-Tenant-ID") headerTenantId: String = tenantId
     ): TenantConfigNetworkDto
 }

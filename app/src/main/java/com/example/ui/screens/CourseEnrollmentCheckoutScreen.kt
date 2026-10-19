@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.SampleData
-import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.SyllabusProTheme
 import com.example.util.BillingPaymentManager
 import com.example.util.PurchaseObserver
 import com.razorpay.Checkout
@@ -153,7 +153,7 @@ class CourseEnrollmentActivity : ComponentActivity(), PaymentResultListener {
         val initialCourseId = intent?.getStringExtra("course_id") ?: "appsc_g2_master_batch"
 
         setContent {
-            MyApplicationTheme {
+            SyllabusProTheme {
                 CourseEnrollmentCheckoutScreen(
                     initialCourseId = initialCourseId,
                     onBack = { finish() },

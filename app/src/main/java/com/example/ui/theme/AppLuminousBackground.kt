@@ -157,14 +157,43 @@ fun AppLuminousBackground(
         )
     }
 
+    val activeWallpaperUrl = remember(activeWallpaper, screenName) {
+        activeWallpaper?.url ?: run {
+            val pinkScreens = listOf(
+                "Syllabus Explorer",
+                "Unit Topics Screen",
+                "Topic Sets Screen",
+                "Set Subtopics Screen",
+                "Current Affairs",
+                "My Progress",
+                "Home Screen",
+                "App Surface",
+                "Global Default"
+            )
+            if (screenName == null || pinkScreens.contains(screenName)) {
+                com.example.R.drawable.premium_pink_wallpaper
+            } else {
+                null
+            }
+        }
+    }
+
+    val wallpaperModel: Any? = remember(activeWallpaperUrl) {
+        when (activeWallpaperUrl) {
+            is Int -> activeWallpaperUrl
+            is String -> activeWallpaperUrl.toIntOrNull() ?: activeWallpaperUrl
+            else -> activeWallpaperUrl
+        }
+    }
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        if (activeWallpaper != null) {
+        if (wallpaperModel != null) {
             val context = LocalContext.current
-            val wallpaperRequest = remember(activeWallpaper.url, context) {
+            val wallpaperRequest = remember(wallpaperModel, context) {
                 ImageRequest.Builder(context)
-                    .data(activeWallpaper.url)
+                    .data(wallpaperModel)
                     .crossfade(true)
                     .allowHardware(true)
                     .diskCachePolicy(CachePolicy.ENABLED)
@@ -181,7 +210,7 @@ fun AppLuminousBackground(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (isDark) Color.Black.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.85f))
+                    .background(if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f))
             )
         } else {
             // Render breathtaking luxury luminous canvas

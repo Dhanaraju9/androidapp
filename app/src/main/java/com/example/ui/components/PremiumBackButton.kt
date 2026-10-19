@@ -34,7 +34,9 @@ fun PremiumBackButton(
         border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
         modifier = modifier
             .size(size.dp)
-            .clickable { onClick() }
+            .premiumPress(target = com.example.model.AnimatableTarget.BUTTONS_CTAS) {
+                onClick()
+            }
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
@@ -63,7 +65,9 @@ fun PremiumHomeButton(
         border = BorderStroke(1.dp, Color(0xFFDBEAFE)),
         modifier = modifier
             .size(size.dp)
-            .clickable { onClick() }
+            .premiumPress(target = com.example.model.AnimatableTarget.BUTTONS_CTAS) {
+                onClick()
+            }
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(

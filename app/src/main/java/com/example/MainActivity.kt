@@ -40,6 +40,7 @@ sealed class AppScreen {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.util.AnimationConfigManager.initialize(this)
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
@@ -58,9 +59,11 @@ class MainActivity : ComponentActivity() {
 fun AppNavigationHost() {
     var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Splash) }
     var screenHistory by remember { mutableStateOf<List<AppScreen>>(emptyList()) }
+    var isNavigatingForward by remember { mutableStateOf(true) }
 
     fun navigateTo(screen: AppScreen) {
         if (currentScreen != screen) {
+            isNavigatingForward = true
             screenHistory = screenHistory + currentScreen
             currentScreen = screen
         }
@@ -68,6 +71,7 @@ fun AppNavigationHost() {
 
     fun goBack() {
         val last = screenHistory.lastOrNull()
+        isNavigatingForward = false
         if (last != null) {
             screenHistory = screenHistory.dropLast(1)
             currentScreen = last
@@ -80,9 +84,23 @@ fun AppNavigationHost() {
         goBack()
     }
 
-    when (val screen = currentScreen) {
-        is AppScreen.Splash -> {
-            AppSplashScreen(
+    val activeEngineConfig = com.example.util.AnimationConfigManager.getActiveEngineConfig()
+    val slowMo by com.example.util.AnimationConfigManager.sandboxSlowMoFactor
+
+    androidx.compose.animation.AnimatedContent(
+        targetState = currentScreen,
+        transitionSpec = {
+            com.example.ui.components.PremiumAnimationEngine.buildScreenTransition(
+                masterConfig = activeEngineConfig.masterConfig,
+                isForward = isNavigatingForward,
+                slowMoFactor = slowMo
+            )
+        },
+        label = "AppScreenTransition"
+    ) { screen ->
+        when (screen) {
+            is AppScreen.Splash -> {
+                AppSplashScreen(
                 onLoadingFinished = {
                     currentScreen = AppScreen.Home
                 }
@@ -276,11 +294,12 @@ fun AppNavigationHost() {
                 onNavigateToSubscription = { navigateTo(AppScreen.Subscription) }
             )
         }
-        is AppScreen.Performance -> {
-            PerformanceBoardScreen(
-                onBack = { goBack() },
-                onNavigateToHome = { currentScreen = AppScreen.Home }
-            )
+            is AppScreen.Performance -> {
+                PerformanceBoardScreen(
+                    onBack = { goBack() },
+                    onNavigateToHome = { currentScreen = AppScreen.Home }
+                )
+            }
         }
     }
 }

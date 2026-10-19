@@ -41,7 +41,11 @@ fun PremiumSectionHeader(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.TOP_APP_BAR_HEADER,
+                index = 0
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -62,7 +66,9 @@ fun PremiumSectionHeader(
                     border = BorderStroke(1.dp, Color(0xFFDBEAFE)),
                     modifier = Modifier
                         .size(40.dp)
-                        .clickable { onNavigateToHome() }
+                        .premiumPress(target = com.example.model.AnimatableTarget.BUTTONS_CTAS) {
+                            onNavigateToHome()
+                        }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -93,6 +99,10 @@ fun StatBadge(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.STATISTICS_BADGES_COUNTERS,
+                index = 0
+            )
             .background(Color(0xFFF8FAFC), RoundedCornerShape(if (isCompact) 8.dp else 12.dp))
             .border(BorderStroke(1.dp, color.copy(alpha = 0.2f)), RoundedCornerShape(if (isCompact) 8.dp else 12.dp))
             .padding(horizontal = if (isCompact) 4.dp else 8.dp, vertical = if (isCompact) 4.dp else 10.dp)

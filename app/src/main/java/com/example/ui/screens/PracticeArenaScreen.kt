@@ -2,6 +2,8 @@ package com.example.ui.screens
 import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.LocalWindowSizeClass
 import com.example.ui.components.MathAndHighlightText
+import com.example.ui.components.premiumAnswerFeedback
+import com.example.ui.components.premiumTargetAnimation
 import com.example.model.HighlightLocation
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 
@@ -1349,7 +1351,14 @@ fun QuestionDetailPanel(
                         width = 1.5.dp,
                         brush = Brush.linearGradient(listOf(qCardBorderColor, qCardBorderColor.copy(alpha = 0.6f), Color(0xFFFDE68A)))
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .premiumTargetAnimation(
+                            target = com.example.model.AnimatableTarget.MCQ_QUESTION_CARDS,
+                            screenKey = "Practice Arena",
+                            visible = true,
+                            index = 0
+                        ),
                     shadowElevation = 4.dp
                 ) {
                     Row(
@@ -1475,7 +1484,20 @@ fun QuestionDetailPanel(
                                 label = "OptionElevation"
                             )
 
-                            Box(modifier = Modifier.fillMaxWidth()) {
+                            val optionIndex = optionKeys.indexOf(key).coerceAtLeast(0)
+                            val optionFeedbackModifier = Modifier
+                                .premiumTargetAnimation(
+                                    target = com.example.model.AnimatableTarget.MCQ_OPTION_CARDS,
+                                    screenKey = "Practice Arena",
+                                    visible = true,
+                                    index = optionIndex
+                                )
+                                .premiumAnswerFeedback(
+                                    isSelected = hasAnswered && isUserSelection,
+                                    isCorrect = if (!isMockTest && hasAnswered) isCorrectOption else null,
+                                    triggerKey = Pair(currentQuestion.id, currentSelectedOption)
+                                )
+                            Box(modifier = Modifier.fillMaxWidth().then(optionFeedbackModifier)) {
                                 Surface(
                                     shape = RoundedCornerShape(pa.optionCornerRadius.dp),
                                     color = animatedBgColor,
@@ -1613,7 +1635,14 @@ fun QuestionDetailPanel(
                             brush = Brush.linearGradient(listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFFF59E0B)))
                         ),
                         shadowElevation = 3.dp,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .premiumTargetAnimation(
+                                target = com.example.model.AnimatableTarget.EXPLANATION_PANEL,
+                                screenKey = "Practice Arena",
+                                visible = true,
+                                index = 0
+                            )
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(

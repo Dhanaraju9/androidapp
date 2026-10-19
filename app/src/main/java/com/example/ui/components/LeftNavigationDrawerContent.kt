@@ -460,6 +460,13 @@ private fun ExactDrawerCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 3.dp)
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.NAVIGATION_DRAWER,
+                index = item.order.coerceIn(0, 8)
+            )
+            .premiumCardInteraction(
+                target = com.example.model.AnimatableTarget.NAVIGATION_DRAWER
+            )
             .shadow(0.5.dp, cardShape)
             .then(
                 if (gradientBrush != null) Modifier.background(gradientBrush, cardShape)

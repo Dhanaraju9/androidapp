@@ -1726,6 +1726,71 @@ object FirebaseSyncManager {
     }
 
     /**
+     * Animation Engine Configuration Persistence & Real-time Flow
+     */
+    fun syncAnimationEngineConfigToFirestore(
+        appId: String,
+        config: com.example.model.AnimationEngineConfig,
+        onSuccess: () -> Unit = {},
+        onFailure: (Exception) -> Unit = {}
+    ) {
+        try {
+            val jsonPayload = AnimationConfigManager.serializeConfigToJson(config)
+            val data = mapOf(
+                "appId" to appId,
+                "configJson" to jsonPayload,
+                "versionNumber" to config.versionNumber,
+                "targetScope" to config.targetScope,
+                "selectedAppIds" to config.selectedAppIds,
+                "activePresetId" to config.masterConfig.activePresetId.name,
+                "masterEnabled" to config.masterConfig.masterEnabled,
+                "updatedAt" to config.updatedAt,
+                "updatedBy" to config.updatedBy
+            )
+
+            firestore.collection("apps").document(appId).collection("configs").document("animation_engine")
+                .set(data)
+                .addOnSuccessListener {
+                    firestore.collection("animation_engine_configs").document(appId).set(data)
+                    if (config.targetScope == "ALL") {
+                        firestore.collection("animation_engine_configs").document("global").set(data)
+                    } else if (config.targetScope == "SELECTED") {
+                        config.selectedAppIds.forEach { targetId ->
+                            firestore.collection("animation_engine_configs").document(targetId).set(data)
+                        }
+                    }
+                    onSuccess()
+                }
+                .addOnFailureListener { e -> onFailure(e) }
+        } catch (e: Exception) {
+            onFailure(e)
+        }
+    }
+
+    fun observeAnimationEngineConfig(appId: String): Flow<com.example.model.AnimationEngineConfig?> = callbackFlow {
+        val listener = firestore.collection("animation_engine_configs")
+            .document(appId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(null)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    try {
+                        val json = snapshot.getString("configJson") ?: ""
+                        val parsed = AnimationConfigManager.parseConfigFromJson(json)
+                        trySend(parsed)
+                    } catch (e: Exception) {
+                        trySend(null)
+                    }
+                } else {
+                    trySend(null)
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    /**
      * Master Admin Config Auto-Synchronizer
      * Automatically subscribes to all Firestore admin config topics for [appId]
      * and updates SampleData in real-time.
@@ -1734,6 +1799,21 @@ object FirebaseSyncManager {
         appId: String,
         coroutineScope: kotlinx.coroutines.CoroutineScope
     ) {
+        coroutineScope.launch {
+            try {
+                observeAnimationEngineConfig(appId).collect { animConfig ->
+                    if (animConfig != null) {
+                        AnimationConfigManager.appConfigsState[appId] = animConfig
+                        if (appId == SampleData.currentActiveAppId.value) {
+                            AnimationConfigManager.globalConfigState.value = animConfig
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Master Animation Config listener error: ${e.message}")
+            }
+        }
+
         coroutineScope.launch {
             try {
                 observeTopBarConfig(appId).collect { topBarConfig ->

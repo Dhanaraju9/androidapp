@@ -20,6 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.premiumHeroExpand
+import com.example.ui.components.premiumTargetAnimation
 import com.example.ui.theme.AppLuminousBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +94,12 @@ fun PerformanceBoardScreen(
 @Composable
 fun BadgesAchievementsCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.RESULT_SUMMARY_SCORE,
+                index = 3
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -127,7 +134,13 @@ fun BadgeItem(title: String, icon: String) {
 @Composable
 fun OverallPerformanceHeroCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumHeroExpand(
+                target = com.example.model.AnimatableTarget.RESULT_SUMMARY_SCORE,
+                isExpanded = true,
+                index = 0
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
@@ -149,7 +162,12 @@ fun OverallPerformanceHeroCard() {
 @Composable
 fun StudyStreakCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.RESULT_SUMMARY_SCORE,
+                index = 1
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -165,7 +183,12 @@ fun StudyStreakCard() {
 @Composable
 fun PerformanceTrendCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.RESULT_SUMMARY_SCORE,
+                index = 2
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)

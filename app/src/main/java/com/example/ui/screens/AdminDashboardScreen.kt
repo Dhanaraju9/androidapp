@@ -380,7 +380,7 @@ fun AdminDashboardScreen(
         "Highlighting", "Current Affairs", "Mock Test Gen", "Posters", "Images",
         "Wallpapers", "Top Bar", "Borders", "Menu", "Carousel", "Users",
         "Subscriptions", "Coupons", "Revenue", "Notifications", "Live",
-        "Leaderboard", "Support", "Tenant Generator", "PYP Manager"
+        "Leaderboard", "Support", "Tenant Generator", "PYP Manager", "Animations"
     )
 
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -668,7 +668,8 @@ fun AdminDashboardScreen(
                             onLogoutClick = { showLogoutDialog = true },
                             onGoToPosters = { activeTab = 8 },
                             onGoToSyllabus = { activeTab = 2 },
-                            onGoToWallpapers = { activeTab = 10 }
+                            onGoToWallpapers = { activeTab = 10 },
+                            onGoToAnimations = { activeTab = 25 }
                         )
                         1 -> AdminAppsManagementTab(
                             onNavigateToTenantGenerator = { activeTab = 23 }
@@ -699,12 +700,17 @@ fun AdminDashboardScreen(
                         22 -> AdminLegalSupportTab()
                         23 -> AdminTenantGeneratorTab()
                         24 -> AdminPreviousYearPapersTab()
+                        25 -> AdminAnimationEngineTab(
+                            selectedAppId = SampleData.currentActiveAppId.value,
+                            adminEmail = "sobhadhanaraju1@gmail.com"
+                        )
                         else -> AdminDashboardTab(
                             onSwitchToUser = onSwitchToUserPage,
                             onLogoutClick = { showLogoutDialog = true },
                             onGoToPosters = { activeTab = 8 },
                             onGoToSyllabus = { activeTab = 2 },
-                            onGoToWallpapers = { activeTab = 10 }
+                            onGoToWallpapers = { activeTab = 10 },
+                            onGoToAnimations = { activeTab = 25 }
                         )
                     }
                 }
@@ -836,7 +842,8 @@ private fun AdminDashboardTab(
     onLogoutClick: () -> Unit,
     onGoToPosters: () -> Unit,
     onGoToSyllabus: () -> Unit,
-    onGoToWallpapers: () -> Unit
+    onGoToWallpapers: () -> Unit,
+    onGoToAnimations: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val activeAppId = SampleData.currentActiveAppId.value
@@ -913,6 +920,68 @@ private fun AdminDashboardTab(
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Switch", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        // Quick Action: Premium Animation Engine Studio Banner
+        item {
+            Surface(
+                color = Color(0xFF0F172A),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.6f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onGoToAnimations() }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF0284C7)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.AutoAwesomeMotion,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Premium Animation Engine & Motion Studio",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "12 Presets • 24 Component Targets • Cascade, 3D Flip, Transitions & Live Sandbox",
+                                fontSize = 11.sp,
+                                color = Color(0xFF94A3B8)
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = onGoToAnimations,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Configure", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }

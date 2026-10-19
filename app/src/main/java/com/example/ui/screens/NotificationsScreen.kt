@@ -2,6 +2,8 @@ package com.example.ui.screens
 
 import android.widget.Toast
 import androidx.compose.animation.*
+import com.example.ui.components.premiumCardInteraction
+import com.example.ui.components.premiumTargetAnimation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -207,7 +209,11 @@ fun NotificationsScreen(
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = 12.dp)
+                        .premiumTargetAnimation(
+                            target = com.example.model.AnimatableTarget.FILTER_CHIPS_TABS,
+                            index = 0
+                        ),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -287,7 +293,8 @@ fun FilterChipItem(
             width = 1.dp,
             color = if (isSelected) Color(0xFF1D4ED8) else Color(0xFFE2E8F0)
         ),
-        shadowElevation = if (isSelected) 3.dp else 1.dp
+        shadowElevation = if (isSelected) 3.dp else 1.dp,
+        modifier = Modifier.premiumCardInteraction(target = com.example.model.AnimatableTarget.FILTER_CHIPS_TABS)
     ) {
         Text(
             text = label,
@@ -349,7 +356,15 @@ fun NotificationCard(
             }
         ),
         shadowElevation = if (isUnread) 6.dp else 2.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.LIVE_CONTENT_DASHBOARD,
+                index = 0
+            )
+            .premiumCardInteraction(
+                target = com.example.model.AnimatableTarget.LIVE_CONTENT_DASHBOARD
+            )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header: Category, Badge, Date & Dismiss button
@@ -566,7 +581,12 @@ fun NotificationEmptyState(
             color = Color.White.copy(alpha = 0.90f),
             border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
             shadowElevation = 4.dp,
-            modifier = Modifier.fillMaxWidth(0.95f)
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .premiumTargetAnimation(
+                    target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
+                    index = 0
+                )
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),

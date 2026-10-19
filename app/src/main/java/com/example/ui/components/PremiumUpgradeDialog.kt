@@ -42,6 +42,10 @@ fun PremiumUpgradePromptDialog(
                 .fillMaxWidth(0.92f)
                 .wrapContentHeight()
                 .padding(vertical = 16.dp)
+                .premiumTargetAnimation(
+                    target = com.example.model.AnimatableTarget.MODAL_DIALOGS,
+                    index = 0
+                )
         ) {
             Column(
                 modifier = Modifier

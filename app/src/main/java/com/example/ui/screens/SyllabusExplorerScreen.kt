@@ -65,17 +65,27 @@ fun SyllabusExplorerScreen(
     // Subject accordion state (expanded by default when entering Subject Explorer)
     var isSubjectExpanded by remember(currentSubject.id) { mutableStateOf(true) }
 
-    // Single-select Unit accordion state: only one Unit may be expanded at a time
+    // Single-select or Multi-select Unit accordion state controlled by AnimationConfigManager
     var expandedUnitId by remember(currentSubject.id, initialUnit?.id) {
         mutableStateOf(initialUnit?.id)
     }
+    var multiExpandedUnitIds by remember(currentSubject.id, initialUnit?.id) {
+        mutableStateOf(if (initialUnit != null) setOf(initialUnit.id) else emptySet<String>())
+    }
+    val accordionSpec = com.example.util.AnimationConfigManager.resolveSpec(
+        com.example.model.AnimatableTarget.ACCORDION_EXPAND_COLLAPSE,
+        "Syllabus Explorer"
+    )
+    val isSingleOpenAccordion = accordionSpec.singleOpenAccordion &&
+        accordionSpec.hierarchyType != com.example.model.HierarchyDrillDownAnimationType.MULTI_OPEN_ACCORDION
     val activeUnit = remember(currentSubject.units, expandedUnitId) {
         currentSubject.units.find { it.id == expandedUnitId }
     }
 
     // Handle system back button when a Unit is expanded to collapse it first
-    BackHandler(enabled = expandedUnitId != null) {
+    BackHandler(enabled = expandedUnitId != null || multiExpandedUnitIds.isNotEmpty()) {
         expandedUnitId = null
+        multiExpandedUnitIds = emptySet()
     }
 
     AppLuminousBackground(screenName = "Syllabus Explorer") {
@@ -139,11 +149,21 @@ fun SyllabusExplorerScreen(
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .premiumPress {
+                            .premiumHeroExpand(
+                                target = com.example.model.AnimatableTarget.SUBJECT_CARDS,
+                                isExpanded = isSubjectExpanded,
+                                screenKey = "Syllabus Explorer",
+                                index = 0
+                            )
+                            .premiumPress(
+                                target = com.example.model.AnimatableTarget.SUBJECT_CARDS,
+                                screenKey = "Syllabus Explorer"
+                            ) {
                                 val nextExpanded = !isSubjectExpanded
                                 isSubjectExpanded = nextExpanded
                                 if (!nextExpanded) {
                                     expandedUnitId = null
+                                    multiExpandedUnitIds = emptySet()
                                 }
                             }
                     ) {
@@ -268,7 +288,11 @@ fun SyllabusExplorerScreen(
                         exit = AppMotionSystem.cascadeContainerExitTransition()
                     ) {
                         val isUnitLocked = !isPremium && unitIndex > 0
-                        val isUnitExpanded = expandedUnitId == unit.id
+                        val isUnitExpanded = if (isSingleOpenAccordion) {
+                            expandedUnitId == unit.id
+                        } else {
+                            unit.id in multiExpandedUnitIds || expandedUnitId == unit.id
+                        }
                         val unitChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
                             isExpanded = isUnitExpanded,
                             label = "SyllabusUnitChevron_${unit.id}"
@@ -286,7 +310,9 @@ fun SyllabusExplorerScreen(
                                 .fillMaxWidth()
                                 .cascadeDropItem(
                                     visible = isSubjectExpanded,
-                                    index = unitIndex
+                                    index = unitIndex,
+                                    target = com.example.model.AnimatableTarget.UNIT_CARDS,
+                                    screenKey = "Syllabus Explorer"
                                 )
                         ) {
                             Card(
@@ -295,11 +321,22 @@ fun SyllabusExplorerScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(118.dp) // 70% of Subjects Card (168.dp)
-                                    .premiumPress {
+                                    .premiumPress(
+                                        target = com.example.model.AnimatableTarget.UNIT_CARDS,
+                                        screenKey = "Syllabus Explorer"
+                                    ) {
                                         if (isUnitLocked) {
                                             upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                        } else {
+                                        } else if (isSingleOpenAccordion) {
                                             expandedUnitId = if (isUnitExpanded) null else unit.id
+                                            multiExpandedUnitIds = emptySet()
+                                        } else {
+                                            if (isUnitExpanded) {
+                                                multiExpandedUnitIds = multiExpandedUnitIds - unit.id
+                                                if (expandedUnitId == unit.id) expandedUnitId = null
+                                            } else {
+                                                multiExpandedUnitIds = multiExpandedUnitIds + unit.id
+                                            }
                                         }
                                     },
                                 border = BorderStroke(
@@ -465,9 +502,14 @@ fun SyllabusExplorerScreen(
                                                     .height(96.dp)
                                                     .cascadeDropItem(
                                                         visible = isUnitExpanded,
-                                                        index = topicIndex
+                                                        index = topicIndex,
+                                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                                        screenKey = "Syllabus Explorer"
                                                     )
-                                                    .premiumPress {
+                                                    .premiumPress(
+                                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                                        screenKey = "Syllabus Explorer"
+                                                    ) {
                                                         if (isTopicLocked) {
                                                             upgradePromptFeature = "Topic: ${topic.name}"
                                                         } else {

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.ui.platform.LocalContext
 import com.example.util.PracticeSessionManager
+import com.example.ui.components.cascadeDropItem
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,7 +56,9 @@ import com.example.ui.components.PremiumSectionHeader
 import com.example.ui.components.PremiumSubscriptionBadge
 import com.example.ui.components.StatBadge
 import com.example.ui.components.TopicFhdCardImage
+import com.example.ui.components.premiumHeroExpand
 import com.example.ui.components.premiumPress
+import com.example.ui.components.premiumTargetAnimation
 import com.example.ui.theme.AppLuminousBackground
 import com.example.ui.theme.PremiumCardColorSystem
 
@@ -424,7 +427,14 @@ fun TopicSetsScreen(
                         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                         border = BorderStroke(1.5.dp, topicHeaderGradient.borderColor),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .premiumHeroExpand(
+                                target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                isExpanded = true,
+                                screenKey = "Topic Sets",
+                                index = 0
+                            )
                     ) {
                         Box(
                             modifier = Modifier
@@ -517,7 +527,12 @@ fun TopicSetsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 4.dp)
+                            .premiumTargetAnimation(
+                                target = com.example.model.AnimatableTarget.FILTER_CHIPS_TABS,
+                                index = 0,
+                                screenKey = "Topic Sets"
+                            ),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // TOGGLE 1: SETS
@@ -529,7 +544,10 @@ fun TopicSetsScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { activeSection = "SETS" }
+                                .premiumPress(
+                                    target = com.example.model.AnimatableTarget.FILTER_CHIPS_TABS,
+                                    screenKey = "Topic Sets"
+                                ) { activeSection = "SETS" }
                         ) {
                             Row(
                                 modifier = Modifier
@@ -565,7 +583,10 @@ fun TopicSetsScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { activeSection = "SUBTOPICS" }
+                                .premiumPress(
+                                    target = com.example.model.AnimatableTarget.FILTER_CHIPS_TABS,
+                                    screenKey = "Topic Sets"
+                                ) { activeSection = "SUBTOPICS" }
                         ) {
                             Row(
                                 modifier = Modifier
@@ -604,7 +625,13 @@ fun TopicSetsScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 color = Color.White,
                                 border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .premiumTargetAnimation(
+                                        target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
+                                        index = 0,
+                                        screenKey = "Topic Sets"
+                                    )
                             ) {
                                 Column(
                                     modifier = Modifier.padding(28.dp),
@@ -659,7 +686,16 @@ fun TopicSetsScreen(
                                         PracticeSessionManager.getSessionStatus(context, pSet.id, hasDbCompleted)
                                     }
 
-                                    Box(modifier = Modifier.weight(1f)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .cascadeDropItem(
+                                                visible = true,
+                                                index = globalIndex,
+                                                target = com.example.model.AnimatableTarget.SETS_CARDS,
+                                                screenKey = "Topic Sets"
+                                            )
+                                    ) {
                                         CompactGridSetCard(
                                             serialNumber = serialNumber,
                                             title = "Set $serialNumber",
@@ -683,7 +719,13 @@ fun TopicSetsScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 color = Color.White,
                                 border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .premiumTargetAnimation(
+                                        target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
+                                        index = 0,
+                                        screenKey = "Topic Sets"
+                                    )
                             ) {
                                 Column(
                                     modifier = Modifier.padding(28.dp),
@@ -732,28 +774,39 @@ fun TopicSetsScreen(
                                 PracticeSessionManager.getSessionStatus(context, subtopicId, hasDbCompletedSub)
                             }
 
-                            CompactGridSubtopicCard(
-                                code = code,
-                                title = subtopicTitle,
-                                questionsCount = subQuestionsCount,
-                                status = status,
-                                backgroundColor = bgCol,
-                                onClick = {
-                                    val subQuestions = topicQuestions.filter { it.subtopic.equals(subtopicTitle, ignoreCase = true) }
-                                    val subtopicPracticeSet = subtopicSetsList.getOrNull(globalIndex) ?: PracticeSetModel(
-                                        id = subtopicId,
-                                        title = subtopicTitle,
-                                        subtitle = "${subQuestions.size} Questions",
-                                        setNumber = globalIndex + 1,
-                                        questionsCount = subQuestions.size,
-                                        startQuestionNumber = 1,
-                                        endQuestionNumber = subQuestions.size,
-                                        questions = subQuestions,
-                                        badge = ""
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .cascadeDropItem(
+                                        visible = true,
+                                        index = globalIndex,
+                                        target = com.example.model.AnimatableTarget.SUBTOPIC_CARDS,
+                                        screenKey = "Topic Sets"
                                     )
-                                    onStartSet(subtopicPracticeSet, subtopicSetsList)
-                                }
-                            )
+                            ) {
+                                CompactGridSubtopicCard(
+                                    code = code,
+                                    title = subtopicTitle,
+                                    questionsCount = subQuestionsCount,
+                                    status = status,
+                                    backgroundColor = bgCol,
+                                    onClick = {
+                                        val subQuestions = topicQuestions.filter { it.subtopic.equals(subtopicTitle, ignoreCase = true) }
+                                        val subtopicPracticeSet = subtopicSetsList.getOrNull(globalIndex) ?: PracticeSetModel(
+                                            id = subtopicId,
+                                            title = subtopicTitle,
+                                            subtitle = "${subQuestions.size} Questions",
+                                            setNumber = globalIndex + 1,
+                                            questionsCount = subQuestions.size,
+                                            startQuestionNumber = 1,
+                                            endQuestionNumber = subQuestions.size,
+                                            questions = subQuestions,
+                                            badge = ""
+                                        )
+                                        onStartSet(subtopicPracticeSet, subtopicSetsList)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -1251,7 +1304,11 @@ fun CompactGridSetCard(
             .fillMaxWidth()
             .height(115.dp)
             .clip(RoundedCornerShape(16.dp))
-            .premiumPress(onClick = onClick)
+            .premiumPress(
+                target = com.example.model.AnimatableTarget.SETS_CARDS,
+                screenKey = "Topic Sets",
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier
@@ -1347,7 +1404,11 @@ fun CompactGridSubtopicCard(
             .fillMaxWidth()
             .height(130.dp)
             .clip(RoundedCornerShape(16.dp))
-            .premiumPress(onClick = onClick)
+            .premiumPress(
+                target = com.example.model.AnimatableTarget.SUBTOPIC_CARDS,
+                screenKey = "Topic Sets",
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier

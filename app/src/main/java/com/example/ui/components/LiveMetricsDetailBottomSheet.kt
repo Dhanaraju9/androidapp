@@ -124,12 +124,21 @@ fun LiveMetricsDetailBottomSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.92f)
                 .navigationBarsPadding()
+                .premiumTargetAnimation(
+                    target = com.example.model.AnimatableTarget.BOTTOM_SHEETS,
+                    index = 0
+                )
         ) {
             // Header Banner
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .premiumHeroExpand(
+                        target = com.example.model.AnimatableTarget.LIVE_CONTENT_DASHBOARD,
+                        isExpanded = true,
+                        index = 0
+                    )
                     .clip(RoundedCornerShape(16.dp))
                     .background(
                         Brush.horizontalGradient(

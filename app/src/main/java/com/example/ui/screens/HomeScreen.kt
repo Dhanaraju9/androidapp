@@ -179,6 +179,14 @@ fun HomeScreen(
 
     var expandedSubjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var expandedUnitId by rememberSaveable { mutableStateOf<String?>(null) }
+    var multiExpandedSubjectIds by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    var multiExpandedUnitIds by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    val accordionSpec = com.example.util.AnimationConfigManager.resolveSpec(
+        target = com.example.model.AnimatableTarget.ACCORDION_EXPAND_COLLAPSE,
+        screenKey = "Home Screen"
+    )
+    val isSingleOpenAccordion = accordionSpec.singleOpenAccordion &&
+        accordionSpec.hierarchyType != com.example.model.HierarchyDrillDownAnimationType.MULTI_OPEN_ACCORDION
     var upgradePromptFeature by remember { mutableStateOf<String?>(null) }
 
     if (showAdminLoginDialog) {
@@ -673,7 +681,11 @@ fun HomeScreen(
                                 val topicCount = remember(subject.id) { subject.units.sumOf { it.topics.size } }
                                 // Each topic typically has 2 practice sets (or calculated dynamically)
                                 val totalSets = remember(topicCount) { topicCount * 2 }
-                                val isExpanded = expandedSubjectId == subject.id
+                                val isExpanded = if (isSingleOpenAccordion) {
+                                    expandedSubjectId == subject.id
+                                } else {
+                                    multiExpandedSubjectIds.contains(subject.id) || expandedSubjectId == subject.id
+                                }
                                 val subjectChevronRotation by animateAccordionChevronRotation(isExpanded = isExpanded)
                                 val richGradient = remember(subject.id, subject.name) {
                                     com.example.ui.theme.PremiumCardColorSystem.getGradientForSubject(subject.name, subject.id)
@@ -686,12 +698,23 @@ fun HomeScreen(
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                    if (expandedSubjectId == subject.id) {
-                                        expandedSubjectId = null
-                                        expandedUnitId = null
+                                    if (isSingleOpenAccordion) {
+                                        if (expandedSubjectId == subject.id) {
+                                            expandedSubjectId = null
+                                            expandedUnitId = null
+                                        } else {
+                                            expandedSubjectId = subject.id
+                                            expandedUnitId = null
+                                        }
+                                        multiExpandedSubjectIds = emptySet()
                                     } else {
-                                        expandedSubjectId = subject.id
-                                        expandedUnitId = null
+                                        if (isExpanded) {
+                                            multiExpandedSubjectIds = multiExpandedSubjectIds - subject.id
+                                            if (expandedSubjectId == subject.id) expandedSubjectId = null
+                                        } else {
+                                            multiExpandedSubjectIds = multiExpandedSubjectIds + subject.id
+                                            expandedSubjectId = subject.id
+                                        }
                                     }
                                 }
 
@@ -701,7 +724,8 @@ fun HomeScreen(
                                         .testTag("subject_card_${subject.id}")
                                         .homeSmoothReveal(
                                             index = 5 + subIndex,
-                                            scrollState = homeScrollState
+                                            scrollState = homeScrollState,
+                                            target = com.example.model.AnimatableTarget.SUBJECT_CARDS
                                         ),
                                     accentBorderColor = richGradient.borderColor
                                 ) {
@@ -1050,12 +1074,18 @@ fun HomeScreen(
                                                     subject.units.forEachIndexed { unitIndex, unit ->
                                                         key(unit.id) {
                                                             val isUnitLocked = !isPremium && unitIndex > 0
-                                                            val isUnitExpanded = expandedUnitId == unit.id
+                                                            val isUnitExpanded = if (isSingleOpenAccordion) {
+                                                                expandedUnitId == unit.id
+                                                            } else {
+                                                                multiExpandedUnitIds.contains(unit.id) || expandedUnitId == unit.id
+                                                            }
                                                             com.example.ui.components.CascadeItem(
                                                                 index = unitIndex,
                                                                 visible = isExpanded,
+                                                                target = com.example.model.AnimatableTarget.UNIT_CARDS,
+                                                                screenKey = "Home Screen",
                                                                 triggerKey = "${subject.id}_unit_${unit.id}",
-                                                                initialOffsetY = 28.dp,
+                                                                initialOffsetY = 16.dp,
                                                                 staggerDelayMs = AppMotionSystem.CASCADE_UNIT_STAGGER_MS,
                                                                 durationMs = AppMotionSystem.CASCADE_DURATION_MS
                                                             ) {
@@ -1068,8 +1098,17 @@ fun HomeScreen(
                                                                     onToggleUnitExpand = {
                                                                         if (isUnitLocked) {
                                                                             upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                                                        } else {
+                                                                        } else if (isSingleOpenAccordion) {
                                                                             expandedUnitId = if (expandedUnitId == unit.id) null else unit.id
+                                                                            multiExpandedUnitIds = emptySet()
+                                                                        } else {
+                                                                            if (isUnitExpanded) {
+                                                                                multiExpandedUnitIds = multiExpandedUnitIds - unit.id
+                                                                                if (expandedUnitId == unit.id) expandedUnitId = null
+                                                                            } else {
+                                                                                multiExpandedUnitIds = multiExpandedUnitIds + unit.id
+                                                                                expandedUnitId = unit.id
+                                                                            }
                                                                         }
                                                                     },
                                                                     onOpenUnit = {
@@ -2887,10 +2926,12 @@ fun HomeUnitPreviewCard(
                             com.example.ui.components.CascadeItem(
                                 index = topicIndex,
                                 visible = isUnitExpanded,
+                                target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                screenKey = "Home Screen",
                                 triggerKey = "${unit.id}_topic_${topic.id}",
-                                initialOffsetY = 22.dp,
+                                initialOffsetY = 16.dp,
                                 staggerDelayMs = AppMotionSystem.CASCADE_TOPIC_STAGGER_MS,
-                                durationMs = 280
+                                durationMs = 260
                             ) {
                             Card(
                                 shape = RoundedCornerShape(10.dp),
@@ -4531,52 +4572,70 @@ private fun SingleCategoryReferenceCard(
 fun Modifier.homeSmoothReveal(
     index: Int = 0,
     parallaxFactor: Float = 0.018f,
-    scrollState: ScrollState? = null
+    scrollState: ScrollState? = null,
+    target: com.example.model.AnimatableTarget = com.example.model.AnimatableTarget.APP_LAUNCH_HOME_ENTRANCE
 ): Modifier = composed {
-    var isRevealed by remember { mutableStateOf(false) }
+    val spec = com.example.util.AnimationConfigManager.resolveSpec(
+        target = target,
+        screenKey = "Home Screen"
+    )
+    val replayCount by com.example.util.AnimationConfigManager.replayTriggerCounter
+    val slowMo by com.example.util.AnimationConfigManager.sandboxSlowMoFactor
 
-    LaunchedEffect(Unit) {
-        val staggerDelay = (index.coerceAtMost(8) * 35L)
+    if (!spec.enabled || spec.entranceType == com.example.model.EntranceAnimationType.NONE) {
+        return@composed this
+    }
+
+    var isRevealed by remember(replayCount, spec.entranceType) { mutableStateOf(false) }
+
+    LaunchedEffect(replayCount, spec.entranceType, spec.staggerDelayMs, spec.maxStaggerItems) {
+        isRevealed = false
+        val staggerDelay = ((index.coerceIn(0, spec.maxStaggerItems) * spec.staggerDelayMs.coerceAtLeast(15)) / slowMo.coerceIn(0.15f, 2f)).toLong()
         if (staggerDelay > 0L) {
             delay(staggerDelay)
         }
         isRevealed = true
     }
 
+    val dur = (spec.durationMs.coerceAtLeast(160) / slowMo.coerceIn(0.15f, 2f)).toInt()
+
     val alphaAnim by animateFloatAsState(
         targetValue = if (isRevealed) 1f else 0.04f,
         animationSpec = tween(
-            durationMillis = 380,
+            durationMillis = dur,
             easing = FastOutSlowInEasing
         ),
         label = "home_card_alpha_$index"
     )
 
-    val translateYAnim by animateFloatAsState(
-        targetValue = if (isRevealed) 0f else 22f,
-        animationSpec = tween(
-            durationMillis = 400,
-            easing = FastOutSlowInEasing
-        ),
-        label = "home_card_translate_y_$index"
-    )
-
-    val scaleAnim by animateFloatAsState(
-        targetValue = if (isRevealed) 1f else 0.982f,
-        animationSpec = tween(
-            durationMillis = 380,
-            easing = FastOutSlowInEasing
-        ),
-        label = "home_card_scale_$index"
+    val mainProgress by animateFloatAsState(
+        targetValue = if (isRevealed) 1f else 0f,
+        animationSpec = com.example.ui.components.PremiumAnimationEngine.buildFloatAnimationSpec(spec, slowMo),
+        label = "home_card_progress_$index"
     )
 
     this.graphicsLayer {
         alpha = alphaAnim
         val scrollOffset = scrollState?.value?.toFloat() ?: 0f
         val parallaxOffset = scrollOffset * parallaxFactor
-        translationY = translateYAnim - parallaxOffset
-        scaleX = scaleAnim
-        scaleY = scaleAnim
+        val distPx = spec.translationDistanceDp.dp.toPx()
+        val inv = 1f - mainProgress
+        val dirSign = if (spec.direction == com.example.model.AnimationDirection.TOP) -1f else 1f
+        translationY = (dirSign * distPx * inv) - parallaxOffset
+        val startScale = spec.initialScale.coerceIn(0.85f, 1.0f)
+        val curScale = startScale + (1f - startScale) * mainProgress
+        scaleX = curScale
+        scaleY = curScale
+        if (spec.entranceType == com.example.model.EntranceAnimationType.FLIP_3D_X ||
+            spec.entranceType == com.example.model.EntranceAnimationType.PERSPECTIVE_ZOOM ||
+            spec.entranceType == com.example.model.EntranceAnimationType.DEPTH_BASED_ENTRANCE
+        ) {
+            rotationX = -10f * inv
+            cameraDistance = spec.cameraDistance * density
+        } else if (spec.entranceType == com.example.model.EntranceAnimationType.FLIP_3D_Y) {
+            rotationY = 12f * inv
+            cameraDistance = spec.cameraDistance * density
+        }
     }
 }
 

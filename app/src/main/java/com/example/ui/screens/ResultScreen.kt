@@ -1,6 +1,9 @@
 package com.example.ui.screens
 
 import com.example.ui.components.MathAndHighlightText
+import com.example.ui.components.premiumHeroExpand
+import com.example.ui.components.premiumPress
+import com.example.ui.components.premiumTargetAnimation
 import com.example.model.HighlightLocation
 import com.example.ui.theme.LocalAppConfig
 
@@ -146,7 +149,9 @@ fun ResultScreen(
                             border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .clickable { onBackToPrevious() }
+                                .premiumPress(target = com.example.model.AnimatableTarget.BUTTONS_CTAS) {
+                                    onBackToPrevious()
+                                }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -176,7 +181,9 @@ fun ResultScreen(
                             border = BorderStroke(1.dp, Color(0xFFDBEAFE)),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .clickable { onBackToHome() }
+                                .premiumPress(target = com.example.model.AnimatableTarget.BUTTONS_CTAS) {
+                                    onBackToHome()
+                                }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -306,7 +313,12 @@ fun ResultScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .scale(cardScale.value),
+                        .scale(cardScale.value)
+                        .premiumHeroExpand(
+                            target = com.example.model.AnimatableTarget.RESULT_SUMMARY_SCORE,
+                            isExpanded = true,
+                            index = 0
+                        ),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isHighAchiever) Color(0xFFFFFFFD) else Color.White

@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items as lazyItems
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
+import androidx.compose.foundation.lazy.itemsIndexed as lazyItemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,6 +38,8 @@ import com.example.ui.components.PremiumLockBadge
 import com.example.ui.components.PremiumUpgradePromptDialog
 import com.example.ui.components.PremiumSubscriptionBadge
 import com.example.ui.components.PracticeAppearancePanel
+import com.example.ui.components.premiumPress
+import com.example.ui.components.premiumTargetAnimation
 import com.example.util.PracticeAppearanceManager
 import com.example.util.FontSettingsManager
 import com.example.repository.AppConfigRepository
@@ -192,7 +194,14 @@ fun CurrentAffairsScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp)
+                                    .premiumTargetAnimation(
+                                        target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
+                                        index = 0,
+                                        screenKey = "Current Affairs"
+                                    )
                             ) {
                                 Column(
                                     modifier = Modifier.padding(24.dp).fillMaxWidth(),
@@ -204,7 +213,7 @@ fun CurrentAffairsScreen(
                             }
                         }
                     } else {
-                        items(monthlyCA, key = { it.id }) { ca ->
+                        gridItemsIndexed(monthlyCA, key = { _, it -> it.id }) { caIdx, ca ->
                             val defaultCaCardImage = SampleData.getCardImagesForAppAndType(SampleData.currentActiveAppId.value, "CURRENT_AFFAIRS")
                                 .firstOrNull { it.isEnabled }?.imageUrl?.ifEmpty { null }
                             val bgWallpaperUrl = if (ca.cardImageUrl.isNotBlank()) {
@@ -219,7 +228,15 @@ fun CurrentAffairsScreen(
                                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { selectedMonthlyCA = ca }
+                                    .premiumTargetAnimation(
+                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                        index = caIdx,
+                                        screenKey = "Current Affairs"
+                                    )
+                                    .premiumPress(
+                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                        screenKey = "Current Affairs"
+                                    ) { selectedMonthlyCA = ca }
                             ) {
                                 Box(modifier = Modifier.fillMaxWidth()) {
                                     AppFhdImage(
@@ -315,8 +332,8 @@ fun CurrentAffairsScreen(
                         )
                     }
 
-                    lazyItems(selectedMonthlyCA?.sets ?: emptyList(), key = { it.id }) { set ->
-                        val isLocked = !isPremium && selectedMonthlyCA?.sets?.indexOf(set)?.let { it > 0 } ?: false
+                    lazyItemsIndexed(selectedMonthlyCA?.sets ?: emptyList(), key = { _, it -> it.id }) { setIdx, set ->
+                        val isLocked = !isPremium && setIdx > 0
                         val appearance = SetThemeManager.getSetAppearance(set)
                         
                         val bgColor = safeParseColor(appearance.backgroundColor, if (isDark) Color(0xFF1E293B) else Color(0xFFFFFFFF))
@@ -338,7 +355,15 @@ fun CurrentAffairsScreen(
                             elevation = CardDefaults.cardElevation(defaultElevation = appearance.shadowElevationDp.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                .premiumTargetAnimation(
+                                    target = com.example.model.AnimatableTarget.SETS_CARDS,
+                                    index = setIdx,
+                                    screenKey = "Current Affairs"
+                                )
+                                .premiumPress(
+                                    target = com.example.model.AnimatableTarget.SETS_CARDS,
+                                    screenKey = "Current Affairs"
+                                ) {
                                     if (isLocked) {
                                         upgradePromptInfo = Triple(
                                             "Unlock Current Affairs",

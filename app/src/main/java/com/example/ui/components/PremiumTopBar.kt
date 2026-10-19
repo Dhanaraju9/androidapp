@@ -253,6 +253,10 @@ fun PremiumTopBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 6.dp, vertical = 4.dp)
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.TOP_APP_BAR_HEADER,
+                index = 0
+            )
     ) {
         val screenWidth = maxWidth
         val isCompactWidth = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Compact

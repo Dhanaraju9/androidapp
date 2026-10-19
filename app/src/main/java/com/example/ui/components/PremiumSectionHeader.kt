@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class HeaderLevel { SUBJECT, UNIT, TOPIC }
+enum class HeaderLevel { SUBJECT, UNIT, TOPIC, SET, SUBTOPIC }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

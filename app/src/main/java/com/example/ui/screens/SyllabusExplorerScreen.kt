@@ -1,34 +1,25 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,67 +31,40 @@ import com.example.ui.components.*
 import com.example.ui.theme.AppLuminousBackground
 
 /**
- * Syllabus Explorer Screen:
- * Level 1: Subjects -> Shows Units (each Unit with a large FHD image card just like Subjects)
- * Level 2: Units -> Shows Topics (each Topic with a large FHD image card just like Subjects & Units)
- * Level 3: Topics -> Opens Practice Sets & Questions
+ * Full-Screen Units Screen (Level 1 -> Level 2 of the Learning Hierarchy):
+ * Displays the selected Subject's summary header and its full-screen list of Unit cards.
+ * Clicking a Unit card opens the dedicated full-screen [UnitTopicsScreen] destination
+ * rather than expanding topics inline underneath the clicked card.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyllabusExplorerScreen(
-    subject: Subject,
-    initialUnit: UnitModel? = null,
+    subjectId: String,
+    fallbackSubject: Subject? = null,
     onBack: () -> Unit,
     onNavigateToHome: (() -> Unit)? = null,
-    onSelectTopic: (UnitModel, TopicModel) -> Unit = { _, _ -> },
-    onSelectSubjectSets: (Subject) -> Unit = { _ -> },
-    onSelectUnitSets: (UnitModel) -> Unit = { _ -> },
+    onSelectUnit: (Subject, UnitModel) -> Unit = { _, _ -> },
     onNavigateToSubscription: () -> Unit = {}
 ) {
-    // Keep in sync with latest SampleData state
-    val currentSubject = SampleData.subjectsState.find { it.id == subject.id } ?: subject
+    // Resolve Subject by stable ID from SampleData state
+    val currentSubject = remember(subjectId, SampleData.subjectsState.size) {
+        SampleData.subjectsState.find { it.id == subjectId } ?: fallbackSubject
+    }
     val isPremium = SampleData.isUserPremium()
     var upgradePromptFeature by remember { mutableStateOf<String?>(null) }
+    val unitsListState = rememberLazyListState()
 
-    // Subject accordion state (expanded by default when entering Subject Explorer)
-    var isSubjectExpanded by remember(currentSubject.id) { mutableStateOf(true) }
-
-    // Single-select or Multi-select Unit accordion state controlled by AnimationConfigManager
-    var expandedUnitId by remember(currentSubject.id, initialUnit?.id) {
-        mutableStateOf(initialUnit?.id)
-    }
-    var multiExpandedUnitIds by remember(currentSubject.id, initialUnit?.id) {
-        mutableStateOf(if (initialUnit != null) setOf(initialUnit.id) else emptySet<String>())
-    }
-    val accordionSpec = com.example.util.AnimationConfigManager.resolveSpec(
-        com.example.model.AnimatableTarget.ACCORDION_EXPAND_COLLAPSE,
-        "Syllabus Explorer"
-    )
-    val isSingleOpenAccordion = accordionSpec.singleOpenAccordion &&
-        accordionSpec.hierarchyType != com.example.model.HierarchyDrillDownAnimationType.MULTI_OPEN_ACCORDION
-    val activeUnit = remember(currentSubject.units, expandedUnitId) {
-        currentSubject.units.find { it.id == expandedUnitId }
-    }
-
-    // Handle system back button when a Unit is expanded to collapse it first
-    BackHandler(enabled = expandedUnitId != null || multiExpandedUnitIds.isNotEmpty()) {
-        expandedUnitId = null
-        multiExpandedUnitIds = emptySet()
+    BackHandler {
+        onBack()
     }
 
     AppLuminousBackground(screenName = "Syllabus Explorer") {
         Scaffold(
             topBar = {
                 PremiumSectionHeader(
-                    title = activeUnit?.name ?: currentSubject.name,
-                    level = if (activeUnit == null) HeaderLevel.SUBJECT else HeaderLevel.UNIT,
-                    onBack = {
-                        if (expandedUnitId != null) {
-                            expandedUnitId = null
-                        } else {
-                            onBack()
-                        }
-                    },
+                    title = currentSubject?.name ?: "Units",
+                    level = HeaderLevel.SUBJECT,
+                    onBack = onBack,
                     onNavigateToHome = onNavigateToHome,
                     rightAction = {
                         PremiumSubscriptionBadge(
@@ -111,145 +75,136 @@ fun SyllabusExplorerScreen(
             },
             containerColor = Color.Transparent
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // ==========================================
-                // 1. SUBJECT ACCORDION HEADER CARD
-                // ==========================================
-                item(key = "subject_header_${currentSubject.id}") {
-                    val totalUnits = currentSubject.units.size
-                    val totalTopics = currentSubject.units.sumOf { it.topics.size }
-                    val totalSets = totalTopics * 2
-                    val totalMcqs = remember(currentSubject.id, SampleData.questionsState.size) {
-                        SampleData.getQuestionsCountForSubject(currentSubject.id)
-                    }
-                    val subjGradient = remember(currentSubject.id, currentSubject.name) {
-                        com.example.ui.theme.PremiumCardColorSystem.getGradientForSubject(
-                            currentSubject.name,
-                            currentSubject.id
-                        )
-                    }
-                    val subjectChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
-                        isExpanded = isSubjectExpanded,
-                        label = "SyllabusSubjectChevron_${currentSubject.id}"
+            if (currentSubject == null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    HierarchyEmptyOrErrorCard(
+                        title = "Subject Not Found",
+                        subtitle = "The requested subject could not be loaded. Please go back and select another subject.",
+                        actionLabel = "Go Back",
+                        onAction = onBack
                     )
+                }
+            } else {
+                val totalUnits = currentSubject.units.size
+                val totalTopics = currentSubject.units.sumOf { it.topics.size }
+                val totalSets = totalTopics * 2
+                val totalMcqs = remember(currentSubject.id, SampleData.questionsState.size) {
+                    SampleData.getQuestionsCountForSubject(currentSubject.id)
+                }
+                val subjGradient = remember(currentSubject.id, currentSubject.name) {
+                    com.example.ui.theme.PremiumCardColorSystem.getGradientForSubject(
+                        currentSubject.name,
+                        currentSubject.id
+                    )
+                }
 
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                        border = BorderStroke(
-                            if (isSubjectExpanded) 2.dp else 1.5.dp,
-                            subjGradient.borderColor
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .premiumHeroExpand(
-                                target = com.example.model.AnimatableTarget.SUBJECT_CARDS,
-                                isExpanded = isSubjectExpanded,
-                                screenKey = "Syllabus Explorer",
-                                index = 0
-                            )
-                            .premiumPress(
-                                target = com.example.model.AnimatableTarget.SUBJECT_CARDS,
-                                screenKey = "Syllabus Explorer"
-                            ) {
-                                val nextExpanded = !isSubjectExpanded
-                                isSubjectExpanded = nextExpanded
-                                if (!nextExpanded) {
-                                    expandedUnitId = null
-                                    multiExpandedUnitIds = emptySet()
-                                }
-                            }
-                    ) {
-                        Box(
+                LazyColumn(
+                    state = unitsListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // ==========================================
+                    // 1. SUBJECT SUMMARY HEADER CARD
+                    // ==========================================
+                    item(key = "subject_header_${currentSubject.id}") {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                            border = BorderStroke(2.dp, subjGradient.borderColor),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(168.dp)
-                                .background(Brush.linearGradient(colors = subjGradient.colors))
+                                .premiumTargetAnimation(
+                                    target = com.example.model.AnimatableTarget.SUBJECT_CARDS,
+                                    index = 0,
+                                    screenKey = "Syllabus Explorer"
+                                )
                         ) {
-                            // Subject assigned Image in background
-                            SubjectFhdCardImage(
-                                subject = currentSubject,
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            // Subtle transparent overlay for text readability
                             Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Black.copy(alpha = 0.2f),
-                                                Color.Black.copy(alpha = 0.5f),
-                                                Color.Black.copy(alpha = 0.85f)
+                                    .fillMaxWidth()
+                                    .height(168.dp)
+                                    .background(Brush.linearGradient(colors = subjGradient.colors))
+                            ) {
+                                SubjectFhdCardImage(
+                                    subject = currentSubject,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Black.copy(alpha = 0.2f),
+                                                    Color.Black.copy(alpha = 0.5f),
+                                                    Color.Black.copy(alpha = 0.85f)
+                                                )
                                             )
                                         )
-                                    )
-                            )
+                                )
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(14.dp),
-                                verticalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(14.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(
-                                        text = currentSubject.name.uppercase(),
-                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Black),
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = Color.Black.copy(alpha = 0.45f),
-                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ExpandMore,
-                                            contentDescription = if (isSubjectExpanded) "Collapse Units" else "Expand Units",
-                                            tint = Color(0xFFFDE68A),
-                                            modifier = Modifier
-                                                .padding(4.dp)
-                                                .size(16.dp)
-                                                .rotate(subjectChevronRotation)
+                                        Text(
+                                            text = currentSubject.name.uppercase(),
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Black),
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
                                         )
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color.Black.copy(alpha = 0.45f),
+                                            border = BorderStroke(1.dp, Color(0xFFFDE68A).copy(alpha = 0.6f))
+                                        ) {
+                                            Text(
+                                                text = "$totalUnits UNITS",
+                                                color = Color(0xFFFDE68A),
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black),
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
                                     }
-                                }
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    StatBadge("Units", "$totalUnits", Color(0xFF2563EB), Modifier.weight(1f))
-                                    StatBadge("Topics", "$totalTopics", Color(0xFF7C3AED), Modifier.weight(1f))
-                                    StatBadge("Sets", "$totalSets", Color(0xFFD97706), Modifier.weight(1f))
-                                    StatBadge("MCQs", "$totalMcqs", Color(0xFF059669), Modifier.weight(1f))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        StatBadge("Units", "$totalUnits", Color(0xFF2563EB), Modifier.weight(1f))
+                                        StatBadge("Topics", "$totalTopics", Color(0xFF7C3AED), Modifier.weight(1f))
+                                        StatBadge("Sets", "$totalSets", Color(0xFFD97706), Modifier.weight(1f))
+                                        StatBadge("MCQs", "$totalMcqs", Color(0xFF059669), Modifier.weight(1f))
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                item(key = "select_unit_instruction") {
-                    AnimatedVisibility(
-                        visible = isSubjectExpanded,
-                        enter = AppMotionSystem.cascadeContainerEnterTransition(),
-                        exit = AppMotionSystem.cascadeContainerExitTransition()
-                    ) {
+                    // ==========================================
+                    // 2. SECTION HEADER
+                    // ==========================================
+                    item(key = "select_unit_instruction") {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -265,101 +220,87 @@ fun SyllabusExplorerScreen(
                                     color = Color(0xFF1E293B)
                                 )
                                 Text(
-                                    text = "Tap any unit below to expand its topics in place",
+                                    text = "Tap any unit card to open its full-screen topics page",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF64748B)
                                 )
                             }
                         }
                     }
-                }
 
-                // ==========================================
-                // 2. UNITS ACCORDION LIST + CASCADING TOPICS
-                // ==========================================
-                itemsIndexed(
-                    items = currentSubject.units,
-                    key = { _, unit -> unit.id },
-                    contentType = { _, _ -> "unit_accordion_item" }
-                ) { unitIndex, unit ->
-                    AnimatedVisibility(
-                        visible = isSubjectExpanded,
-                        enter = AppMotionSystem.cascadeContainerEnterTransition(),
-                        exit = AppMotionSystem.cascadeContainerExitTransition()
-                    ) {
-                        val isUnitLocked = !isPremium && unitIndex > 0
-                        val isUnitExpanded = if (isSingleOpenAccordion) {
-                            expandedUnitId == unit.id
-                        } else {
-                            unit.id in multiExpandedUnitIds || expandedUnitId == unit.id
+                    // ==========================================
+                    // 3. FULL-SCREEN UNITS LIST (NO INLINE EXPANSION)
+                    // ==========================================
+                    if (currentSubject.units.isEmpty()) {
+                        item(key = "empty_units_state") {
+                            HierarchyEmptyOrErrorCard(
+                                title = "No Units Available",
+                                subtitle = "Syllabus units for ${currentSubject.name} are being updated."
+                            )
                         }
-                        val unitChevronRotation = AppMotionSystem.animateAccordionChevronRotation(
-                            isExpanded = isUnitExpanded,
-                            label = "SyllabusUnitChevron_${unit.id}"
-                        )
-                        val unitMcqCount = remember(currentSubject.id, unit.id, SampleData.questionsState.size) {
-                            unit.topics.sumOf { SampleData.getQuestionsForPractice(currentSubject.id, unit.id, it.id, "").size }
-                        }
-                        val unitSetsCount = remember(unit.topics.size) { unit.topics.size * 2 }
-                        val unitGradient = remember(unit.id, currentSubject.name) {
-                            com.example.ui.theme.PremiumCardColorSystem.getGradientForUnit(unit.unitNumber, currentSubject.name, unit.name)
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .cascadeDropItem(
-                                    visible = isSubjectExpanded,
-                                    index = unitIndex,
-                                    target = com.example.model.AnimatableTarget.UNIT_CARDS,
-                                    screenKey = "Syllabus Explorer"
+                    } else {
+                        itemsIndexed(
+                            items = currentSubject.units,
+                            key = { _, unit -> unit.id },
+                            contentType = { _, _ -> "unit_card_item" }
+                        ) { unitIndex, unit ->
+                            val isUnitLocked = !isPremium && unitIndex > 0
+                            val unitMcqCount = remember(currentSubject.id, unit.id, SampleData.questionsState.size) {
+                                unit.topics.sumOf {
+                                    SampleData.getQuestionsForPractice(currentSubject.id, unit.id, it.id, "").size
+                                }
+                            }
+                            val unitSetsCount = remember(unit.topics.size) { unit.topics.size * 2 }
+                            val unitGradient = remember(unit.id, currentSubject.name) {
+                                com.example.ui.theme.PremiumCardColorSystem.getGradientForUnit(
+                                    unit.unitNumber,
+                                    currentSubject.name,
+                                    unit.name
                                 )
-                        ) {
+                            }
+
                             Card(
                                 shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(118.dp) // 70% of Subjects Card (168.dp)
+                                    .height(118.dp)
+                                    .testTag("unit_card_${unit.id}")
+                                    .cascadeDropItem(
+                                        visible = true,
+                                        index = unitIndex,
+                                        target = com.example.model.AnimatableTarget.UNIT_CARDS,
+                                        screenKey = "Syllabus Explorer"
+                                    )
                                     .premiumPress(
                                         target = com.example.model.AnimatableTarget.UNIT_CARDS,
                                         screenKey = "Syllabus Explorer"
                                     ) {
                                         if (isUnitLocked) {
-                                            upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                        } else if (isSingleOpenAccordion) {
-                                            expandedUnitId = if (isUnitExpanded) null else unit.id
-                                            multiExpandedUnitIds = emptySet()
+                                            upgradePromptFeature =
+                                                "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
                                         } else {
-                                            if (isUnitExpanded) {
-                                                multiExpandedUnitIds = multiExpandedUnitIds - unit.id
-                                                if (expandedUnitId == unit.id) expandedUnitId = null
-                                            } else {
-                                                multiExpandedUnitIds = multiExpandedUnitIds + unit.id
-                                            }
+                                            onSelectUnit(currentSubject, unit)
                                         }
                                     },
                                 border = BorderStroke(
-                                    if (isUnitExpanded) 2.dp else 1.5.dp,
+                                    1.5.dp,
                                     if (isUnitLocked) Color(0xFFFFD700).copy(alpha = 0.6f)
-                                    else if (isUnitExpanded) Color(0xFFFDE68A)
                                     else unitGradient.borderColor
                                 ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = if (isUnitExpanded) 4.dp else 2.dp)
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Brush.linearGradient(colors = unitGradient.colors))
                                 ) {
-                                    // Full Bleed Unit FHD Image
                                     UnitFhdCardImage(
                                         unit = unit,
                                         subjectName = currentSubject.name,
                                         modifier = Modifier.fillMaxSize()
                                     )
 
-                                    // Gradient Overlay for Text Readability
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -404,19 +345,17 @@ fun SyllabusExplorerScreen(
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Text(
-                                                        text = if (isUnitExpanded) "Hide Topics" else "View Topics",
+                                                        text = "Open Topics",
                                                         color = Color(0xFFFDE68A),
                                                         fontSize = 11.5.sp,
                                                         fontWeight = FontWeight.Bold
                                                     )
-                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
                                                     Icon(
-                                                        imageVector = Icons.Default.ExpandMore,
-                                                        contentDescription = if (isUnitExpanded) "Collapse Topics" else "Expand Topics",
+                                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                        contentDescription = "Open Topics",
                                                         tint = Color(0xFFFDE68A),
-                                                        modifier = Modifier
-                                                            .size(15.dp)
-                                                            .rotate(unitChevronRotation)
+                                                        modifier = Modifier.size(14.dp)
                                                     )
                                                 }
                                             }
@@ -434,7 +373,8 @@ fun SyllabusExplorerScreen(
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                text = "${unit.topics.size} Topics • $unitSetsCount Sets" + if (unitMcqCount > 0) " • $unitMcqCount MCQs" else "",
+                                                text = "${unit.topics.size} Topics • $unitSetsCount Sets" +
+                                                    if (unitMcqCount > 0) " • $unitMcqCount MCQs" else "",
                                                 color = unitGradient.textColorSecondary,
                                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                                                 fontSize = 11.5.sp,
@@ -445,235 +385,12 @@ fun SyllabusExplorerScreen(
                                     }
                                 }
                             }
-
-                            // ==========================================
-                            // 3. EXPANDED UNIT -> TOPICS CASCADE ACCORDION
-                            // ==========================================
-                            AnimatedVisibility(
-                                visible = isUnitExpanded,
-                                enter = AppMotionSystem.cascadeContainerEnterTransition(),
-                                exit = AppMotionSystem.cascadeContainerExitTransition()
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 12.dp, start = 6.dp, end = 6.dp, bottom = 4.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = "UNIT TOPICS",
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Black,
-                                                    letterSpacing = 0.5.sp
-                                                ),
-                                                color = Color(0xFF1E293B)
-                                            )
-                                            Text(
-                                                text = "Click any topic to practice MCQs and test sets",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFF64748B)
-                                            )
-                                        }
-                                    }
-
-                                    unit.topics.forEachIndexed { topicIndex, topic ->
-                                        key(topic.id) {
-                                            val isTopicLocked = !isPremium && topicIndex > 0
-                                            val topicSets = remember(SampleData.questionsState.size, currentSubject.id, unit.id, topic.id) {
-                                                SampleData.getPracticeSetsForTopic(currentSubject.id, unit, topic)
-                                            }
-                                            val totalSetsCount = remember(topicSets) { topicSets.size }
-                                            val totalMcqCount = remember(topicSets) { topicSets.sumOf { it.questionsCount } }
-                                            val topicGradient = remember(topic.id, topic.name) {
-                                                com.example.ui.theme.PremiumCardColorSystem.getGradientForTopic(topicIndex, topic.name, currentSubject.name)
-                                            }
-
-                                            Card(
-                                                shape = RoundedCornerShape(14.dp),
-                                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(96.dp)
-                                                    .cascadeDropItem(
-                                                        visible = isUnitExpanded,
-                                                        index = topicIndex,
-                                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
-                                                        screenKey = "Syllabus Explorer"
-                                                    )
-                                                    .premiumPress(
-                                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
-                                                        screenKey = "Syllabus Explorer"
-                                                    ) {
-                                                        if (isTopicLocked) {
-                                                            upgradePromptFeature = "Topic: ${topic.name}"
-                                                        } else {
-                                                            onSelectTopic(unit, topic)
-                                                        }
-                                                    },
-                                                border = BorderStroke(1.5.dp, if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.6f) else topicGradient.borderColor),
-                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .background(Brush.linearGradient(colors = topicGradient.colors))
-                                                ) {
-                                                    // Full Bleed Topic FHD Image
-                                                    TopicFhdCardImage(
-                                                        topic = topic,
-                                                        modifier = Modifier.fillMaxSize()
-                                                    )
-
-                                                    // Gradient Overlay for Text Readability
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .background(
-                                                                Brush.verticalGradient(
-                                                                    colors = listOf(
-                                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.35f else 0.18f),
-                                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.60f else 0.45f),
-                                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.82f else 0.72f),
-                                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.94f else 0.88f)
-                                                                    )
-                                                                )
-                                                            )
-                                                    )
-
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                                        verticalArrangement = Arrangement.SpaceBetween
-                                                    ) {
-                                                        // Top Row: Topic Badge + Sets/MCQs or Pro Lock
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Surface(
-                                                                shape = RoundedCornerShape(6.dp),
-                                                                color = topicGradient.badgeBg
-                                                            ) {
-                                                                Text(
-                                                                    text = "TOPIC ${topicIndex + 1}",
-                                                                    color = topicGradient.badgeText,
-                                                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black, fontSize = 10.sp),
-                                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                                                )
-                                                            }
-                                                            if (isTopicLocked) {
-                                                                PremiumLockBadge(text = "LOCKED (PRO)", isSmall = true)
-                                                            } else {
-                                                                Row(
-                                                                    verticalAlignment = Alignment.CenterVertically,
-                                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                                ) {
-                                                                    Text(
-                                                                        text = "$totalSetsCount Sets",
-                                                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.5.sp),
-                                                                        color = Color(0xFFFDE68A)
-                                                                    )
-                                                                    Text(
-                                                                        text = "•",
-                                                                        color = Color.White.copy(alpha = 0.6f),
-                                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
-                                                                    )
-                                                                    Text(
-                                                                        text = "$totalMcqCount MCQs",
-                                                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.5.sp),
-                                                                        color = Color.White
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-
-                                                        // Bottom Row: Topic Name & Subtitle + Action Pill (Practice or Unlock)
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                                                Text(
-                                                                    text = topic.name,
-                                                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                                                                    color = Color.White,
-                                                                    maxLines = 1,
-                                                                    overflow = TextOverflow.Ellipsis
-                                                                )
-                                                                if (!topic.subtitle.isNullOrBlank()) {
-                                                                    Text(
-                                                                        text = topic.subtitle,
-                                                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
-                                                                        color = Color(0xFFFDE68A).copy(alpha = 0.9f),
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis
-                                                                    )
-                                                                }
-                                                            }
-
-                                                            Surface(
-                                                                shape = RoundedCornerShape(12.dp),
-                                                                color = if (isTopicLocked) Color(0xFF0F172A) else Color(0xFF10B981),
-                                                                border = if (isTopicLocked) BorderStroke(1.dp, Color(0xFFFFD700)) else null
-                                                            ) {
-                                                                Row(
-                                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                                    verticalAlignment = Alignment.CenterVertically
-                                                                ) {
-                                                                    if (isTopicLocked) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Default.Lock,
-                                                                            contentDescription = null,
-                                                                            tint = Color(0xFFFFD700),
-                                                                            modifier = Modifier.size(11.dp)
-                                                                        )
-                                                                        Spacer(modifier = Modifier.width(3.dp))
-                                                                        Text(
-                                                                            text = "Unlock",
-                                                                            color = Color(0xFFFFD700),
-                                                                            fontSize = 10.5.sp,
-                                                                            fontWeight = FontWeight.Bold
-                                                                        )
-                                                                    } else {
-                                                                        Text(
-                                                                            text = "Practice",
-                                                                            color = Color.White,
-                                                                            fontSize = 10.5.sp,
-                                                                            fontWeight = FontWeight.Bold
-                                                                        )
-                                                                        Spacer(modifier = Modifier.width(3.dp))
-                                                                        Icon(
-                                                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                                            contentDescription = null,
-                                                                            tint = Color.White,
-                                                                            modifier = Modifier.size(11.dp)
-                                                                        )
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
-                }
 
-                item(key = "bottom_spacer") {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    item(key = "bottom_spacer") {
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
                 }
             }
         }
@@ -690,5 +407,547 @@ fun SyllabusExplorerScreen(
                 onNavigateToSubscription()
             }
         )
+    }
+}
+
+/**
+ * Backward-compatible overload accepting [Subject] directly.
+ */
+@Composable
+fun SyllabusExplorerScreen(
+    subject: Subject,
+    initialUnit: UnitModel? = null,
+    onBack: () -> Unit,
+    onNavigateToHome: (() -> Unit)? = null,
+    onSelectUnit: (Subject, UnitModel) -> Unit = { _, _ -> },
+    onSelectTopic: (UnitModel, TopicModel) -> Unit = { _, _ -> },
+    onSelectSubjectSets: (Subject) -> Unit = { _ -> },
+    onSelectUnitSets: (UnitModel) -> Unit = { _ -> },
+    onNavigateToSubscription: () -> Unit = {}
+) {
+    SyllabusExplorerScreen(
+        subjectId = subject.id,
+        fallbackSubject = subject,
+        onBack = onBack,
+        onNavigateToHome = onNavigateToHome,
+        onSelectUnit = onSelectUnit,
+        onNavigateToSubscription = onNavigateToSubscription
+    )
+}
+
+/**
+ * Full-Screen Topics Screen for a Selected Unit (Level 2 -> Level 3 of the Learning Hierarchy):
+ * Displays the selected Unit's summary header card and its full-screen list of Topic cards.
+ * Clicking a Topic card opens the dedicated full-screen [TopicSetsScreen] destination.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UnitTopicsScreen(
+    subjectId: String,
+    unitId: String,
+    fallbackSubject: Subject? = null,
+    fallbackUnit: UnitModel? = null,
+    onBack: () -> Unit,
+    onNavigateToHome: (() -> Unit)? = null,
+    onSelectTopic: (Subject, UnitModel, TopicModel) -> Unit = { _, _, _ -> },
+    onNavigateToSubscription: () -> Unit = {}
+) {
+    val currentSubject = remember(subjectId, SampleData.subjectsState.size) {
+        SampleData.subjectsState.find { it.id == subjectId } ?: fallbackSubject
+    }
+    val currentUnit = remember(currentSubject, unitId) {
+        currentSubject?.units?.find { it.id == unitId } ?: fallbackUnit
+    }
+    val isPremium = SampleData.isUserPremium()
+    var upgradePromptFeature by remember { mutableStateOf<String?>(null) }
+    val topicsListState = rememberLazyListState()
+
+    BackHandler {
+        onBack()
+    }
+
+    AppLuminousBackground(screenName = "Unit Topics Screen") {
+        Scaffold(
+            topBar = {
+                PremiumSectionHeader(
+                    title = currentUnit?.name ?: "Unit Topics",
+                    level = HeaderLevel.UNIT,
+                    onBack = onBack,
+                    onNavigateToHome = onNavigateToHome,
+                    rightAction = {
+                        PremiumSubscriptionBadge(
+                            onNavigateToSubscription = onNavigateToSubscription
+                        )
+                    }
+                )
+            },
+            containerColor = Color.Transparent
+        ) { padding ->
+            if (currentSubject == null || currentUnit == null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    HierarchyEmptyOrErrorCard(
+                        title = "Unit Not Found",
+                        subtitle = "The selected unit could not be found. Please return to the Units screen.",
+                        actionLabel = "Back to Units",
+                        onAction = onBack
+                    )
+                }
+            } else {
+                val unitIndex = remember(currentSubject.units, currentUnit.id) {
+                    currentSubject.units.indexOfFirst { it.id == currentUnit.id }.coerceAtLeast(0)
+                }
+                val unitMcqCount = remember(currentSubject.id, currentUnit.id, SampleData.questionsState.size) {
+                    currentUnit.topics.sumOf {
+                        SampleData.getQuestionsForPractice(currentSubject.id, currentUnit.id, it.id, "").size
+                    }
+                }
+                val unitSetsCount = remember(currentUnit.topics.size) { currentUnit.topics.size * 2 }
+                val unitGradient = remember(currentUnit.id, currentSubject.name) {
+                    com.example.ui.theme.PremiumCardColorSystem.getGradientForUnit(
+                        currentUnit.unitNumber,
+                        currentSubject.name,
+                        currentUnit.name
+                    )
+                }
+
+                LazyColumn(
+                    state = topicsListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // ==========================================
+                    // 1. UNIT HERO SUMMARY HEADER CARD
+                    // ==========================================
+                    item(key = "unit_header_${currentUnit.id}") {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                            border = BorderStroke(2.dp, unitGradient.borderColor),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .premiumTargetAnimation(
+                                    target = com.example.model.AnimatableTarget.UNIT_CARDS,
+                                    index = 0,
+                                    screenKey = "Unit Topics Screen"
+                                )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(148.dp)
+                                    .background(Brush.linearGradient(colors = unitGradient.colors))
+                            ) {
+                                UnitFhdCardImage(
+                                    unit = currentUnit,
+                                    subjectName = currentSubject.name,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Black.copy(alpha = 0.2f),
+                                                    Color.Black.copy(alpha = 0.5f),
+                                                    Color.Black.copy(alpha = 0.85f)
+                                                )
+                                            )
+                                        )
+                                )
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(14.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = unitGradient.badgeBg
+                                        ) {
+                                            Text(
+                                                text = "UNIT ${currentUnit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)} • ${currentSubject.name.uppercase()}",
+                                                color = unitGradient.badgeText,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Black),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = SampleData.formatUnitTitle(currentUnit.unitNumber, currentUnit.name),
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                                        color = Color.White,
+                                        fontSize = 15.5.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        StatBadge("Topics", "${currentUnit.topics.size}", Color(0xFF7C3AED), Modifier.weight(1f), isCompact = true)
+                                        StatBadge("Sets", "$unitSetsCount", Color(0xFFD97706), Modifier.weight(1f), isCompact = true)
+                                        StatBadge("MCQs", "$unitMcqCount", Color(0xFF059669), Modifier.weight(1f), isCompact = true)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // 2. SECTION INSTRUCTION
+                    // ==========================================
+                    item(key = "select_topic_instruction") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "UNIT TOPICS (${currentUnit.topics.size})",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp
+                                    ),
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "Tap any topic card to open its full-screen practice sets page",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // 3. FULL-SCREEN TOPICS LIST
+                    // ==========================================
+                    if (currentUnit.topics.isEmpty()) {
+                        item(key = "empty_topics_state") {
+                            HierarchyEmptyOrErrorCard(
+                                title = "No Topics Available",
+                                subtitle = "Topics for ${currentUnit.name} are being prepared."
+                            )
+                        }
+                    } else {
+                        itemsIndexed(
+                            items = currentUnit.topics,
+                            key = { _, topic -> topic.id },
+                            contentType = { _, _ -> "topic_card_item" }
+                        ) { topicIndex, topic ->
+                            val isTopicLocked = !isPremium && (unitIndex > 0 || topicIndex > 0)
+                            val topicSets = remember(SampleData.questionsState.size, currentSubject.id, currentUnit.id, topic.id) {
+                                SampleData.getPracticeSetsForTopic(currentSubject.id, currentUnit, topic)
+                            }
+                            val totalSetsCount = remember(topicSets, topic.practiceSetsCount) {
+                                if (topicSets.isNotEmpty()) topicSets.size else maxOf(topic.practiceSetsCount, 2)
+                            }
+                            val totalMcqCount = remember(topicSets, currentSubject.id, currentUnit.id, topic.id, SampleData.questionsState.size) {
+                                val fromSets = topicSets.sumOf { it.questionsCount }
+                                if (fromSets > 0) fromSets else SampleData.getQuestionsForPractice(currentSubject.id, currentUnit.id, topic.id, "").size
+                            }
+                            val topicGradient = remember(topic.id, topic.name) {
+                                com.example.ui.theme.PremiumCardColorSystem.getGradientForTopic(
+                                    topicIndex,
+                                    topic.name,
+                                    currentSubject.name
+                                )
+                            }
+
+                            Card(
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(96.dp)
+                                    .testTag("topic_card_${topic.id}")
+                                    .cascadeDropItem(
+                                        visible = true,
+                                        index = topicIndex,
+                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                        screenKey = "Unit Topics Screen"
+                                    )
+                                    .premiumPress(
+                                        target = com.example.model.AnimatableTarget.TOPIC_CARDS,
+                                        screenKey = "Unit Topics Screen"
+                                    ) {
+                                        if (isTopicLocked) {
+                                            upgradePromptFeature = "Topic: ${topic.name}"
+                                        } else {
+                                            onSelectTopic(currentSubject, currentUnit, topic)
+                                        }
+                                    },
+                                border = BorderStroke(
+                                    1.5.dp,
+                                    if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.6f)
+                                    else topicGradient.borderColor
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Brush.linearGradient(colors = topicGradient.colors))
+                                ) {
+                                    TopicFhdCardImage(
+                                        topic = topic,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.35f else 0.18f),
+                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.60f else 0.45f),
+                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.82f else 0.72f),
+                                                        Color.Black.copy(alpha = if (isTopicLocked) 0.94f else 0.88f)
+                                                    )
+                                                )
+                                            )
+                                    )
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        // Top Row: Topic Badge + Sets/MCQs or Pro Lock
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = topicGradient.badgeBg
+                                            ) {
+                                                Text(
+                                                    text = "TOPIC ${topicIndex + 1}",
+                                                    color = topicGradient.badgeText,
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        fontWeight = FontWeight.Black,
+                                                        fontSize = 10.sp
+                                                    ),
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            if (isTopicLocked) {
+                                                PremiumLockBadge(text = "LOCKED (PRO)", isSmall = true)
+                                            } else {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "$totalSetsCount Sets",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 10.5.sp
+                                                        ),
+                                                        color = Color(0xFFFDE68A)
+                                                    )
+                                                    Text(
+                                                        text = "•",
+                                                        color = Color.White.copy(alpha = 0.6f),
+                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
+                                                    )
+                                                    Text(
+                                                        text = "$totalMcqCount MCQs",
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 10.5.sp
+                                                        ),
+                                                        color = Color.White
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        // Bottom Row: Topic Name & Subtitle + Action Pill
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .padding(end = 8.dp)
+                                            ) {
+                                                Text(
+                                                    text = topic.name,
+                                                    style = MaterialTheme.typography.titleMedium.copy(
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp
+                                                    ),
+                                                    color = Color.White,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                if (!topic.subtitle.isNullOrBlank()) {
+                                                    Text(
+                                                        text = topic.subtitle,
+                                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
+                                                        color = Color(0xFFFDE68A).copy(alpha = 0.9f),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = if (isTopicLocked) Color(0xFF0F172A) else Color(0xFF10B981),
+                                                border = if (isTopicLocked) BorderStroke(1.dp, Color(0xFFFFD700)) else null
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (isTopicLocked) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Lock,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFFFFD700),
+                                                            modifier = Modifier.size(11.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(3.dp))
+                                                        Text(
+                                                            text = "Unlock",
+                                                            color = Color(0xFFFFD700),
+                                                            fontSize = 10.5.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                    } else {
+                                                        Text(
+                                                            text = "Open Sets",
+                                                            color = Color.White,
+                                                            fontSize = 10.5.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Spacer(modifier = Modifier.width(3.dp))
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                            contentDescription = null,
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(11.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item(key = "bottom_spacer") {
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    upgradePromptFeature?.let { feature ->
+        PremiumUpgradePromptDialog(
+            title = "Unlock Premium Content",
+            featureName = feature,
+            description = "Free candidates can access only the first Unit and first Topic Set. Upgrade to Premium for unrestricted access to all syllabus units, topic MCQs, and mock tests.",
+            onDismiss = { upgradePromptFeature = null },
+            onUpgradeClick = {
+                upgradePromptFeature = null
+                onNavigateToSubscription()
+            }
+        )
+    }
+}
+
+@Composable
+fun HierarchyEmptyOrErrorCard(
+    title: String,
+    subtitle: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .premiumTargetAnimation(
+                target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
+                index = 0
+            )
+    ) {
+        Column(
+            modifier = Modifier.padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.HourglassEmpty,
+                contentDescription = null,
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = Color(0xFF334155)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF64748B)
+            )
+            if (actionLabel != null && onAction != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onAction,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFF2563EB))
+                ) {
+                    Text(
+                        text = actionLabel,
+                        color = Color(0xFF2563EB),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -70,6 +71,8 @@ fun MockTestGeneratorScreen(
     onNavigateToAvailableTests: () -> Unit = {},
     onNavigateToSubscription: () -> Unit = {}
 ) {
+    BackHandler { onNavigateBack() }
+
     val context = LocalContext.current
     val activeApp = SampleData.getActiveApp()
     val adminConfig = remember(activeApp.id) {

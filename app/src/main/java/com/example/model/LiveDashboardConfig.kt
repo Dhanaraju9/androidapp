@@ -26,61 +26,61 @@ data class LiveDashboardConfig(
     val containerBgEnd: String = "#FFFDF9",
     val containerBorderColor: String = "#F1EAD8",
 
-    // 5 Individual Metric Cards with vibrant premium palette
+    // 5 Individual Metric Cards with rich orange gradient (#FF9800 to #FF6D00)
     val subjectsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(
         title = "Subjects",
         badgeText = "",
-        bgGradientStart = "#FF526F",
-        bgGradientEnd = "#FA2552",
-        borderColor = "#FF3358",
-        accentGlowColor = "#FF526F",
+        bgGradientStart = "#FF9800",
+        bgGradientEnd = "#FF6D00",
+        borderColor = "#FF9800",
+        accentGlowColor = "#FF9800",
         textColor = "#FFFFFF",
         badgeBgColor = "#FFFFFF",
-        badgeTextColor = "#FA2552"
+        badgeTextColor = "#FF6D00"
     ),
     val unitsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(
         title = "Units",
         badgeText = "",
-        bgGradientStart = "#00C853",
-        bgGradientEnd = "#00A844",
-        borderColor = "#00B348",
-        accentGlowColor = "#00C853",
+        bgGradientStart = "#FF9800",
+        bgGradientEnd = "#FF6D00",
+        borderColor = "#FF9800",
+        accentGlowColor = "#FF9800",
         textColor = "#FFFFFF",
         badgeBgColor = "#FFFFFF",
-        badgeTextColor = "#00A844"
+        badgeTextColor = "#FF6D00"
     ),
     val topicsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(
         title = "Topics",
         badgeText = "",
-        bgGradientStart = "#FFB300",
-        bgGradientEnd = "#FF8F00",
-        borderColor = "#FFA000",
-        accentGlowColor = "#FFB300",
+        bgGradientStart = "#FF9800",
+        bgGradientEnd = "#FF6D00",
+        borderColor = "#FF9800",
+        accentGlowColor = "#FF9800",
         textColor = "#FFFFFF",
         badgeBgColor = "#FFFFFF",
-        badgeTextColor = "#FF8F00"
+        badgeTextColor = "#FF6D00"
     ),
     val practiceSetsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(
         title = "Practice Sets",
         badgeText = "",
-        bgGradientStart = "#8B5CF6",
-        bgGradientEnd = "#6D28D9",
-        borderColor = "#7C3AED",
-        accentGlowColor = "#8B5CF6",
+        bgGradientStart = "#FF9800",
+        bgGradientEnd = "#FF6D00",
+        borderColor = "#FF9800",
+        accentGlowColor = "#FF9800",
         textColor = "#FFFFFF",
         badgeBgColor = "#FFFFFF",
-        badgeTextColor = "#6D28D9"
+        badgeTextColor = "#FF6D00"
     ),
     val totalMcqsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(
         title = "Total MCQs",
         badgeText = "",
-        bgGradientStart = "#FF2D87",
-        bgGradientEnd = "#E91E63",
-        borderColor = "#E11D48",
-        accentGlowColor = "#FF2D87",
+        bgGradientStart = "#FF9800",
+        bgGradientEnd = "#FF6D00",
+        borderColor = "#FF9800",
+        accentGlowColor = "#FF9800",
         textColor = "#FFFFFF",
         badgeBgColor = "#FFFFFF",
-        badgeTextColor = "#E91E63"
+        badgeTextColor = "#FF6D00"
     )
 )
 

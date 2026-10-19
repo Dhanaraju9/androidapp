@@ -356,9 +356,9 @@ fun LiveMetricsDetailBottomSheet(
                             subjects = displaySubjects,
                             searchQuery = searchQuery,
                             selectedSubjectId = selectedSubjectFilter,
-                            onStartPracticeSet = {
+                            onSelectTopicSet = { subject, unit, topic ->
                                 onDismissRequest()
-                                onNavigateToPracticeSets()
+                                onSelectTopic(subject, unit, topic)
                             }
                         )
                     }
@@ -826,7 +826,7 @@ private fun PracticeSetsSheetContent(
     subjects: List<Subject>,
     searchQuery: String,
     selectedSubjectId: String?,
-    onStartPracticeSet: () -> Unit
+    onSelectTopicSet: (Subject, UnitModel, TopicModel) -> Unit
 ) {
     data class DisplayPracticeSet(
         val title: String,
@@ -834,7 +834,10 @@ private fun PracticeSetsSheetContent(
         val contextName: String,
         val questionsCount: Int,
         val difficulty: String,
-        val subjectId: String
+        val subjectId: String,
+        val subject: Subject,
+        val unit: UnitModel,
+        val topic: TopicModel
     )
 
     val setsList = remember(subjects) {
@@ -852,7 +855,10 @@ private fun PracticeSetsSheetContent(
                                     contextName = "${subject.name} • Unit ${unit.unitNumber}",
                                     questionsCount = s.questionsCount,
                                     difficulty = s.difficulty,
-                                    subjectId = subject.id
+                                    subjectId = subject.id,
+                                    subject = subject,
+                                    unit = unit,
+                                    topic = topic
                                 )
                             )
                         }
@@ -867,7 +873,10 @@ private fun PracticeSetsSheetContent(
                                     contextName = "${subject.name} • Unit ${unit.unitNumber}",
                                     questionsCount = 10,
                                     difficulty = topic.difficulty,
-                                    subjectId = subject.id
+                                    subjectId = subject.id,
+                                    subject = subject,
+                                    unit = unit,
+                                    topic = topic
                                 )
                             )
                         }
@@ -901,7 +910,7 @@ private fun PracticeSetsSheetContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .dashboardPressAnimation(onClick = { onStartPracticeSet() }),
+                        .dashboardPressAnimation(onClick = { onSelectTopicSet(item.subject, item.unit, item.topic) }),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
@@ -953,7 +962,7 @@ private fun PracticeSetsSheetContent(
                         }
 
                         Button(
-                            onClick = onStartPracticeSet,
+                            onClick = { onSelectTopicSet(item.subject, item.unit, item.topic) },
                             modifier = Modifier.height(34.dp),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),

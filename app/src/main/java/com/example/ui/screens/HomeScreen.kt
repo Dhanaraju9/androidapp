@@ -177,16 +177,6 @@ fun HomeScreen(
         }
     }
 
-    var expandedSubjectId by rememberSaveable { mutableStateOf<String?>(null) }
-    var expandedUnitId by rememberSaveable { mutableStateOf<String?>(null) }
-    var multiExpandedSubjectIds by rememberSaveable { mutableStateOf(emptySet<String>()) }
-    var multiExpandedUnitIds by rememberSaveable { mutableStateOf(emptySet<String>()) }
-    val accordionSpec = com.example.util.AnimationConfigManager.resolveSpec(
-        target = com.example.model.AnimatableTarget.ACCORDION_EXPAND_COLLAPSE,
-        screenKey = "Home Screen"
-    )
-    val isSingleOpenAccordion = accordionSpec.singleOpenAccordion &&
-        accordionSpec.hierarchyType != com.example.model.HierarchyDrillDownAnimationType.MULTI_OPEN_ACCORDION
     var upgradePromptFeature by remember { mutableStateOf<String?>(null) }
 
     if (showAdminLoginDialog) {
@@ -552,7 +542,14 @@ fun HomeScreen(
                             onNavigateToMockTests = onNavigateToMockTests,
                             onRefreshCategoryCounts = { dynamicCategoryCounts = it },
                             onNavigateToTopicSets = {
-                                Toast.makeText(context, "Topic Sets feature coming soon!", Toast.LENGTH_SHORT).show()
+                                val firstSubject = displaySubjects.firstOrNull()
+                                val firstUnit = firstSubject?.units?.firstOrNull()
+                                val firstTopic = firstUnit?.topics?.firstOrNull()
+                                if (firstSubject != null && firstUnit != null && firstTopic != null) {
+                                    onNavigateToTopic?.invoke(firstSubject, firstUnit, firstTopic) ?: onNavigateToSubject(firstSubject)
+                                } else if (firstSubject != null) {
+                                    onNavigateToSubject(firstSubject)
+                                }
                             },
                             onNavigateToPractice = {
                                 Toast.makeText(context, "Practice Arena feature coming soon!", Toast.LENGTH_SHORT).show()
@@ -569,22 +566,63 @@ fun HomeScreen(
                                 )
                         )
 
-                        // Subtle Divider / Gap Row between Live Content Dashboard and Syllabus Section Cards below
+                        // Refined, luxurious horizontal divider between Live Content Dashboard and Prelims, Mains, General cards
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
                                 .homeSmoothReveal(
                                     index = 3,
                                     scrollState = homeScrollState
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            HorizontalDivider(
-                                thickness = 1.dp,
-                                color = if (isDarkMode) Color(0xFF334155).copy(alpha = 0.5f) else Color(0xFFE2E8F0).copy(alpha = 0.85f),
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .widthIn(max = 680.dp)
+                                    .padding(horizontal = 24.dp, vertical = 7.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Subtle ambient warm glow behind the center line
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.82f)
+                                        .height(4.dp)
+                                        .background(
+                                            brush = Brush.horizontalGradient(
+                                                listOf(
+                                                    Color.Transparent,
+                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.16f else 0.20f),
+                                                    Color(0xFFFDE68A).copy(alpha = if (isDarkMode) 0.22f else 0.28f),
+                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.16f else 0.20f),
+                                                    Color.Transparent
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(2.dp)
+                                        )
+                                )
+                                // Refined, thin gradient line with warm champagne, soft orange, and restrained cream highlight
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.25.dp)
+                                        .background(
+                                            brush = Brush.horizontalGradient(
+                                                listOf(
+                                                    Color.Transparent,
+                                                    Color(0xFFF7D9A4).copy(alpha = 0.35f),
+                                                    Color(0xFFFF9E43).copy(alpha = 0.80f),
+                                                    Color(0xFFFFFDF5),
+                                                    Color(0xFFF7D9A4),
+                                                    Color(0xFFFF8A24).copy(alpha = 0.80f),
+                                                    Color(0xFFF7D9A4).copy(alpha = 0.35f),
+                                                    Color.Transparent
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(1.dp)
+                                        )
+                                )
+                            }
                         }
 
                         // 3. PRELIMS, MAINS, and GENERAL TEST category cards - placed very close to Exam Syllabus & Papers
@@ -593,8 +631,6 @@ fun HomeScreen(
                             onSelectCategory = { newCategory ->
                                 if (selectedCategoryFilter != newCategory) {
                                     selectedCategoryFilter = newCategory
-                                    expandedSubjectId = null
-                                    expandedUnitId = null
                                 }
                             },
                             prelimsCount = dynamicCategoryCounts.prelimsCount,
@@ -679,43 +715,18 @@ fun HomeScreen(
                                 }
                                 val unitCount = remember(subject.id) { subject.units.size }
                                 val topicCount = remember(subject.id) { subject.units.sumOf { it.topics.size } }
-                                // Each topic typically has 2 practice sets (or calculated dynamically)
-                                val totalSets = remember(topicCount) { topicCount * 2 }
-                                val isExpanded = if (isSingleOpenAccordion) {
-                                    expandedSubjectId == subject.id
-                                } else {
-                                    multiExpandedSubjectIds.contains(subject.id) || expandedSubjectId == subject.id
-                                }
-                                val subjectChevronRotation by animateAccordionChevronRotation(isExpanded = isExpanded)
                                 val richGradient = remember(subject.id, subject.name) {
                                     com.example.ui.theme.PremiumCardColorSystem.getGradientForSubject(subject.name, subject.id)
                                 }
-                                val toggleSubjectExpand = {
-                                    if (isZeroMcq && !isExpanded) {
+                                val openSubjectFullScreen = {
+                                    if (isZeroMcq) {
                                         Toast.makeText(
                                             context,
                                             "⚠️ ${subject.name} question bank is updating soon! Exploring syllabus outline...",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                    if (isSingleOpenAccordion) {
-                                        if (expandedSubjectId == subject.id) {
-                                            expandedSubjectId = null
-                                            expandedUnitId = null
-                                        } else {
-                                            expandedSubjectId = subject.id
-                                            expandedUnitId = null
-                                        }
-                                        multiExpandedSubjectIds = emptySet()
-                                    } else {
-                                        if (isExpanded) {
-                                            multiExpandedSubjectIds = multiExpandedSubjectIds - subject.id
-                                            if (expandedSubjectId == subject.id) expandedSubjectId = null
-                                        } else {
-                                            multiExpandedSubjectIds = multiExpandedSubjectIds + subject.id
-                                            expandedSubjectId = subject.id
-                                        }
-                                    }
+                                    onNavigateToSubject(subject)
                                 }
 
                                 HomeCardContainer(
@@ -745,7 +756,7 @@ fun HomeScreen(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .height(172.dp)
-                                                    .clickable { toggleSubjectExpand() }
+                                                    .clickable { openSubjectFullScreen() }
                                             ) {
                                                 // Full-Width Scenic Background Image relevant to each subject
                                                 SubjectFhdCardImage(
@@ -816,28 +827,23 @@ fun HomeScreen(
 
                                                         Surface(
                                                             shape = CircleShape,
-                                                            color = if (isExpanded) Color(0xFFFEF3C7) else Color.White.copy(alpha = 0.28f),
+                                                            color = Color.White.copy(alpha = 0.28f),
                                                             border = BorderStroke(
                                                                 1.dp,
-                                                                if (isExpanded) Color(0xFFF59E0B)
-                                                                else Color.White.copy(alpha = 0.65f)
+                                                                Color.White.copy(alpha = 0.65f)
                                                             ),
                                                             modifier = Modifier
                                                                 .size(30.dp)
                                                                 .clip(CircleShape)
                                                                 .testTag("subject_expand_btn_${subject.id}")
-                                                                .clickable { toggleSubjectExpand() }
+                                                                .clickable { openSubjectFullScreen() }
                                                         ) {
                                                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                                                 Icon(
-                                                                    imageVector = Icons.Default.KeyboardArrowDown,
-                                                                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                                                    tint = if (isExpanded) Color(0xFF92400E) else Color.White,
-                                                                    modifier = Modifier
-                                                                        .size(18.dp)
-                                                                        .graphicsLayer {
-                                                                            rotationZ = subjectChevronRotation
-                                                                        }
+                                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                                    contentDescription = "Open Units",
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(16.dp)
                                                                 )
                                                             }
                                                         }
@@ -1027,111 +1033,6 @@ fun HomeScreen(
                                                                     fontSize = 11.sp,
                                                                     fontWeight = FontWeight.ExtraBold,
                                                                     maxLines = 1
-                                                                )
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            // Expandable Subjects > Units > Topics with Cascade-Drop Opening Animation
-                                            AnimatedVisibility(
-                                                visible = isExpanded,
-                                                enter = AppMotionSystem.cascadeContainerEnterTransition(),
-                                                exit = AppMotionSystem.cascadeContainerExitTransition()
-                                            ) {
-                                                Column(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .background(Color(0xFF0F172A).copy(alpha = 0.85f))
-                                                        .padding(12.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Text(
-                                                            text = "UNITS & TOPICS BREAKDOWN",
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.Black,
-                                                            color = Color.White.copy(alpha = 0.9f),
-                                                            letterSpacing = 0.5.sp
-                                                        )
-                                                        Text(
-                                                            text = "Full Syllabus →",
-                                                            fontSize = 12.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color(0xFF60A5FA),
-                                                            modifier = Modifier
-                                                                .testTag("subject_full_syllabus_${subject.id}")
-                                                                .clickable { onNavigateToSubject(subject) }
-                                                        )
-                                                    }
-
-                                                    val isPremium = SampleData.isUserPremium()
-                                                    subject.units.forEachIndexed { unitIndex, unit ->
-                                                        key(unit.id) {
-                                                            val isUnitLocked = !isPremium && unitIndex > 0
-                                                            val isUnitExpanded = if (isSingleOpenAccordion) {
-                                                                expandedUnitId == unit.id
-                                                            } else {
-                                                                multiExpandedUnitIds.contains(unit.id) || expandedUnitId == unit.id
-                                                            }
-                                                            com.example.ui.components.CascadeItem(
-                                                                index = unitIndex,
-                                                                visible = isExpanded,
-                                                                target = com.example.model.AnimatableTarget.UNIT_CARDS,
-                                                                screenKey = "Home Screen",
-                                                                triggerKey = "${subject.id}_unit_${unit.id}",
-                                                                initialOffsetY = 16.dp,
-                                                                staggerDelayMs = AppMotionSystem.CASCADE_UNIT_STAGGER_MS,
-                                                                durationMs = AppMotionSystem.CASCADE_DURATION_MS
-                                                            ) {
-                                                                HomeUnitPreviewCard(
-                                                                    subject = subject,
-                                                                    unit = unit,
-                                                                    unitIndex = unitIndex,
-                                                                    isUnitExpanded = isUnitExpanded,
-                                                                    isLocked = isUnitLocked,
-                                                                    onToggleUnitExpand = {
-                                                                        if (isUnitLocked) {
-                                                                            upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                                                        } else if (isSingleOpenAccordion) {
-                                                                            expandedUnitId = if (expandedUnitId == unit.id) null else unit.id
-                                                                            multiExpandedUnitIds = emptySet()
-                                                                        } else {
-                                                                            if (isUnitExpanded) {
-                                                                                multiExpandedUnitIds = multiExpandedUnitIds - unit.id
-                                                                                if (expandedUnitId == unit.id) expandedUnitId = null
-                                                                            } else {
-                                                                                multiExpandedUnitIds = multiExpandedUnitIds + unit.id
-                                                                                expandedUnitId = unit.id
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    onOpenUnit = {
-                                                                        if (isUnitLocked) {
-                                                                            upgradePromptFeature = "Unit ${unit.unitNumber.takeIf { it > 0 } ?: (unitIndex + 1)}: ${unit.name}"
-                                                                        } else if (onNavigateToUnit != null) {
-                                                                            onNavigateToUnit(subject, unit)
-                                                                        } else {
-                                                                            onNavigateToSubject(subject)
-                                                                        }
-                                                                    },
-                                                                    onOpenTopic = { selectedTopic ->
-                                                                        val topicIndex = unit.topics.indexOf(selectedTopic)
-                                                                        val isTopicLocked = !isPremium && (unitIndex > 0 || topicIndex > 0)
-                                                                        if (isTopicLocked) {
-                                                                            upgradePromptFeature = "Topic: ${selectedTopic.name}"
-                                                                        } else if (onNavigateToTopic != null) {
-                                                                            onNavigateToTopic(subject, unit, selectedTopic)
-                                                                        } else {
-                                                                            onNavigateToSubject(subject)
-                                                                        }
-                                                                    },
-                                                                    modifier = Modifier.testTag("unit_card_${unit.id}")
                                                                 )
                                                             }
                                                         }
@@ -3577,14 +3478,17 @@ fun HomeLiveContentDashboard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val richOrangeStart = Color(0xFFFF9800)
+                val richOrangeEnd = Color(0xFFFF6D00)
+
                 // Card 1: Subjects
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.subjectsCard.title,
                     count = config.subjectsCard.overrideValue ?: totalSubjects,
                     icon = Icons.AutoMirrored.Filled.Article,
-                    bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
-                    bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
+                    bgStart = richOrangeStart,
+                    bgEnd = richOrangeEnd,
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.SUBJECTS }
                 )
 
@@ -3594,8 +3498,8 @@ fun HomeLiveContentDashboard(
                     title = config.unitsCard.title,
                     count = config.unitsCard.overrideValue ?: totalUnits,
                     icon = Icons.Default.MenuBook,
-                    bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
-                    bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
+                    bgStart = richOrangeStart,
+                    bgEnd = richOrangeEnd,
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.UNITS }
                 )
 
@@ -3605,8 +3509,8 @@ fun HomeLiveContentDashboard(
                     title = config.topicsCard.title,
                     count = config.topicsCard.overrideValue ?: totalTopics,
                     icon = Icons.Default.Layers,
-                    bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
-                    bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
+                    bgStart = richOrangeStart,
+                    bgEnd = richOrangeEnd,
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOPICS }
                 )
 
@@ -3616,8 +3520,8 @@ fun HomeLiveContentDashboard(
                     title = config.practiceSetsCard.title,
                     count = config.practiceSetsCard.overrideValue ?: totalSets,
                     icon = Icons.Default.GridView,
-                    bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
-                    bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
+                    bgStart = richOrangeStart,
+                    bgEnd = richOrangeEnd,
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.PRACTICE_SETS }
                 )
 
@@ -3627,8 +3531,8 @@ fun HomeLiveContentDashboard(
                     title = config.totalMcqsCard.title,
                     count = config.totalMcqsCard.overrideValue ?: totalMcqs,
                     icon = Icons.Default.FactCheck,
-                    bgStart = com.example.model.parseHexColor(config.topicsCard.bgGradientStart, Color(0xFFFFB300)),
-                    bgEnd = com.example.model.parseHexColor(config.topicsCard.bgGradientEnd, Color(0xFFFF8F00)),
+                    bgStart = richOrangeStart,
+                    bgEnd = richOrangeEnd,
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOTAL_MCQS }
                 )
             }
@@ -3673,10 +3577,11 @@ fun HomeLiveContentDashboard(
 /**
  * Compact Equal-Width Metric Card for the Single-Row Live Content Dashboard:
  * - Arranges all 5 statistic cards (Subjects, Units, Topics, Sets, MCQs) in ONE horizontal row
+ * - Rich orange gradient background (#FF9800 to #FF6D00) with clean non-floral luminous sheen
+ * - Strong layered orange-and-white rounded border and subtle orange glow
  * - Compact height (58.dp) with equal weight distribution
  * - Circular frosted icon container on top, bold dynamic count in middle, clean label at bottom
  * - Tactile press animation with scale and elevation transition
- * - Responsive across small phones, standard phones, and tablets without text truncation
  */
 @Composable
 fun SingleRowMetricCard(
@@ -3698,18 +3603,30 @@ fun SingleRowMetricCard(
             else -> title
         }
     }
-    val cardBorderBrush = remember(bgStart, bgEnd) {
+    // Outer strong orange-gold border brush
+    val outerOrangeBorderBrush = remember(bgStart, bgEnd) {
         Brush.verticalGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.55f),
-                bgStart.copy(alpha = 0.20f)
+                Color(0xFFFFB300),
+                bgStart,
+                bgEnd
+            )
+        )
+    }
+    // Inner crisp white-and-warm-gold layered border brush
+    val innerWhiteLayeredBorderBrush = remember {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.92f),
+                Color(0xFFFFF8E1).copy(alpha = 0.82f),
+                Color.White.copy(alpha = 0.72f)
             )
         )
     }
     val pressState = rememberCardPressAnimationState(
         targetScale = 0.96f,
-        defaultElevation = 2.dp,
-        pressedElevation = 0.5.dp,
+        defaultElevation = 3.dp,
+        pressedElevation = 1.dp,
         durationMs = 120
     )
 
@@ -3720,6 +3637,12 @@ fun SingleRowMetricCard(
                 scaleX = pressState.scale
                 scaleY = pressState.scale
             }
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(9.dp),
+                ambientColor = Color(0xFFFF9800).copy(alpha = 0.55f),
+                spotColor = Color(0xFFFF6D00).copy(alpha = 0.65f)
+            )
             .clip(RoundedCornerShape(9.dp))
             .clickable(
                 interactionSource = pressState.interactionSource,
@@ -3727,7 +3650,7 @@ fun SingleRowMetricCard(
             ) { onClick() },
         shape = RoundedCornerShape(9.dp),
         color = Color.Transparent,
-        border = BorderStroke(1.dp, cardBorderBrush),
+        border = BorderStroke(1.5.dp, outerOrangeBorderBrush),
         shadowElevation = pressState.elevation
     ) {
         Box(
@@ -3738,7 +3661,27 @@ fun SingleRowMetricCard(
                         colors = listOf(bgStart, bgEnd)
                     )
                 )
-                .padding(horizontal = 2.dp, vertical = 3.dp),
+                // Inner layered white rounded border ring
+                .padding(1.5.dp)
+                .border(
+                    width = 1.dp,
+                    brush = innerWhiteLayeredBorderBrush,
+                    shape = RoundedCornerShape(7.5.dp)
+                )
+                .clip(RoundedCornerShape(7.5.dp))
+                // Subtle non-floral top-left luminous sheen
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.16f),
+                            Color.Transparent,
+                            Color(0xFFE65100).copy(alpha = 0.12f)
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(140f, 160f)
+                    )
+                )
+                .padding(horizontal = 2.dp, vertical = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(

@@ -410,13 +410,13 @@ fun PracticeArenaScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Ivory, // Soft luxury ivory background
+        containerColor = if (isDarkMode) Color(0xFF0F172A) else Color(pa.screenBgColor),
         topBar = {
             // Floating Card Header with 2 clean rows
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Ivory)
+                    .background(if (isDarkMode) Color(0xFF0F172A) else Color(pa.screenBgColor))
                     .statusBarsPadding()
             ) {
                 Card(
@@ -1813,11 +1813,12 @@ fun QuestionDetailPanel(
 }
 }
 
-private fun getFontFamily(fontName: String): androidx.compose.ui.text.font.FontFamily {
-    return when (fontName) {
-        "Serif" -> androidx.compose.ui.text.font.FontFamily.Serif
-        "Monospace" -> androidx.compose.ui.text.font.FontFamily.Monospace
-        "Sans-Serif" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+private fun getFontFamily(fontName: String?): androidx.compose.ui.text.font.FontFamily {
+    return when (fontName?.lowercase()?.trim()) {
+        "serif" -> androidx.compose.ui.text.font.FontFamily.Serif
+        "monospace" -> androidx.compose.ui.text.font.FontFamily.Monospace
+        "cursive" -> androidx.compose.ui.text.font.FontFamily.Cursive
+        "sans-serif", "sansserif" -> androidx.compose.ui.text.font.FontFamily.SansSerif
         else -> androidx.compose.ui.text.font.FontFamily.Default
     }
 }

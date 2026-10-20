@@ -198,11 +198,26 @@ fun UserProfileScreen(
                     PracticeAppearancePanel(
                         currentSettings = currentSettings,
                         onSave = { newSettings ->
+                            val currentAdv = com.example.repository.AppConfigRepository.getInstance().getCurrentConfig().advancedFontSettings
+                            val updatedAdv = currentAdv.copy(practiceAppearance = newSettings)
+                            com.example.util.FontSettingsManager.saveSettings(context, updatedAdv)
                             com.example.util.PracticeAppearanceManager.saveSettings(context, newSettings)
+                            val currentConfig = com.example.repository.AppConfigRepository.getInstance().getCurrentConfig()
+                            com.example.repository.AppConfigRepository.getInstance().updateAppConfig(
+                                currentConfig.copy(advancedFontSettings = updatedAdv)
+                            )
                             showAppearancePanel = false
                         },
                         onReset = {
                             com.example.util.PracticeAppearanceManager.resetToDefault(context)
+                            val defPa = com.example.model.PracticeAppearanceSettings()
+                            val currentAdv = com.example.repository.AppConfigRepository.getInstance().getCurrentConfig().advancedFontSettings
+                            val updatedAdv = currentAdv.copy(practiceAppearance = defPa)
+                            com.example.util.FontSettingsManager.saveSettings(context, updatedAdv)
+                            val currentConfig = com.example.repository.AppConfigRepository.getInstance().getCurrentConfig()
+                            com.example.repository.AppConfigRepository.getInstance().updateAppConfig(
+                                currentConfig.copy(advancedFontSettings = updatedAdv)
+                            )
                             showAppearancePanel = false
                         },
                         onBack = { showAppearancePanel = false }

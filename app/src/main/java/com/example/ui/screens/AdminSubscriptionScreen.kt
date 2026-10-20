@@ -102,12 +102,7 @@ fun AdminSubscriptionTab() {
             Tab(
                 selected = selectedTab == 3,
                 onClick = { selectedTab = 3 },
-                text = { Text("Gateway UI Theme", fontWeight = if(selectedTab == 3) FontWeight.Bold else FontWeight.Normal) }
-            )
-            Tab(
-                selected = selectedTab == 4,
-                onClick = { selectedTab = 4 },
-                text = { Text("Transactions Ledger", fontWeight = if(selectedTab == 4) FontWeight.Bold else FontWeight.Normal) }
+                text = { Text("Transactions Ledger", fontWeight = if(selectedTab == 3) FontWeight.Bold else FontWeight.Normal) }
             )
         }
         
@@ -134,9 +129,6 @@ fun AdminSubscriptionTab() {
                 RazorpayGatewayTabContent()
             }
             3 -> {
-                PaymentGatewayManagerTabContent()
-            }
-            4 -> {
                 AdminTransactionsLedgerTabContent()
             }
         }
@@ -1140,6 +1132,10 @@ fun AppDistributionScopeSelector(
 
 @Composable
 fun RazorpayGatewayTabContent() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        com.example.util.BillingPaymentManager.loadMerchantConfig(context)
+    }
     var merchantName by remember { mutableStateOf(com.example.util.BillingPaymentManager.merchantName) }
     var merchantId by remember { mutableStateOf(com.example.util.BillingPaymentManager.merchantId) }
     var accountId by remember { mutableStateOf(com.example.util.BillingPaymentManager.accountId) }
@@ -1379,7 +1375,8 @@ fun RazorpayGatewayTabContent() {
                             mid = merchantId,
                             accId = accountId,
                             keyId = razorpayKeyId,
-                            live = isLiveMode
+                            live = isLiveMode,
+                            context = context
                         )
                         showSavedMessage = true
                     },
@@ -1438,262 +1435,6 @@ fun RazorpayGatewayTabContent() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun PaymentGatewayManagerTabContent() {
-    val activeConfig by com.example.data.PaymentGatewayConfigRepository.config.collectAsState()
-    var previewGateway by remember { mutableStateOf("play_billing") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Live Preview Box & Reset Control Bar
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.5.dp, Color(0xFF2563EB).copy(alpha = 0.3f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Live Interactive Screen Preview",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Color(0xFF0F172A)
-                        )
-                        Text(
-                            text = "100% Pixel-to-Pixel match with PAYMENT GATE.png",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-
-                    // Reset to Default Button
-                    Button(
-                        onClick = {
-                            com.example.data.PaymentGatewayConfigRepository.resetToDefault()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFEF3C7)),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reset",
-                                tint = Color(0xFFB45309),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Reset to Default",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFB45309)
-                            )
-                        }
-                    }
-                }
-
-                // Gateway Toggle for Live Preview
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Preview State:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
-                    FilterChip(
-                        selected = previewGateway == "play_billing",
-                        onClick = { previewGateway = "play_billing" },
-                        label = { Text("Google Play Selected") }
-                    )
-                    FilterChip(
-                        selected = previewGateway == "razorpay",
-                        onClick = { previewGateway = "razorpay" },
-                        label = { Text("Razorpay Selected") }
-                    )
-                }
-
-                // Live Preview Surface
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(480.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .border(BorderStroke(1.dp, Color(0xFFCBD5E1)))
-                ) {
-                    com.example.ui.components.SelectPaymentGatewayContent(
-                        config = activeConfig,
-                        selectedGateway = previewGateway,
-                        onGatewaySelected = { previewGateway = it }
-                    )
-                }
-            }
-        }
-
-        // Configuration Control Panels
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Text(
-                    text = "Screen & Brand Text Controls",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color(0xFF0F172A)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.topBarTitle,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(topBarTitle = it))
-                    },
-                    label = { Text("Top Bar Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.topBarSubtitle,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(topBarSubtitle = it))
-                    },
-                    label = { Text("Top Bar Subtitle") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.pageHeading,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(pageHeading = it))
-                    },
-                    label = { Text("Page Heading") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.pageSubtitle,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(pageSubtitle = it))
-                    },
-                    label = { Text("Page Subtitle") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                Text(
-                    text = "Payment Gateway Option Titles & Badges",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color(0xFF0F172A)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.gplayTitle,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(gplayTitle = it))
-                    },
-                    label = { Text("Google Play Gateway Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.gplayBadgeText,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(gplayBadgeText = it))
-                    },
-                    label = { Text("Google Play Badge Text") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.razorpayTitle,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(razorpayTitle = it))
-                    },
-                    label = { Text("Razorpay Gateway Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.razorpayBadgeText,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(razorpayBadgeText = it))
-                    },
-                    label = { Text("Razorpay Badge Text") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                HorizontalDivider(color = Color(0xFFF1F5F9))
-
-                Text(
-                    text = "Call-To-Action (CTA) Button Text",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color(0xFF0F172A)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.ctaGooglePlayText,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(ctaGooglePlayText = it))
-                    },
-                    label = { Text("CTA Text (Google Play Selected)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                OutlinedTextField(
-                    value = activeConfig.ctaRazorpayText,
-                    onValueChange = {
-                        com.example.data.PaymentGatewayConfigRepository.updateConfig(activeConfig.copy(ctaRazorpayText = it))
-                    },
-                    label = { Text("CTA Text (Razorpay Selected)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

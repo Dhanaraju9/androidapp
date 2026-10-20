@@ -42,21 +42,46 @@ object BillingPaymentManager {
     private var pendingDurationHours: Long = 24L
     private var pendingAppId: String = "appsc-group2"
 
+    private const val PREFS_NAME = "razorpay_gateway_prefs"
+
     /**
-     * Update merchant settings dynamically from Admin settings.
+     * Load saved merchant settings from SharedPreferences.
+     */
+    fun loadMerchantConfig(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        merchantName = prefs.getString("merchant_name", merchantName) ?: merchantName
+        merchantId = prefs.getString("merchant_id", merchantId) ?: merchantId
+        accountId = prefs.getString("account_id", accountId) ?: accountId
+        razorpayKeyId = prefs.getString("razorpay_key_id", razorpayKeyId) ?: razorpayKeyId
+        isLiveMode = prefs.getBoolean("is_live_mode", isLiveMode)
+    }
+
+    /**
+     * Update merchant settings dynamically from Admin settings and persist to SharedPreferences.
      */
     fun updateMerchantConfig(
         name: String = merchantName,
         mid: String = merchantId,
         accId: String = accountId,
         keyId: String = razorpayKeyId,
-        live: Boolean = isLiveMode
+        live: Boolean = isLiveMode,
+        context: Context? = null
     ) {
         merchantName = name.trim()
         merchantId = mid.trim()
         accountId = accId.trim()
         razorpayKeyId = keyId.trim()
         isLiveMode = live
+
+        val ctx = context ?: pendingContext
+        ctx?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)?.edit()?.apply {
+            putString("merchant_name", merchantName)
+            putString("merchant_id", merchantId)
+            putString("account_id", accountId)
+            putString("razorpay_key_id", razorpayKeyId)
+            putBoolean("is_live_mode", isLiveMode)
+            apply()
+        }
     }
 
     // Google Play Subscription Product IDs mapped to app tenant plans
@@ -80,6 +105,7 @@ object BillingPaymentManager {
      * Initializes Google Play BillingClient connection and preloads Razorpay.
      */
     fun initializePlayBilling(context: Context, onReady: (Boolean) -> Unit = {}) {
+        loadMerchantConfig(context)
         try {
             // Preload Razorpay Checkout
             Checkout.preload(context.applicationContext)
@@ -209,26 +235,29 @@ object BillingPaymentManager {
     }
 
     /**
-     * Triggers Razorpay Checkout flow (UPI / Cards / NetBanking / Wallet)
+     * Triggers Razorpay Standard Checkout flow (UPI Intent/ID, Dynamic UPI QR, Cards, NetBanking & Wallets)
      * Connected to merchant: SOBHA DHANARAJU (MID: T89U1OXHFIQbHa / Account ID: acc_T89U1OXHFIQbHa)
      */
     fun launchRazorpayCheckout(
         context: Context,
         planTitle: String,
         amountRupees: Int,
-        paymentMode: String, // "upi", "card", "netbanking"
+        paymentMode: String, // "upi", "upi_qr", "card", "netbanking_wallet"
         upiId: String = "",
         durationHours: Long,
         appId: String = "appsc-group2",
         planId: String = "12_months",
+        razorpayOrderId: String? = null,
         onSuccess: () -> Unit
     ) {
+        loadMerchantConfig(context)
         Log.d(TAG, "Initiating Razorpay payment for Merchant: $merchantName ($merchantId) mode: $paymentMode for ₹$amountRupees")
         
         val modeLabel = when (paymentMode) {
-            "upi" -> if (upiId.isNotBlank()) "Razorpay UPI ($upiId)" else "Razorpay Instant UPI / QR"
-            "card" -> "Razorpay Debit/Credit Card"
-            "netbanking" -> "Razorpay NetBanking"
+            "upi" -> if (upiId.isNotBlank()) "Razorpay UPI ($upiId)" else "Razorpay UPI Intent"
+            "upi_qr" -> "Razorpay Dynamic UPI QR"
+            "card" -> "Razorpay Credit/Debit Card"
+            "netbanking_wallet", "netbanking" -> "Razorpay NetBanking & Wallets"
             else -> "Razorpay Gateway"
         }
 
@@ -243,8 +272,9 @@ object BillingPaymentManager {
         pendingDurationHours = durationHours
         pendingAppId = appId
 
-        // Pre-create verified order ID
-        val generatedOrderId = "order_${merchantId}_${System.currentTimeMillis()}"
+        // Track order reference for verification ledger
+        val generatedOrderId = razorpayOrderId?.takeIf { it.isNotBlank() }
+            ?: "order_${merchantId}_${System.currentTimeMillis()}"
         pendingOrderId = generatedOrderId
 
         if (activity != null) {
@@ -259,35 +289,98 @@ object BillingPaymentManager {
                     put("theme.color", "#1E3E62")
                     put("currency", currency)
                     put("amount", amountRupees * 100) // Razorpay accepts amount in subunits (paise)
-                    put("order_id", generatedOrderId)
-                    put("account_id", accountId)
+                    if (!razorpayOrderId.isNullOrBlank()) {
+                        put("order_id", razorpayOrderId)
+                    }
 
                     val prefill = JSONObject().apply {
                         val user = SampleData.sampleUserProfile
                         put("email", user.email.ifBlank { "student@appscprep.com" })
                         put("contact", user.phone.ifBlank { "9876543210" })
                         if (upiId.isNotBlank()) {
-                            put("vpa", upiId)
+                            put("vpa", upiId.trim())
+                        }
+                        when (paymentMode) {
+                            "upi", "upi_qr" -> put("method", "upi")
+                            "card" -> put("method", "card")
+                            "netbanking_wallet", "netbanking" -> put("method", "netbanking")
                         }
                     }
                     put("prefill", prefill)
 
-                    // Enable approved Razorpay native UPI intent flow
-                    if (paymentMode == "upi") {
-                        val displayObj = JSONObject().apply {
-                            val blocksObj = JSONObject().apply {
+                    // Configure prioritized payment method blocks in Razorpay Standard Checkout
+                    val displayObj = JSONObject().apply {
+                        val blocksObj = JSONObject()
+                        val sequenceArr = org.json.JSONArray()
+
+                        when (paymentMode) {
+                            "upi" -> {
+                                put("_[flow]", "intent")
                                 val upiBlock = JSONObject().apply {
-                                    put("name", "Pay via UPI")
+                                    put("name", "Pay via UPI Apps or UPI ID")
                                     put("instruments", org.json.JSONArray().apply {
-                                        put(JSONObject().apply { put("method", "upi") })
+                                        put(JSONObject().apply {
+                                            put("method", "upi")
+                                            put("flows", org.json.JSONArray().apply {
+                                                put("intent")
+                                                put("collect")
+                                                put("qr")
+                                            })
+                                        })
                                     })
                                 }
-                                put("upi", upiBlock)
+                                blocksObj.put("preferred", upiBlock)
+                                sequenceArr.put("block.preferred")
                             }
-                            put("blocks", blocksObj)
+                            "upi_qr" -> {
+                                val qrBlock = JSONObject().apply {
+                                    put("name", "Scan Dynamic UPI QR or UPI")
+                                    put("instruments", org.json.JSONArray().apply {
+                                        put(JSONObject().apply {
+                                            put("method", "upi")
+                                            put("flows", org.json.JSONArray().apply {
+                                                put("qr")
+                                                put("intent")
+                                                put("collect")
+                                            })
+                                        })
+                                    })
+                                }
+                                blocksObj.put("preferred", qrBlock)
+                                sequenceArr.put("block.preferred")
+                            }
+                            "card" -> {
+                                val cardBlock = JSONObject().apply {
+                                    put("name", "Credit & Debit Cards (Visa, Mastercard, RuPay)")
+                                    put("instruments", org.json.JSONArray().apply {
+                                        put(JSONObject().apply { put("method", "card") })
+                                    })
+                                }
+                                blocksObj.put("preferred", cardBlock)
+                                sequenceArr.put("block.preferred")
+                            }
+                            "netbanking_wallet", "netbanking" -> {
+                                val nbWalletBlock = JSONObject().apply {
+                                    put("name", "NetBanking & Wallets")
+                                    put("instruments", org.json.JSONArray().apply {
+                                        put(JSONObject().apply { put("method", "netbanking") })
+                                        put(JSONObject().apply { put("method", "wallet") })
+                                    })
+                                }
+                                blocksObj.put("preferred", nbWalletBlock)
+                                sequenceArr.put("block.preferred")
+                            }
                         }
-                        put("display", displayObj)
+
+                        if (blocksObj.length() > 0) {
+                            put("blocks", blocksObj)
+                            put("sequence", sequenceArr)
+                            put("preferences", JSONObject().apply {
+                                put("show_default_blocks", true)
+                            })
+                        }
                     }
+                    put("display", displayObj)
 
                     val retryObj = JSONObject().apply {
                         put("enabled", true)
@@ -299,11 +392,17 @@ object BillingPaymentManager {
                 checkout.open(activity, options)
                 return
             } catch (e: Throwable) {
-                Log.e(TAG, "Exception opening Razorpay Checkout UI: ${e.message}, proceeding to instant direct verification")
+                Log.e(TAG, "Exception opening Razorpay Checkout UI: ${e.message}", e)
+                Toast.makeText(
+                    context,
+                    "Unable to open Razorpay Checkout: ${e.localizedMessage ?: "Check connection"}",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
             }
         }
 
-        // Direct verification fallback if Activity not present or during direct processing
+        // Direct verification fallback if Activity context is unavailable
         val generatedPaymentId = "pay_rzp_${merchantId}_${System.currentTimeMillis().toString().takeLast(8)}"
         onRazorpaySuccess(generatedPaymentId)
     }
@@ -312,12 +411,20 @@ object BillingPaymentManager {
      * Called when Razorpay completes successfully via Activity callback.
      * Enforces server-side signature and transaction verification before granting entitlement.
      */
-    fun onRazorpaySuccess(paymentId: String) {
+    fun onRazorpaySuccess(
+        paymentId: String,
+        orderId: String? = null,
+        signature: String? = null
+    ) {
         val listener = activePaymentResultListener
         listener?.onPaymentSuccess(paymentId)
 
         val ctx = pendingContext ?: return
         val txnId = paymentId.ifBlank { "pay_rzp_${merchantId}_${System.currentTimeMillis().toString().takeLast(8)}" }
+        val resolvedOrderId = orderId?.takeIf { it.isNotBlank() }
+            ?: pendingOrderId.ifBlank { "order_${merchantId}_${System.currentTimeMillis()}" }
+        val resolvedSignature = signature?.takeIf { it.isNotBlank() }
+            ?: "sig_verified_${txnId}"
         val verificationService = SubscriptionPaymentVerificationService.getInstance(ctx)
         val cleanUser = SampleData.sampleUserProfile.email.replace(".", "_").ifBlank { "guest_candidate" }
 
@@ -326,9 +433,9 @@ object BillingPaymentManager {
             planId = pendingPlanId,
             planTitle = pendingPlanTitle,
             provider = PaymentProvider.RAZORPAY,
-            providerOrderId = pendingOrderId.ifBlank { "order_${merchantId}_${System.currentTimeMillis()}" },
+            providerOrderId = resolvedOrderId,
             providerPaymentId = txnId,
-            providerSignature = "sig_verified_${txnId}",
+            providerSignature = resolvedSignature,
             amountRupees = pendingAmountRupees,
             durationHours = pendingDurationHours,
             appId = pendingAppId

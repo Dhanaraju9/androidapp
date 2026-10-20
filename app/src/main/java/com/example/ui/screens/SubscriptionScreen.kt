@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.example.data.SampleData
 import coil.compose.AsyncImage
-import com.example.ui.components.PremiumPaymentGatewayDialog
 import com.example.ui.theme.AppLuminousBackground
 
 data class ExactSubPlan(
@@ -70,8 +69,7 @@ fun SubscriptionScreen(
     var appliedCoupon by remember { mutableStateOf<String?>(null) }
     var couponDiscountAmount by remember { mutableStateOf(0) }
 
-    // Payment Checkout Modal State
-    var showCheckoutModal by remember { mutableStateOf(false) }
+    // Payment Gateway & Mode State
     var selectedGateway by remember { mutableStateOf("play_billing") } // "play_billing" or "razorpay"
     var selectedPaymentMode by remember { mutableStateOf("upi") }
     var upiIdInput by remember { mutableStateOf("") }
@@ -144,6 +142,55 @@ fun SubscriptionScreen(
         (currentPlan.price - couponDiscountAmount).coerceAtLeast(49)
     }
 
+    val proceedWithPayment: (String) -> Unit = { gatewayToUse ->
+        val selectedPlan = plans.find { it.id == selectedPlanId }
+        val is1DayPass = enableOneDayPass
+        val planTitle = if (is1DayPass) "1-Day VIP Pass (24 Hours Access)" else currentPlan.durationLabel
+        val durationHours = if (is1DayPass) 24L else {
+            when (selectedPlan?.id) {
+                "1_month" -> 30 * 24L
+                "3_months" -> 90 * 24L
+                "6_months" -> 180 * 24L
+                "12_months" -> 365 * 24L
+                else -> 24L
+            }
+        }
+
+        if (appliedCoupon != null) {
+            val coupon = com.example.data.CouponRepository.coupons.value.find { it.code.equals(appliedCoupon, ignoreCase = true) }
+            if (coupon != null) {
+                com.example.data.CouponRepository.recordCouponUsage(coupon.id, couponDiscountAmount.toDouble())
+            }
+        }
+
+        if (gatewayToUse == "play_billing") {
+            com.example.util.BillingPaymentManager.launchPlayBillingCheckout(
+                context = context,
+                planId = if (is1DayPass) "1_day_pass" else selectedPlanId,
+                planTitle = planTitle,
+                amountRupees = finalPrice,
+                durationHours = durationHours,
+                onSuccess = {
+                    onBack()
+                }
+            )
+        } else {
+            com.example.util.BillingPaymentManager.launchRazorpayCheckout(
+                context = context,
+                planTitle = planTitle,
+                amountRupees = finalPrice,
+                paymentMode = selectedPaymentMode,
+                upiId = upiIdInput,
+                durationHours = durationHours,
+                appId = activeAppId,
+                planId = if (is1DayPass) "1_day_pass" else selectedPlanId,
+                onSuccess = {
+                    onBack()
+                }
+            )
+        }
+    }
+
     AppLuminousBackground(screenName = "Subscription Screen") {
         Scaffold(
             containerColor = Color.Transparent,
@@ -171,7 +218,7 @@ fun SubscriptionScreen(
                                     else "🚀 Proceeding to secure checkout for ${currentPlan.durationLabel} (${currentPlan.subtitle}) - ₹$finalPrice"
                                 )
                             }
-                            showCheckoutModal = true
+                            proceedWithPayment(selectedGateway)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                         contentPadding = PaddingValues(0.dp),
@@ -800,7 +847,7 @@ fun SubscriptionScreen(
                                     onClick = {
                                         selectedPlanId = plan.id
                                         enableOneDayPass = false
-                                        showCheckoutModal = true
+                                        proceedWithPayment(selectedGateway)
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = plan.buttonColor),
                                     shape = RoundedCornerShape(12.dp),
@@ -903,10 +950,14 @@ fun SubscriptionScreen(
                 ChoosePaymentMethodCard(
                     selectedGateway = selectedGateway,
                     onSelectGateway = { selectedGateway = it },
+                    selectedPaymentMode = selectedPaymentMode,
+                    onSelectPaymentMode = { selectedPaymentMode = it },
+                    upiIdInput = upiIdInput,
+                    onUpiIdChanged = { upiIdInput = it },
                     detectedUpiApps = detectedUpiApps,
                     onProceed = { gateway ->
                         selectedGateway = gateway
-                        showCheckoutModal = true
+                        proceedWithPayment(gateway)
                     }
                 )
             }
@@ -943,83 +994,6 @@ fun SubscriptionScreen(
                     )
                 }
             }
-        }
-
-        // =============================================================================
-        // PREMIUM CHECKOUT MODAL DIALOG
-        // =============================================================================
-        if (showCheckoutModal) {
-            val selectedPlan = plans.find { it.id == selectedPlanId }
-            val is1DayPass = enableOneDayPass
-            val planTitle = if (is1DayPass) "1-Day VIP Pass (24 Hours Access)" else currentPlan.durationLabel
-            val planSubtitle = if (is1DayPass) "Unlimited Mock Tests & Practice sets" else currentPlan.subtitle
-            val origPrice = if (is1DayPass) 49 else currentPlan.originalPrice
-            val durationHours = if (is1DayPass) 24L else {
-                when(selectedPlan?.id) {
-                    "1_month" -> 30 * 24L
-                    "3_months" -> 90 * 24L
-                    "6_months" -> 180 * 24L
-                    "12_months" -> 365 * 24L
-                    else -> 24L
-                }
-            }
-
-            PremiumPaymentGatewayDialog(
-                planTitle = planTitle,
-                planSubtitle = planSubtitle,
-                originalPrice = origPrice,
-                finalPrice = finalPrice,
-                couponCode = appliedCoupon,
-                discountAmount = couponDiscountAmount,
-                selectedGateway = selectedGateway,
-                onGatewaySelected = { selectedGateway = it },
-                selectedPaymentMode = selectedPaymentMode,
-                onPaymentModeSelected = { selectedPaymentMode = it },
-                upiIdInput = upiIdInput,
-                onUpiIdChanged = { upiIdInput = it },
-                merchantName = com.example.util.BillingPaymentManager.merchantName,
-                merchantId = com.example.util.BillingPaymentManager.merchantId,
-                accountId = com.example.util.BillingPaymentManager.accountId,
-                onProceedPayment = {
-                    if (appliedCoupon != null) {
-                        val coupon = com.example.data.CouponRepository.coupons.value.find { it.code.equals(appliedCoupon, ignoreCase = true) }
-                        if (coupon != null) {
-                            com.example.data.CouponRepository.recordCouponUsage(coupon.id, couponDiscountAmount.toDouble())
-                        }
-                    }
-
-                    if (selectedGateway == "play_billing") {
-                        com.example.util.BillingPaymentManager.launchPlayBillingCheckout(
-                            context = context,
-                            planId = if (is1DayPass) "1_day_pass" else selectedPlanId,
-                            planTitle = planTitle,
-                            amountRupees = finalPrice,
-                            durationHours = durationHours,
-                            onSuccess = {
-                                showCheckoutModal = false
-                                onBack()
-                            }
-                        )
-                    } else {
-                        com.example.util.BillingPaymentManager.launchRazorpayCheckout(
-                            context = context,
-                            planTitle = planTitle,
-                            amountRupees = finalPrice,
-                            paymentMode = selectedPaymentMode,
-                            upiId = upiIdInput,
-                            durationHours = durationHours,
-                            onSuccess = {
-                                showCheckoutModal = false
-                                onBack()
-                            }
-                        )
-                    }
-                },
-                onTermsClick = { showLegalDialog = "terms" },
-                onPrivacyClick = { showLegalDialog = "privacy" },
-                onRefundPolicyClick = { showLegalDialog = "refund" },
-                onDismiss = { showCheckoutModal = false }
-            )
         }
 
         if (showLegalDialog != null) {
@@ -1272,6 +1246,10 @@ private fun CurrentSubscriptionStatusCard(
 private fun ChoosePaymentMethodCard(
     selectedGateway: String,
     onSelectGateway: (String) -> Unit,
+    selectedPaymentMode: String = "upi",
+    onSelectPaymentMode: (String) -> Unit = {},
+    upiIdInput: String = "",
+    onUpiIdChanged: (String) -> Unit = {},
     detectedUpiApps: List<com.example.model.DetectedUpiApp>,
     onProceed: (String) -> Unit
 ) {
@@ -1400,7 +1378,7 @@ private fun ChoosePaymentMethodCard(
                     .fillMaxWidth()
                     .clickable { onSelectGateway("razorpay") }
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1436,34 +1414,67 @@ private fun ChoosePaymentMethodCard(
                     }
 
                     Text(
-                        text = "Pay via UPI (Instant QR / App Intent), Debit & Credit Cards, Net Banking, and Wallets.",
+                        text = "Official Razorpay Standard Checkout — select your preferred payment channel below:",
                         fontSize = 12.sp,
                         color = Color(0xFF475569)
                     )
 
-                    // Razorpay Supported Payment Methods
+                    // Interactive Razorpay Payment Channel Selector (4 Prioritized Channels)
+                    val razorpayModes = listOf(
+                        "upi" to "📲 UPI Intent / ID",
+                        "upi_qr" to "📷 Dynamic UPI QR",
+                        "card" to "💳 Cards (Visa/MC/RuPay)",
+                        "netbanking_wallet" to "🏦 NetBanking & Wallets"
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        listOf("⚡ Razorpay", "📲 UPI", "💳 Cards", "🏦 Net Banking", "👛 Wallets").forEach { method ->
+                        razorpayModes.forEach { (modeKey, modeLabel) ->
+                            val isModeSelected = isRazorpay && selectedPaymentMode == modeKey
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFFECFDF5),
-                                border = BorderStroke(1.dp, Color(0xFFA7F3D0))
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isModeSelected) Color(0xFF059669) else Color(0xFFECFDF5),
+                                border = BorderStroke(
+                                    width = if (isModeSelected) 1.5.dp else 1.dp,
+                                    color = if (isModeSelected) Color(0xFF047857) else Color(0xFFA7F3D0)
+                                ),
+                                modifier = Modifier.clickable {
+                                    onSelectGateway("razorpay")
+                                    onSelectPaymentMode(modeKey)
+                                }
                             ) {
                                 Text(
-                                    text = method,
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF065F46),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    text = modeLabel,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isModeSelected) Color.White else Color(0xFF065F46),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                                 )
                             }
                         }
+                    }
+
+                    // Optional UPI ID / VPA input when UPI Intent / ID is selected
+                    if (isRazorpay && selectedPaymentMode == "upi") {
+                        OutlinedTextField(
+                            value = upiIdInput,
+                            onValueChange = onUpiIdChanged,
+                            label = { Text("Optional UPI ID (e.g. name@okaxis, number@ybl)", fontSize = 11.5.sp) },
+                            placeholder = { Text("Leave blank to select installed UPI app directly", fontSize = 11.sp) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                focusedBorderColor = Color(0xFF059669),
+                                unfocusedBorderColor = Color(0xFFA7F3D0)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     // Detected apps on device (no hardcoding of unavailable apps)
@@ -1499,11 +1510,19 @@ private fun ChoosePaymentMethodCard(
                         }
                     } else {
                         Text(
-                            text = "💡 Supported: Google Pay, PhonePe, Paytm, BHIM & any UPI ID via Instant QR/Intent",
+                            text = "💡 Supported: Google Pay, PhonePe, Paytm, BHIM, Dynamic UPI QR, Visa/Mastercard/RuPay, NetBanking & Wallets",
                             fontSize = 10.5.sp,
                             color = Color(0xFF64748B),
                             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                         )
+                    }
+
+                    val ctaText = when (selectedPaymentMode) {
+                        "upi" -> "Continue with Razorpay UPI →"
+                        "upi_qr" -> "Scan Razorpay Dynamic UPI QR →"
+                        "card" -> "Pay with Credit / Debit Card →"
+                        "netbanking_wallet" -> "Pay via NetBanking / Wallet →"
+                        else -> "Continue with Razorpay →"
                     }
 
                     Button(
@@ -1512,7 +1531,7 @@ private fun ChoosePaymentMethodCard(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth().height(42.dp)
                     ) {
-                        Text("Continue with Razorpay / UPI →", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(ctaText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }

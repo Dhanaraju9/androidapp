@@ -22,9 +22,9 @@ data class LiveDashboardConfig(
     val liveIndicatorColor: String = "#00C853", // Vibrant emerald beacon
     val liveBankButtonText: String = "Live Bank",
     val liveBankButtonColor: String = "#00A844",
-    val containerBgStart: String = "#FFFDF9",
-    val containerBgEnd: String = "#FFFDF9",
-    val containerBorderColor: String = "#F1EAD8",
+    val containerBgStart: String = "#FFF3EE",
+    val containerBgEnd: String = "#FCE4EC",
+    val containerBorderColor: String = "#FED7AA",
 
     // 5 Individual Metric Cards with rich orange gradient (#FF9800 to #FF6D00)
     val subjectsCard: LiveDashboardMetricCardConfig = LiveDashboardMetricCardConfig(

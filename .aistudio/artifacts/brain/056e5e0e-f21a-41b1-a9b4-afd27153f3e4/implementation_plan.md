@@ -1,87 +1,49 @@
-# Expanding & Customizing Splash Screen Quotes
+# Integrating Official Razorpay Android Standard Checkout Facility
 
-This plan outlines how new inspirational quotes are added to the splash screen, how you can supply your own custom quotes, and how the session rotation system ensures every quote is displayed smoothly without immediate repetition.
-
-### User Review & Critical Decisions
-
-> [!IMPORTANT]
-> **Share Your Custom Quotes Anytime**: Since you indicated you would like to provide your own custom list of quotes, you can paste your list of quotes (along with their authors) directly in the chat before or after clicking **Proceed**, and they will be added directly into the splash screen collection.
-
-- **Confirmed Decision 1 (Custom Quote List)**: The quote provider will be structured to cleanly accept your custom list of quotes while also supporting dynamic runtime additions saved persistently on the device.
-- **Confirmed Decision 2 (Selected Quote Themes)**: Any additional built-in quotes will focus on Indian leaders and scholars (Dr. A.P.J. Abdul Kalam, Swami Vivekananda, Dr. B.R. Ambedkar, Chanakya), Civil Services and competitive exam perseverance, and daily study discipline and time management.
+This plan details how to replace the local Razorpay stub with the official **Razorpay Android Standard Checkout SDK** and configure all requested payment channels (**UPI Intent & UPI ID**, **Dynamic UPI QR Code**, **Credit & Debit Cards**, and **NetBanking & Wallets**).
 
 ---
 
-### 1. Overview & Core Concept
+## 1. Gradle Dependency & Manifest Configuration
 
-- **What It Does**: Expands the splash screen quote system so it can host an extended library of custom motivational quotes and rotate through them deterministically across app launches, while maintaining the character-by-character typewriter reveal and zero-layout-jump container.
-- **Target Audience / Persona**: APPSC Group-2 and competitive exam aspirants who open the app daily for study sessions and benefit from fresh, high-intent motivation during startup.
-- **Key Value**: Prevents quote fatigue across repeated daily study sessions and makes adding new custom quotes effortless—either by pasting them in chat for direct inclusion or adding them through the quote manager API.
-
----
-
-### 2. User Experience & Visual Design
-
-- **Key User Flows**:
-  1. **Adding Custom Quotes in Code / Chat**: Each quote is defined as a `QuoteItem(text = "...", author = "...")` entry inside the central quote provider. You can paste any number of quotes in chat, or add them directly to the list.
-  2. **App Launch & Session Rotation**: On every launch, the splash screen fetches the next quote in the sequence from `SplashQuoteProvider`, ensuring two consecutive sessions never show the same quote.
-  3. **Zero-Jump Typewriter Reveal**: As the quote types out character by character (`38ms` per character, adapted for long quotes so startup never feels sluggish), the unrevealed characters are pre-allocated as transparent text so the card height and line wrapping remain 100% locked from the first frame.
-  4. **Post-Typing Author Reveal**: Once the quote finishes typing, the author attribution (`— Author Name`) gently slides and fades in below the quote.
-- **Visual Identity & Theme**:
-  - *Aesthetic Direction*: Pastel Rainbow Luxury (`WarmIvory` `#FFF8F0` background, `PastelPeach` `#FFD6B8`, `PastelPink` `#F7B7D2`, and `Lavender` `#DCC6F5` border gradient).
-  - *Typography & Hierarchy*: Centered `16.5sp` `SemiBold` Serif typography in `DeepPlum` (`#64205E`) with `25sp` line height for quotation text, paired with `13.5sp` `Bold` Italic author attribution.
-- **Interactive Feedback & Motion**:
-  - Adaptive typing speed adjustment so longer custom quotes (e.g., 100+ characters) automatically scale their per-character typing interval to keep total splash duration balanced and responsive.
+1. **Add Official Razorpay Checkout SDK**:
+   - Add `com.razorpay:checkout:1.6.40` to `gradle/libs.versions.toml` and `app/build.gradle.kts`.
+   - Delete the local mock stub file `app/src/main/java/com/razorpay/Checkout.kt` so the app uses the real `com.razorpay.Checkout` and `com.razorpay.PaymentResultWithDataListener` classes from the official SDK.
+2. **Android 11+ (API 30+) UPI Intent `<queries>` in `AndroidManifest.xml`**:
+   - Declare `<queries>` for `upi://pay` intents and major Indian UPI packages (`com.google.android.apps.nbu.paisa.user` for Google Pay, `com.phonepe.app` for PhonePe, `net.one97.paytm` for Paytm, `in.org.npci.upiapp` for BHIM, `com.dreamplug.androidapp` for CRED, and `in.amazon.mShop.android.shopping` for Amazon Pay) so Razorpay and `UpiAppDetector` can detect and launch installed UPI apps directly.
 
 ---
 
-### 3. Key Product Decisions & Trade-Offs
+## 2. Activity Callback Wiring (`MainActivity.kt`)
 
-- **Decision 1: Adaptive Typing Speed for Longer Custom Quotes**
-  - *Chosen Approach*: Dynamically adjust the character typing interval between `24ms` and `38ms` based on quote character length.
-  - *Why*: Custom quotes vary in length; capping total typing duration ensures longer quotes from scholars or leaders do not overly delay entering the app while keeping short quotes deliberate and readable.
-  - *Alternatives Considered*: Fixed `38ms` interval for all quotes, which causes 140-character quotes to take over 5.3 seconds just to type.
-- **Decision 2: Combined Built-In + Persistent Custom Quotes Storage**
-  - *Chosen Approach*: Merge the static `curatedQuotes` list with any user-supplied custom quotes stored in `SharedPreferences` (`SplashQuoteProvider.addCustomQuote(...)` / `setCustomQuotes(...)`).
-  - *Why*: Allows immediate code-level additions when you share quotes in chat while also enabling runtime management without requiring a database migration.
+1. **Implement `PaymentResultWithDataListener` in `MainActivity`**:
+   - Implement `com.razorpay.PaymentResultWithDataListener` on `MainActivity`.
+   - Preload Razorpay Checkout in `onCreate` via `Checkout.preload(applicationContext)` and initialize saved merchant credentials in `BillingPaymentManager`.
+   - Route `onPaymentSuccess(razorpayPaymentId: String?, paymentData: PaymentData?)` to `BillingPaymentManager.onRazorpaySuccess(paymentId, paymentData?.orderId, paymentData?.signature)` so the real payment ID, order ID, and cryptographic signature are passed to `SubscriptionPaymentVerificationService`.
+   - Route `onPaymentError(code: Int, response: String?, paymentData: PaymentData?)` to `BillingPaymentManager.onRazorpayError(code, response)`.
 
 ---
 
-### 4. Technical Architecture & Data Strategy *(Technical Reference)*
+## 3. Razorpay Checkout & Payment Channels (`BillingPaymentManager.kt`)
 
-- **Architecture & Component Diagram**:
+1. **Configure Multi-Channel Checkout Options**:
+   - Support all 4 prioritized payment modes in `launchRazorpayCheckout(...)`:
+     - **UPI Intent & UPI ID (`"upi"`)**: Enables native UPI app intent flow (`_[flow] = "intent"`) and pre-fills `vpa` when a user enters their UPI ID.
+     - **Dynamic UPI QR Code (`"upi_qr"`)**: Configures Razorpay display blocks to highlight UPI QR + UPI options for quick scan-and-pay.
+     - **Credit & Debit Cards (`"card"`)**: Highlights Visa, Mastercard, and RuPay card checkout.
+     - **NetBanking & Wallets (`"netbanking_wallet"`)**: Highlights 50+ Indian banks and major digital wallets.
+   - Note: Razorpay Standard Checkout only accepts a server-generated `order_id` if created via the Razorpay Orders REST API; passing a client-generated `order_...` string causes the live Razorpay SDK to reject the checkout payload. We will omit synthetic `order_id` values from the client `JSONObject` unless a real server-issued Razorpay Order ID is provided, while still tracking the internal transaction reference for local ledger and entitlement verification.
+2. **Persistent Merchant & Key Configuration**:
+   - Persist `merchantName`, `merchantId`, `accountId`, `razorpayKeyId`, and `isLiveMode` in `SharedPreferences` (`razorpay_gateway_prefs`) so updates made in **Admin Dashboard → Subscription Management → Razorpay Gateway** survive app restarts.
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                      SplashQuoteProvider                          │
-│  ┌─────────────────────────────┐  ┌────────────────────────────┐  │
-│  │ Curated & User Custom List  │  │ SharedPreferences Store    │  │
-│  │ (Kalam, Vivekananda, Exam   │  │ • last_quote_index         │  │
-│  │  Perseverance, Discipline)  │  │ • session_count            │  │
-│  └──────────────┬──────────────┘  │ • custom_quotes_json       │  │
-│                 └────────┬────────┴──────────────┬─────────────┘  │
-│                          ▼                       ▼                │
-│               getQuoteForNextSession(context)                     │
-└──────────────────────────┬────────────────────────────────────────┘
-                           │ Returns Pair<Int, QuoteItem>
-                           ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                        AppSplashScreen                            │
-│  ┌─────────────────────────────────────────────────────────────┐  │
-│  │ Adaptive Typing Interval Calculator (24ms – 38ms)           │  │
-│  └─────────────────────────────┬───────────────────────────────┘  │
-│                                ▼                                  │
-│  ┌─────────────────────────────────────────────────────────────┐  │
-│  │ PastelInspirationalQuoteSection                             │  │
-│  │ • Pre-allocated transparent suffix (Zero layout jump)       │  │
-│  │ • Post-typing author slide + fade reveal                    │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────────────┘
-```
+---
 
-- **Data Model & State**:
-  - `QuoteItem(val text: String, val author: String)`: Immutable model representing each quote and its author.
-  - `SplashQuoteProvider`: Singleton managing the combined list of built-in quotes and custom quotes, tracking `last_quote_index` and `session_count` in `SharedPreferences` so every quote is cycled through before repeating.
-- **Interactive Component & State Mapping**:
-  - `getQuoteForNextSession(context)` reads the merged quote pool, advances the index deterministically with wrap-around protection, persists the new index, and provides the selected `QuoteItem` to `AppSplashScreen`.
-  - `addCustomQuote(context, text, author)` and `addCustomQuotes(context, list)` allow adding new quotes at any time.
+## 4. Subscription Screen Razorpay Mode Selector (`SubscriptionScreen.kt`)
+
+1. **Interactive Channel Selector inside the Razorpay Card**:
+   - In the **Choose Payment Method** card on `SubscriptionScreen.kt`, when **Razorpay / Alternative Billing** is selected, allow the user to pick their preferred Razorpay payment channel before tapping **Continue with Razorpay / UPI →**:
+     - **UPI App / UPI ID** (with an optional UPI ID / VPA input field and detected UPI app chips)
+     - **UPI QR Code**
+     - **Debit / Credit Cards**
+     - **NetBanking & Wallets**
+   - Tapping **Continue with Razorpay / UPI →** (or **Proceed to Secure Checkout →** / **Choose Plan →**) launches the official Razorpay Standard Checkout bottom sheet pre-configured with the chosen channel, plan amount (in paise), candidate email/phone prefill, and merchant branding.

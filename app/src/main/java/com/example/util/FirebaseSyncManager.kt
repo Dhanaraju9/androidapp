@@ -1543,8 +1543,8 @@ object FirebaseSyncManager {
                         val suffix = snapshot.getString("headerTitleSuffix") ?: "DASHBOARD"
                         val subtitle = snapshot.getString("headerSubtitle") ?: "Real-time question bank & syllabus metrics"
                         val liveColor = snapshot.getString("liveIndicatorColor") ?: "#00C853"
-                        val containerStart = snapshot.getString("containerBgStart") ?: "#FFFDF9"
-                        val containerEnd = snapshot.getString("containerBgEnd") ?: "#FFFDF9"
+                        val containerStart = snapshot.getString("containerBgStart") ?: "#FFF3EE"
+                        val containerEnd = snapshot.getString("containerBgEnd") ?: "#FCE4EC"
                         
                         val config = com.example.model.LiveDashboardConfig(
                             headerTitlePrefix = prefix,

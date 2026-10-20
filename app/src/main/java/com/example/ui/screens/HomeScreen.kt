@@ -2410,8 +2410,11 @@ fun HomeLiveContentDashboard(
 
     val liveColor = Color(0xFF10B981)
     val liveDotInnerColor = Color(0xFF34D399)
-    val containerBgStart = Color(0xFFFFF3EE)
-    val containerBgEnd = Color(0xFFFCE4EC)
+    // Manually edit containerBgStart & containerBgEnd below to change the Live Content Dashboard card background:
+    // Examples: Light Blue = Color(0xFFE0F2FE) to Color(0xFFBAE6FD) | Vanilla Gold = Color(0xFFFFF8E7) to Color(0xFFFDE68A)
+    //           Soft Lavender = Color(0xFFF3E5F5) to Color(0xFFEDE9FE) | Mint Green = Color(0xFFECFDF5) to Color(0xFFD1FAE5)
+    val containerBgStart = Color(0xFFFFF3EE) // Top gradient color: Warm Peach (#FFF3EE)
+    val containerBgEnd = Color(0xFFFCE4EC)   // Bottom gradient color: Soft Rose (#FCE4EC)
     val containerBorder = Color(0xFFFED7AA)
     val liveBankBtnColor = Color(0xFF16A34A)
 

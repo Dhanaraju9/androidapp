@@ -1,6 +1,6 @@
 {
-  "summary": "Implementation plan for expanding and managing custom inspirational quotes on the splash screen, supporting both code-level quote collections and persistent custom user quotes across app sessions.",
-  "updatedAt": "2026-10-20T10:06:09.970717479Z",
+  "summary": "Implementation plan for integrating the official Razorpay Android Standard Checkout SDK with support for UPI Intent/ID, Dynamic UPI QR Code, Credit/Debit Cards, NetBanking, Wallets, Android 11+ UPI package queries, Activity payment callback handling, and persistent merchant configuration.",
+  "updatedAt": "2026-10-20T11:15:57.899609083Z",
   "requestFeedback": true,
   "userFacing": true
 }

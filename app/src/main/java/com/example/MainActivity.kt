@@ -21,7 +21,9 @@ import com.example.model.TopicModel
 import com.example.model.UnitModel
 import com.example.model.PracticeSectionType
 import com.example.ui.screens.*
+import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.SyllabusProTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 
 sealed class AppScreen {
@@ -226,21 +228,45 @@ sealed class AppScreen {
     }
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.repository.AppConfigRepository.getInstance().initializeWithContext(this)
         com.example.util.AnimationConfigManager.initialize(this)
+        com.example.util.BillingPaymentManager.loadMerchantConfig(this)
+        try {
+            com.razorpay.Checkout.preload(applicationContext)
+        } catch (_: Throwable) {}
         enableEdgeToEdge()
         setContent {
-            SyllabusProTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppNavigationHost()
+            val appConfigRepository = remember { com.example.repository.AppConfigRepository.getInstance() }
+            val appConfig by appConfigRepository.currentAppConfig.collectAsStateWithLifecycle()
+
+            CompositionLocalProvider(
+                LocalAppConfig provides appConfig
+            ) {
+                SyllabusProTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AppNavigationHost()
+                    }
                 }
             }
         }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: com.razorpay.PaymentData?) {
+        com.example.util.BillingPaymentManager.onRazorpaySuccess(
+            paymentId = razorpayPaymentId ?: paymentData?.paymentId ?: "",
+            orderId = paymentData?.orderId,
+            signature = paymentData?.signature
+        )
+    }
+
+    override fun onPaymentError(code: Int, response: String?, paymentData: com.razorpay.PaymentData?) {
+        com.example.util.BillingPaymentManager.onRazorpayError(code, response)
     }
 }
 

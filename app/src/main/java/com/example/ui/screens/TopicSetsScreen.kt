@@ -423,12 +423,12 @@ fun TopicSetsScreen(
                                         fontWeight = FontWeight.Black,
                                         letterSpacing = 0.5.sp
                                     ),
-                                    color = Color(0xFF1E293B)
+                                    color = Color(0xFF000080)
                                 )
                                 Text(
-                                    text = "Tap any set card to open practice",
+                                    text = "",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF64748B)
+                                    color = Color(0xFFFFFFFF)
                                 )
                             }
                         }

@@ -100,7 +100,7 @@ fun AdminLiveDashboardTab() {
                                     text = "Live Content Dashboard Customizer",
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color.Blue
                                 )
                                 Text(
                                     text = "Customize header, metrics, badges, colors & borders in real-time",
@@ -156,7 +156,7 @@ fun AdminLiveDashboardTab() {
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE)), // Light Blue (#E0F2FE)
                 border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -190,7 +190,7 @@ fun AdminLiveDashboardTab() {
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE)), // Light Blue (#E0F2FE)
                 border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -221,6 +221,23 @@ fun AdminLiveDashboardTab() {
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = config.containerBgStart,
+                            onValueChange = { config = config.copy(containerBgStart = it) },
+                            label = { Text("Card Bg Start (Hex)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = config.containerBgEnd,
+                            onValueChange = { config = config.copy(containerBgEnd = it) },
+                            label = { Text("Card Bg End (Hex)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(

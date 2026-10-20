@@ -19,6 +19,7 @@ import com.example.model.Question
 import com.example.model.Subject
 import com.example.model.TopicModel
 import com.example.model.UnitModel
+import com.example.model.PracticeSectionType
 import com.example.ui.screens.*
 import com.example.ui.theme.SyllabusProTheme
 import java.util.UUID
@@ -119,10 +120,17 @@ sealed class AppScreen {
         val setId: String = "",
         val subtopicId: String = "",
         val subtopicTitle: String = "",
-        val preloadedQuestions: List<Question> = emptyList()
+        val preloadedQuestions: List<Question> = emptyList(),
+        val sectionType: PracticeSectionType? = null
     ) : AppScreen() {
         override val routeKey: String =
-            "practice_${subjectId}_${unitId}_${topicId}_${setId}_${subtopicId}_$setName"
+            "practice_${subjectId}_${unitId}_${topicId}_${setId}_${subtopicId}_${sectionType?.name ?: "default"}_$setName"
+    }
+
+    data class OfflineSubjectDetail(
+        val subject: Subject
+    ) : AppScreen() {
+        override val routeKey: String = "offline_detail_${subject.id}"
     }
 
     data class Result(
@@ -383,7 +391,11 @@ fun AppNavigationHost() {
                             )
                         },
                         onNavigateToLeaderboard = { navigateTo(AppScreen.Leaderboard) },
-                        onNavigateToOfflineManager = {},
+                        onNavigateToOfflineManager = {
+                            val targetSubject = SampleData.subjectsState.firstOrNull()
+                                ?: Subject(id = "subj-history", name = "History")
+                            navigateTo(AppScreen.OfflineSubjectDetail(targetSubject))
+                        },
                         onNavigateToNotifications = {
                             navigateTo(AppScreen.Notifications)
                         },
@@ -461,7 +473,8 @@ fun AppNavigationHost() {
                                     setId = practiceSet.id,
                                     subtopicId = "",
                                     subtopicTitle = "",
-                                    preloadedQuestions = practiceSet.questions
+                                    preloadedQuestions = practiceSet.questions,
+                                    sectionType = PracticeSectionType.SETS
                                 )
                             )
                         },
@@ -475,7 +488,8 @@ fun AppNavigationHost() {
                                     setId = "",
                                     subtopicId = subtopicPracticeSet.id,
                                     subtopicTitle = subtopicTitle,
-                                    preloadedQuestions = subtopicPracticeSet.questions
+                                    preloadedQuestions = subtopicPracticeSet.questions,
+                                    sectionType = PracticeSectionType.SUBTOPICS
                                 )
                             )
                         },
@@ -508,7 +522,8 @@ fun AppNavigationHost() {
                                     setId = screen.setId,
                                     subtopicId = subtopicPracticeSet.id,
                                     subtopicTitle = subtopicTitle,
-                                    preloadedQuestions = subtopicPracticeSet.questions
+                                    preloadedQuestions = subtopicPracticeSet.questions,
+                                    sectionType = PracticeSectionType.SUBTOPICS
                                 )
                             )
                         },
@@ -566,6 +581,12 @@ fun AppNavigationHost() {
                         practiceSessionId = sessionKey,
                         questions = questions,
                         title = screen.subtopicTitle.ifBlank { screen.setName },
+                        sectionType = screen.sectionType ?: when {
+                            com.example.util.OfflineSyncManager.isOfflineModeSimulated.value -> PracticeSectionType.OFFLINE
+                            screen.subjectId == "subj-current-affairs" -> PracticeSectionType.CURRENT_AFFAIRS
+                            screen.subtopicId.isNotBlank() || screen.subtopicTitle.isNotBlank() -> PracticeSectionType.SUBTOPICS
+                            else -> PracticeSectionType.SETS
+                        },
                         onBack = { goBack() },
                         onSubmitTest = { correctCount, wrongCount, scoreVal, userAnsMap, elapsedSec ->
                             navigateTo(
@@ -658,6 +679,25 @@ fun AppNavigationHost() {
                     )
                 }
 
+                is AppScreen.OfflineSubjectDetail -> {
+                    OfflineSubjectDetailScreen(
+                        subject = screen.subject,
+                        onBack = { goBack() },
+                        onNavigateToHome = { navigateToHome() },
+                        onStartPractice = { subId, unitId, topicId, setName ->
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = subId,
+                                    unitId = unitId,
+                                    topicId = topicId,
+                                    setName = setName.ifBlank { "Offline Practice Set" },
+                                    sectionType = PracticeSectionType.OFFLINE
+                                )
+                            )
+                        }
+                    )
+                }
+
                 is AppScreen.Subscription -> {
                     SubscriptionScreen(
                         onBack = { goBack() },
@@ -732,7 +772,15 @@ fun AppNavigationHost() {
                         onBack = { goBack() },
                         onNavigateToHome = { navigateToHome() },
                         onNavigateToPractice = { subId, unitId, topicId, setName ->
-                            navigateTo(AppScreen.PracticeArena(subId, unitId, topicId, setName))
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = subId,
+                                    unitId = unitId,
+                                    topicId = topicId,
+                                    setName = setName,
+                                    sectionType = PracticeSectionType.CURRENT_AFFAIRS
+                                )
+                            )
                         },
                         onNavigateToSubscription = { navigateTo(AppScreen.Subscription) }
                     )

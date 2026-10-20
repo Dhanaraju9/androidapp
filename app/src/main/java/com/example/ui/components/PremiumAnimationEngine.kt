@@ -859,17 +859,11 @@ fun Modifier.premiumAnswerFeedback(
     }
 
     this.graphicsLayer {
-        val p = animProgress.value
-        if (isCorrect) {
-            // Smooth pulse: 1.0 -> 1.035 -> 1.0
-            val pulse = sin(p * PI.toFloat()) * 0.035f
-            scaleX = 1f + pulse
-            scaleY = 1f + pulse
-        } else {
-            // Damped horizontal wrong-answer shake
-            val damp = (1f - p)
-            translationX = sin(p * 3f * PI.toFloat()) * 10.dp.toPx() * damp
-        }
+        // Maintain exactly the same scale and position without zooming or shaking
+        scaleX = 1f
+        scaleY = 1f
+        translationX = 0f
+        translationY = 0f
     }
 }
 

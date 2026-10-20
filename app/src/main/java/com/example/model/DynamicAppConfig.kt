@@ -88,9 +88,31 @@ data class PracticeAppearanceSettings(
         borderWidth = 1,
         cornerRadius = 16
     ),
-    val answerAnimationEffect: String = "Subtle Glow & Ripple",
+    val answerAnimationEffect: String = "Confetti Pop",
+    val setsEffect: String = "Confetti Pop",
+    val subtopicsEffect: String = "Confetti Pop",
+    val currentAffairsEffect: String = "Confetti Pop",
+    val offlineEffect: String = "Confetti Pop",
     val lastUpdated: Long = System.currentTimeMillis()
 ) {
+    fun getEffectForSection(section: PracticeSectionType): String {
+        return when (section) {
+            PracticeSectionType.SETS -> setsEffect
+            PracticeSectionType.SUBTOPICS -> subtopicsEffect
+            PracticeSectionType.CURRENT_AFFAIRS -> currentAffairsEffect
+            PracticeSectionType.OFFLINE -> offlineEffect
+        }
+    }
+
+    fun withEffectForSection(section: PracticeSectionType, effect: String): PracticeAppearanceSettings {
+        return when (section) {
+            PracticeSectionType.SETS -> copy(setsEffect = effect, lastUpdated = System.currentTimeMillis())
+            PracticeSectionType.SUBTOPICS -> copy(subtopicsEffect = effect, lastUpdated = System.currentTimeMillis())
+            PracticeSectionType.CURRENT_AFFAIRS -> copy(currentAffairsEffect = effect, lastUpdated = System.currentTimeMillis())
+            PracticeSectionType.OFFLINE -> copy(offlineEffect = effect, lastUpdated = System.currentTimeMillis())
+        }
+    }
+
     val screenBgColor: Long get() = hexToColorLong(screenBackgroundColor)
     val questionBgColor: Long get() = hexToColorLong(questionCard.backgroundColor)
     val questionTextColor: Long get() = hexToColorLong(questionCard.textColor)

@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.model.PracticeAppearanceSettings
 import com.example.model.PracticeSectionAppearance
+import com.example.model.BurstEffectType
+import com.example.model.PracticeSectionType
 import com.example.util.FontSettingsManager
 import com.example.util.PracticeAppearanceManager
 
@@ -436,6 +438,10 @@ fun PracticeAppearancePanel(
     var activeColorDialogTarget by remember { mutableStateOf<String?>(null) }
     var fontDropdownExpanded by remember { mutableStateOf(false) }
 
+    var selectedSectionForEffect by remember { mutableStateOf(PracticeSectionType.SETS) }
+    var previewTrigger by remember { mutableIntStateOf(0) }
+    var previewEffectName by remember { mutableStateOf(BurstEffectType.DEFAULT.displayName) }
+
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp >= 680
 
@@ -471,63 +477,172 @@ fun PracticeAppearancePanel(
                             onSelectTab = { selectedTab = it }
                         )
 
-                        BackgroundColoursCard(
-                            settings = tempSettings,
-                            onOpenColorPicker = { activeColorDialogTarget = it }
-                        )
-
-                        FontSettingsCard(
-                            settings = tempSettings,
-                            fontDropdownExpanded = fontDropdownExpanded,
-                            onToggleFontDropdown = { fontDropdownExpanded = it },
-                            onSelectFont = {
-                                tempSettings = tempSettings.copy(
-                                    questionCard = tempSettings.questionCard.copy(fontFamily = it),
-                                    options = tempSettings.options.copy(fontFamily = it),
-                                    explanation = tempSettings.explanation.copy(fontFamily = it)
+                        when (selectedTab) {
+                            "Appearance" -> {
+                                BackgroundColoursCard(
+                                    settings = tempSettings,
+                                    onOpenColorPicker = { activeColorDialogTarget = it }
                                 )
-                                fontDropdownExpanded = false
-                            },
-                            onFontSizeChange = { newSize ->
-                                tempSettings = tempSettings.copy(
-                                    questionCard = tempSettings.questionCard.copy(fontSize = newSize),
-                                    options = tempSettings.options.copy(fontSize = (newSize - 1).coerceAtLeast(12)),
-                                    explanation = tempSettings.explanation.copy(fontSize = (newSize - 2).coerceAtLeast(12))
+
+                                FontSettingsCard(
+                                    settings = tempSettings,
+                                    fontDropdownExpanded = fontDropdownExpanded,
+                                    onToggleFontDropdown = { fontDropdownExpanded = it },
+                                    onSelectFont = {
+                                        tempSettings = tempSettings.copy(
+                                            questionCard = tempSettings.questionCard.copy(fontFamily = it),
+                                            options = tempSettings.options.copy(fontFamily = it),
+                                            explanation = tempSettings.explanation.copy(fontFamily = it)
+                                        )
+                                        fontDropdownExpanded = false
+                                    },
+                                    onFontSizeChange = { newSize ->
+                                        tempSettings = tempSettings.copy(
+                                            questionCard = tempSettings.questionCard.copy(fontSize = newSize),
+                                            options = tempSettings.options.copy(fontSize = (newSize - 1).coerceAtLeast(12)),
+                                            explanation = tempSettings.explanation.copy(fontSize = (newSize - 2).coerceAtLeast(12))
+                                        )
+                                    },
+                                    onOpenColorPicker = { activeColorDialogTarget = it }
                                 )
-                            },
-                            onOpenColorPicker = { activeColorDialogTarget = it }
-                        )
 
-                        PresetThemesCard(
-                            selectedPresetName = tempSettings.presetName,
-                            onSelectPreset = { preset ->
-                                tempSettings = preset.settings
-                            }
-                        )
+                                PresetThemesCard(
+                                    selectedPresetName = tempSettings.presetName,
+                                    onSelectPreset = { preset ->
+                                        tempSettings = preset.settings
+                                    }
+                                )
 
-                        BottomActionButtons(
-                            onReset = {
-                                val def = PracticeAppearanceSettings()
-                                tempSettings = def
-                                onReset()
-                                Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
-                            },
-                            onApply = {
-                                onSave(tempSettings)
-                                Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                AnswerFeedbackEffectsSummaryCard(
+                                    settings = tempSettings,
+                                    onNavigateToEffects = { selectedTab = "Effects" }
+                                )
+
+                                BottomActionButtons(
+                                    onReset = {
+                                        val def = PracticeAppearanceSettings()
+                                        tempSettings = def
+                                        PracticeAppearanceManager.resetEffectsToDefault(context)
+                                        onReset()
+                                        Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onApply = {
+                                        PracticeSectionType.entries.forEach { s ->
+                                            PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                        }
+                                        PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                        onSave(tempSettings)
+                                        Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
                             }
-                        )
+
+                            "Effects" -> {
+                                AnswerFeedbackEffectsCard(
+                                    currentSettings = tempSettings,
+                                    selectedSection = selectedSectionForEffect,
+                                    onSelectSection = { selectedSectionForEffect = it },
+                                    onSelectEffect = { sec, eff ->
+                                        tempSettings = tempSettings.withEffectForSection(sec, eff.displayName)
+                                        previewEffectName = eff.displayName
+                                        previewTrigger++
+                                    },
+                                    onTriggerPreview = { effName ->
+                                        previewEffectName = effName
+                                        previewTrigger++
+                                    },
+                                    onResetToDefault = {
+                                        PracticeAppearanceManager.resetEffectsToDefault(context)
+                                        tempSettings = tempSettings.copy(
+                                            setsEffect = BurstEffectType.DEFAULT.displayName,
+                                            subtopicsEffect = BurstEffectType.DEFAULT.displayName,
+                                            currentAffairsEffect = BurstEffectType.DEFAULT.displayName,
+                                            offlineEffect = BurstEffectType.DEFAULT.displayName
+                                        )
+                                        previewEffectName = BurstEffectType.DEFAULT.displayName
+                                        previewTrigger++
+                                        onReset()
+                                        Toast.makeText(context, "✓ Reset all 4 sections to Confetti Pop", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onApply = {
+                                        PracticeSectionType.entries.forEach { s ->
+                                            PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                        }
+                                        PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                        onSave(tempSettings)
+                                        Toast.makeText(context, "✓ Effects applied successfully!", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+
+                            "Layout" -> {
+                                BackgroundColoursCard(
+                                    settings = tempSettings,
+                                    onOpenColorPicker = { activeColorDialogTarget = it }
+                                )
+                                BottomActionButtons(
+                                    onReset = {
+                                        val def = PracticeAppearanceSettings()
+                                        tempSettings = def
+                                        PracticeAppearanceManager.resetEffectsToDefault(context)
+                                        onReset()
+                                        Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onApply = {
+                                        PracticeSectionType.entries.forEach { s ->
+                                            PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                        }
+                                        PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                        onSave(tempSettings)
+                                        Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+
+                            "Preview" -> {
+                                InteractivePracticePreviewCard(
+                                    settings = tempSettings,
+                                    onTriggerEffect = { effectName ->
+                                        previewEffectName = effectName
+                                        previewTrigger++
+                                    }
+                                )
+                                BottomActionButtons(
+                                    onReset = {
+                                        val def = PracticeAppearanceSettings()
+                                        tempSettings = def
+                                        PracticeAppearanceManager.resetEffectsToDefault(context)
+                                        onReset()
+                                        Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onApply = {
+                                        PracticeSectionType.entries.forEach { s ->
+                                            PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                        }
+                                        PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                        onSave(tempSettings)
+                                        Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(20.dp))
                     }
 
-                    // Right Column (Live Preview Panel)
+                    // Right Column (Live Interactive Preview Panel)
                     Column(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .verticalScroll(rememberScrollState())
                     ) {
-                        LivePreviewCard(settings = tempSettings)
+                        InteractivePracticePreviewCard(
+                            settings = tempSettings,
+                            onTriggerEffect = { effectName ->
+                                previewEffectName = effectName
+                                previewTrigger++
+                            }
+                        )
                         Spacer(modifier = Modifier.height(20.dp))
                     }
                 }
@@ -545,74 +660,165 @@ fun PracticeAppearancePanel(
                         onSelectTab = { selectedTab = it }
                     )
 
-                    if (selectedTab == "Appearance" || selectedTab == "Layout") {
-                        BackgroundColoursCard(
-                            settings = tempSettings,
-                            onOpenColorPicker = { activeColorDialogTarget = it }
-                        )
+                    when (selectedTab) {
+                        "Appearance" -> {
+                            BackgroundColoursCard(
+                                settings = tempSettings,
+                                onOpenColorPicker = { activeColorDialogTarget = it }
+                            )
 
-                        FontSettingsCard(
-                            settings = tempSettings,
-                            fontDropdownExpanded = fontDropdownExpanded,
-                            onToggleFontDropdown = { fontDropdownExpanded = it },
-                            onSelectFont = {
-                                tempSettings = tempSettings.copy(
-                                    questionCard = tempSettings.questionCard.copy(fontFamily = it),
-                                    options = tempSettings.options.copy(fontFamily = it),
-                                    explanation = tempSettings.explanation.copy(fontFamily = it)
-                                )
-                                fontDropdownExpanded = false
-                            },
-                            onFontSizeChange = { newSize ->
-                                tempSettings = tempSettings.copy(
-                                    questionCard = tempSettings.questionCard.copy(fontSize = newSize),
-                                    options = tempSettings.options.copy(fontSize = (newSize - 1).coerceAtLeast(12)),
-                                    explanation = tempSettings.explanation.copy(fontSize = (newSize - 2).coerceAtLeast(12))
-                                )
-                            },
-                            onOpenColorPicker = { activeColorDialogTarget = it }
-                        )
+                            FontSettingsCard(
+                                settings = tempSettings,
+                                fontDropdownExpanded = fontDropdownExpanded,
+                                onToggleFontDropdown = { fontDropdownExpanded = it },
+                                onSelectFont = {
+                                    tempSettings = tempSettings.copy(
+                                        questionCard = tempSettings.questionCard.copy(fontFamily = it),
+                                        options = tempSettings.options.copy(fontFamily = it),
+                                        explanation = tempSettings.explanation.copy(fontFamily = it)
+                                    )
+                                    fontDropdownExpanded = false
+                                },
+                                onFontSizeChange = { newSize ->
+                                    tempSettings = tempSettings.copy(
+                                        questionCard = tempSettings.questionCard.copy(fontSize = newSize),
+                                        options = tempSettings.options.copy(fontSize = (newSize - 1).coerceAtLeast(12)),
+                                        explanation = tempSettings.explanation.copy(fontSize = (newSize - 2).coerceAtLeast(12))
+                                    )
+                                },
+                                onOpenColorPicker = { activeColorDialogTarget = it }
+                            )
 
-                        PresetThemesCard(
-                            selectedPresetName = tempSettings.presetName,
-                            onSelectPreset = { preset ->
-                                tempSettings = preset.settings
-                            }
-                        )
+                            PresetThemesCard(
+                                selectedPresetName = tempSettings.presetName,
+                                onSelectPreset = { preset ->
+                                    tempSettings = preset.settings
+                                }
+                            )
 
-                        BottomActionButtons(
-                            onReset = {
-                                val def = PracticeAppearanceSettings()
-                                tempSettings = def
-                                onReset()
-                                Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
-                            },
-                            onApply = {
-                                onSave(tempSettings)
-                                Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
-                            }
-                        )
+                            AnswerFeedbackEffectsSummaryCard(
+                                settings = tempSettings,
+                                onNavigateToEffects = { selectedTab = "Effects" }
+                            )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                            BottomActionButtons(
+                                onReset = {
+                                    val def = PracticeAppearanceSettings()
+                                    tempSettings = def
+                                    PracticeAppearanceManager.resetEffectsToDefault(context)
+                                    onReset()
+                                    Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                },
+                                onApply = {
+                                    PracticeSectionType.entries.forEach { s ->
+                                        PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                    }
+                                    PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                    onSave(tempSettings)
+                                    Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                }
+                            )
 
-                        // Also include live preview below on mobile
-                        LivePreviewCard(settings = tempSettings)
-                    } else {
-                        // Preview Tab selected
-                        LivePreviewCard(settings = tempSettings)
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        BottomActionButtons(
-                            onReset = {
-                                val def = PracticeAppearanceSettings()
-                                tempSettings = def
-                                onReset()
-                                Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
-                            },
-                            onApply = {
-                                onSave(tempSettings)
-                                Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
-                            }
-                        )
+                            InteractivePracticePreviewCard(
+                                settings = tempSettings,
+                                onTriggerEffect = { effectName ->
+                                    previewEffectName = effectName
+                                    previewTrigger++
+                                }
+                            )
+                        }
+
+                        "Effects" -> {
+                            AnswerFeedbackEffectsCard(
+                                currentSettings = tempSettings,
+                                selectedSection = selectedSectionForEffect,
+                                onSelectSection = { selectedSectionForEffect = it },
+                                onSelectEffect = { sec, eff ->
+                                    tempSettings = tempSettings.withEffectForSection(sec, eff.displayName)
+                                    previewEffectName = eff.displayName
+                                    previewTrigger++
+                                },
+                                onTriggerPreview = { effName ->
+                                    previewEffectName = effName
+                                    previewTrigger++
+                                },
+                                onResetToDefault = {
+                                    PracticeAppearanceManager.resetEffectsToDefault(context)
+                                    tempSettings = tempSettings.copy(
+                                        setsEffect = BurstEffectType.DEFAULT.displayName,
+                                        subtopicsEffect = BurstEffectType.DEFAULT.displayName,
+                                        currentAffairsEffect = BurstEffectType.DEFAULT.displayName,
+                                        offlineEffect = BurstEffectType.DEFAULT.displayName
+                                    )
+                                    previewEffectName = BurstEffectType.DEFAULT.displayName
+                                    previewTrigger++
+                                    onReset()
+                                    Toast.makeText(context, "✓ Reset all 4 sections to Confetti Pop", Toast.LENGTH_SHORT).show()
+                                },
+                                onApply = {
+                                    PracticeSectionType.entries.forEach { s ->
+                                        PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                    }
+                                    PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                    onSave(tempSettings)
+                                    Toast.makeText(context, "✓ Effects applied successfully!", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+
+                        "Layout" -> {
+                            BackgroundColoursCard(
+                                settings = tempSettings,
+                                onOpenColorPicker = { activeColorDialogTarget = it }
+                            )
+                            BottomActionButtons(
+                                onReset = {
+                                    val def = PracticeAppearanceSettings()
+                                    tempSettings = def
+                                    PracticeAppearanceManager.resetEffectsToDefault(context)
+                                    onReset()
+                                    Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                },
+                                onApply = {
+                                    PracticeSectionType.entries.forEach { s ->
+                                        PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                    }
+                                    PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                    onSave(tempSettings)
+                                    Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+
+                        "Preview" -> {
+                            InteractivePracticePreviewCard(
+                                settings = tempSettings,
+                                onTriggerEffect = { effectName ->
+                                    previewEffectName = effectName
+                                    previewTrigger++
+                                }
+                            )
+
+                            BottomActionButtons(
+                                onReset = {
+                                    val def = PracticeAppearanceSettings()
+                                    tempSettings = def
+                                    PracticeAppearanceManager.resetEffectsToDefault(context)
+                                    onReset()
+                                    Toast.makeText(context, "Reset to default settings", Toast.LENGTH_SHORT).show()
+                                },
+                                onApply = {
+                                    PracticeSectionType.entries.forEach { s ->
+                                        PracticeAppearanceManager.saveEffectForSection(context, s, tempSettings.getEffectForSection(s))
+                                    }
+                                    PracticeAppearanceManager.saveSettings(context, tempSettings)
+                                    onSave(tempSettings)
+                                    Toast.makeText(context, "Appearance applied successfully!", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -680,6 +886,13 @@ fun PracticeAppearancePanel(
                 }
             )
         }
+
+        // Correct Answer Burst Effect Canvas Overlay
+        CorrectAnswerBurstEffect(
+            trigger = previewTrigger,
+            effectName = previewEffectName,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -828,6 +1041,7 @@ fun TabSelectorRow(
         ) {
             val tabs = listOf(
                 Triple("Appearance", Icons.Default.Palette, "Appearance"),
+                Triple("Effects", Icons.Default.AutoAwesome, "Effects"),
                 Triple("Layout", Icons.Default.Tune, "Layout"),
                 Triple("Preview", Icons.Outlined.Visibility, "Preview")
             )
@@ -842,7 +1056,7 @@ fun TabSelectorRow(
                         .clickable { onSelectTab(name) }
                 ) {
                     Row(
-                        modifier = Modifier.padding(vertical = 9.dp),
+                        modifier = Modifier.padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -850,14 +1064,15 @@ fun TabSelectorRow(
                             imageVector = icon,
                             contentDescription = label,
                             tint = if (isSelected) Color.White else Color(0xFF1E293B),
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(15.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = label,
                             color = if (isSelected) Color.White else Color(0xFF1E293B),
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                            fontSize = 13.5.sp
+                            fontSize = 12.sp,
+                            maxLines = 1
                         )
                     }
                 }
@@ -1899,6 +2114,967 @@ fun LivePreviewCard(
                                     color = Color(0xFF94A3B8),
                                     fontSize = 11.sp
                                 )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class PracticePreviewSectionData(
+    val section: PracticeSectionType,
+    val title: String,
+    val tabLabel: String,
+    val question: String,
+    val options: List<String>,
+    val correctIndex: Int,
+    val explanation: String
+)
+
+val practicePreviewSections = listOf(
+    PracticePreviewSectionData(
+        section = PracticeSectionType.SETS,
+        title = "Sets Practice",
+        tabLabel = "Sets",
+        question = "భారతదేశ రాజధాని ఏది?",
+        options = listOf("ముంబై", "న్యూఢిల్లీ", "కోల్‌కతా", "చెన్నై"),
+        correctIndex = 1,
+        explanation = "న్యూఢిల్లీ భారతదేశ రాజధాని. 1911లో కోల్‌కతా నుండి ఢిల్లీకి రాజధాని మార్పు ప్రకటించారు."
+    ),
+    PracticePreviewSectionData(
+        section = PracticeSectionType.SUBTOPICS,
+        title = "Subtopics Practice",
+        tabLabel = "Subtopics",
+        question = "భారత రాజ్యాంగం ఎప్పుడు అమలులోకి వచ్చింది?",
+        options = listOf("1947", "1950", "1952", "1935"),
+        correctIndex = 1,
+        explanation = "భారత రాజ్యాంగం 1950 జనవరి 26న అమలులోకి వచ్చింది."
+    ),
+    PracticePreviewSectionData(
+        section = PracticeSectionType.CURRENT_AFFAIRS,
+        title = "Current Affairs Practice",
+        tabLabel = "Current Affairs",
+        question = "ISRO ప్రధాన కార్యాలయం ఏ నగరంలో ఉంది?",
+        options = listOf("హైదరాబాద్", "బెంగళూరు", "చెన్నై", "తిరువనంతపురం"),
+        correctIndex = 1,
+        explanation = "ISRO ప్రధాన కార్యాలయం బెంగళూరులో ఉంది."
+    ),
+    PracticePreviewSectionData(
+        section = PracticeSectionType.OFFLINE,
+        title = "Offline Downloaded Practice",
+        tabLabel = "Offline",
+        question = "తెలంగాణ రాష్ట్ర రాజధాని ఏది?",
+        options = listOf("విజయవాడ", "హైదరాబాద్", "వరంగల్", "కరీంనగర్"),
+        correctIndex = 1,
+        explanation = "హైదరాబాద్ తెలంగాణ రాష్ట్ర రాజధాని."
+    )
+)
+
+@Composable
+fun InteractivePracticePreviewCard(
+    settings: PracticeAppearanceSettings,
+    onTriggerEffect: (String) -> Unit
+) {
+    var selectedPreviewIndex by remember { mutableIntStateOf(0) }
+    var selectedOptionIndex by remember { mutableStateOf<Int?>(null) }
+
+    val currentData = practicePreviewSections[selectedPreviewIndex.coerceIn(0, practicePreviewSections.size - 1)]
+    val sectionEffect = settings.getEffectForSection(currentData.section)
+
+    val qBg = parseHexColor(settings.questionCard.backgroundColor)
+    val qText = parseHexColor(settings.questionCard.textColor)
+    val qFont = resolveFontFamily(settings.questionCard.fontFamily)
+    val qSize = settings.questionCard.fontSize.sp
+
+    val oBg = parseHexColor(settings.options.backgroundColor)
+    val oText = parseHexColor(settings.options.textColor)
+    val oFont = resolveFontFamily(settings.options.fontFamily)
+    val oSize = settings.options.fontSize.sp
+
+    val eBg = parseHexColor(settings.explanation.backgroundColor)
+    val eText = parseHexColor(settings.explanation.textColor)
+    val eFont = resolveFontFamily(settings.explanation.fontFamily)
+    val eSize = settings.explanation.fontSize.sp
+
+    val screenBg = parseHexColor(settings.screenBackgroundColor, Color(0xFFF1F5F9))
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Visibility,
+                    contentDescription = null,
+                    tint = Color(0xFF0F172A),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Live Interactive Preview",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
+                    fontSize = 15.sp
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFDCFCE7)
+            ) {
+                Text(
+                    text = "Interactive",
+                    color = Color(0xFF16A34A),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                )
+            }
+        }
+
+        // Section Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            practicePreviewSections.forEachIndexed { idx, sec ->
+                val isSelected = selectedPreviewIndex == idx
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isSelected) Color(0xFF16A34A) else Color.White,
+                    border = BorderStroke(1.dp, if (isSelected) Color(0xFF16A34A) else Color(0xFFCBD5E1)),
+                    modifier = Modifier.clickable {
+                        selectedPreviewIndex = idx
+                        selectedOptionIndex = null
+                    }
+                ) {
+                    Text(
+                        text = sec.tabLabel,
+                        color = if (isSelected) Color.White else Color(0xFF1E293B),
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 12.5.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        // Preview Screen Card Container with localized burst effect
+        var cardBurstTrigger by remember { mutableIntStateOf(0) }
+        var cardBurstEffect by remember { mutableStateOf(sectionEffect) }
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = screenBg),
+                border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Top Mini Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0F2C59))
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "${currentData.title} • Q 1/10",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.5.sp
+                        )
+                        IconButton(
+                            onClick = { selectedOptionIndex = null },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Reset question", tint = Color.White, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Question Card
+                    Card(
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = qBg),
+                        border = BorderStroke(1.dp, parseHexColor(settings.questionCard.borderColor, Color(0xFFFDE68A))),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFF59E0B),
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("Q", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = currentData.question,
+                                color = qText,
+                                fontFamily = qFont,
+                                fontSize = qSize,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    // Options A, B, C, D
+                    val optionLabels = listOf("A", "B", "C", "D")
+                    currentData.options.forEachIndexed { optIdx, optText ->
+                        val isChosen = selectedOptionIndex == optIdx
+                        val isCorrect = optIdx == currentData.correctIndex
+                        val hasAnswered = selectedOptionIndex != null
+
+                        val optCardBg = when {
+                            !hasAnswered -> oBg
+                            isCorrect && (hasAnswered && (selectedOptionIndex == currentData.correctIndex || isChosen)) -> Color(0xFFDCFCE7)
+                            isChosen && !isCorrect -> Color(0xFFFEE2E2)
+                            else -> oBg
+                        }
+
+                        val optBorderColor = when {
+                            !hasAnswered -> parseHexColor(settings.options.borderColor, Color(0xFFBAE6FD))
+                            isCorrect && (hasAnswered && (selectedOptionIndex == currentData.correctIndex || isChosen)) -> Color(0xFF16A34A)
+                            isChosen && !isCorrect -> Color(0xFFDC2626)
+                            else -> parseHexColor(settings.options.borderColor, Color(0xFFBAE6FD))
+                        }
+
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = optCardBg),
+                            border = BorderStroke(1.5.dp, optBorderColor),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    enabled = selectedOptionIndex == null,
+                                    interactionSource = remember(optIdx) { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    indication = ripple()
+                                ) {
+                                    if (selectedOptionIndex == null) {
+                                        selectedOptionIndex = optIdx
+                                        if (isCorrect) {
+                                            cardBurstEffect = sectionEffect
+                                            cardBurstTrigger++
+                                            onTriggerEffect(sectionEffect)
+                                        }
+                                    }
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = when {
+                                        !hasAnswered -> Color(0xFF0284C7)
+                                        isCorrect && (selectedOptionIndex == currentData.correctIndex || isChosen) -> Color(0xFF16A34A)
+                                        isChosen && !isCorrect -> Color(0xFFDC2626)
+                                        else -> Color(0xFF0284C7)
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(optionLabels[optIdx], color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                Text(
+                                    text = optText,
+                                    color = oText,
+                                    fontFamily = oFont,
+                                    fontSize = oSize,
+                                    fontWeight = if (isChosen) FontWeight.Bold else FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                if (hasAnswered && isCorrect) {
+                                    Icon(Icons.Default.Check, contentDescription = "Correct", tint = Color(0xFF16A34A), modifier = Modifier.size(18.dp))
+                                } else if (isChosen && !isCorrect) {
+                                    Icon(Icons.Default.Close, contentDescription = "Wrong", tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    // Explanation Box
+                    if (selectedOptionIndex != null) {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = eBg),
+                            border = BorderStroke(1.dp, parseHexColor(settings.explanation.borderColor, Color(0xFFBBF7D0))),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Outlined.Lightbulb, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("వివరణ (Explanation)", color = Color(0xFF15803D), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = currentData.explanation,
+                                    color = eText,
+                                    fontFamily = eFont,
+                                    fontSize = eSize,
+                                    lineHeight = (eSize.value + 4).sp
+                                )
+                            }
+                        }
+                    }
+
+                    // Bottom info bar matching HTML
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Effect: $sectionEffect" + if (sectionEffect == BurstEffectType.DEFAULT.displayName) " (default)" else "",
+                            fontSize = 11.5.sp,
+                            color = Color(0xFF475569),
+                            fontWeight = FontWeight.Medium
+                        )
+                        TextButton(
+                            onClick = { selectedOptionIndex = null },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF0052CC))
+                                Text("↻ Replay / మళ్ళీ", fontSize = 11.5.sp, color = Color(0xFF0052CC), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Localized Canvas Overlay directly over preview card
+        CorrectAnswerBurstEffect(
+            trigger = cardBurstTrigger,
+            effectName = cardBurstEffect,
+            modifier = Modifier.matchParentSize()
+        )
+    }
+}
+}
+
+@Composable
+fun AnswerFeedbackEffectsCard(
+    currentSettings: PracticeAppearanceSettings,
+    selectedSection: PracticeSectionType,
+    onSelectSection: (PracticeSectionType) -> Unit,
+    onSelectEffect: (PracticeSectionType, BurstEffectType) -> Unit,
+    onTriggerPreview: (String) -> Unit,
+    onResetToDefault: () -> Unit,
+    onApply: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFEFF6FF),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Correct-Answer Feedback Effects",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
+                        fontSize = 15.5.sp
+                    )
+                    Text(
+                        text = "Choose separate effects for each practice section",
+                        color = Color(0xFF64748B),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // Section selection chips
+            Text(
+                text = "Select Practice Section to Configure:",
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF334155),
+                fontSize = 12.5.sp
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PracticeSectionType.entries.forEach { section ->
+                    val isSelected = selectedSection == section
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isSelected) Color(0xFF0052CC) else Color(0xFFF1F5F9),
+                        border = BorderStroke(1.dp, if (isSelected) Color(0xFF0052CC) else Color(0xFFCBD5E1)),
+                        modifier = Modifier.clickable { onSelectSection(section) }
+                    ) {
+                        Text(
+                            text = when (section) {
+                                PracticeSectionType.SETS -> "📚 Sets"
+                                PracticeSectionType.SUBTOPICS -> "📑 Subtopics"
+                                PracticeSectionType.CURRENT_AFFAIRS -> "📰 Current Affairs"
+                                PracticeSectionType.OFFLINE -> "💾 Offline"
+                            },
+                            color = if (isSelected) Color.White else Color(0xFF1E293B),
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 12.5.sp,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+                        )
+                    }
+                }
+            }
+
+            // Active section status banner
+            val activeEffectForSection = currentSettings.getEffectForSection(selectedSection)
+            var cardBurstTrigger by remember { mutableIntStateOf(0) }
+            var cardBurstEffect by remember { mutableStateOf(activeEffectForSection) }
+            val currentSectionData = remember(selectedSection) {
+                practicePreviewSections.find { it.section == selectedSection } ?: practicePreviewSections.first()
+            }
+            var previewOptionSelected by remember(selectedSection) { mutableStateOf<Int?>(null) }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFF0FDF4),
+                border = BorderStroke(1.dp, Color(0xFFBBF7D0)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Currently configuring: ${selectedSection.displayName}",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF166534),
+                            fontSize = 12.5.sp
+                        )
+                        Text(
+                            text = "Active effect: $activeEffectForSection" + if (activeEffectForSection == BurstEffectType.DEFAULT.displayName) " (Default)" else "",
+                            color = Color(0xFF15803D),
+                            fontSize = 11.5.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            cardBurstEffect = activeEffectForSection
+                            cardBurstTrigger++
+                            onTriggerPreview(activeEffectForSection)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White)
+                            Text("Preview", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            // Live Interactive Preview Box inside Effects tab
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFFF8FAFC),
+                    border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(shape = CircleShape, color = Color(0xFF16A34A), modifier = Modifier.size(10.dp)) {}
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Preview Stage (${selectedSection.displayName})",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.5.sp,
+                                    color = Color(0xFF0F172A)
+                                )
+                            }
+                            TextButton(
+                                onClick = {
+                                    previewOptionSelected = null
+                                    cardBurstEffect = activeEffectForSection
+                                    cardBurstTrigger++
+                                    onTriggerPreview(activeEffectForSection)
+                                },
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFF16A34A))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Play Preview", fontSize = 11.5.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Text(
+                            text = currentSectionData.question,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF1E293B)
+                        )
+
+                        // 2 Quick Interactive Options to test answer burst
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            currentSectionData.options.take(2).forEachIndexed { optIdx, optTxt ->
+                                val isChosen = previewOptionSelected == optIdx
+                                val isCorrect = optIdx == currentSectionData.correctIndex
+                                val hasAnswered = previewOptionSelected != null
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = when {
+                                        !hasAnswered -> Color.White
+                                        isCorrect && (hasAnswered && (previewOptionSelected == currentSectionData.correctIndex || isChosen)) -> Color(0xFFDCFCE7)
+                                        isChosen && !isCorrect -> Color(0xFFFEE2E2)
+                                        else -> Color.White
+                                    },
+                                    border = BorderStroke(
+                                        1.5.dp,
+                                        when {
+                                            !hasAnswered -> Color(0xFFBAE6FD)
+                                            isCorrect && (hasAnswered && (previewOptionSelected == currentSectionData.correctIndex || isChosen)) -> Color(0xFF16A34A)
+                                            isChosen && !isCorrect -> Color(0xFFDC2626)
+                                            else -> Color(0xFFCBD5E1)
+                                        }
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable {
+                                            if (previewOptionSelected == null) {
+                                                previewOptionSelected = optIdx
+                                                if (isCorrect) {
+                                                    cardBurstEffect = activeEffectForSection
+                                                    cardBurstTrigger++
+                                                    onTriggerPreview(activeEffectForSection)
+                                                }
+                                            }
+                                        }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "${if (optIdx == 0) "A" else "B"}. $optTxt",
+                                            fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 12.sp,
+                                            color = if (isChosen && isCorrect) Color(0xFF14532D) else Color(0xFF0F172A),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (hasAnswered && isCorrect) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Effect Burst directly over this live preview stage!
+                CorrectAnswerBurstEffect(
+                    trigger = cardBurstTrigger,
+                    effectName = cardBurstEffect,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+
+            Text(
+                text = "Available Effects (Tap to preview and select):",
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF334155),
+                fontSize = 12.5.sp
+            )
+
+            // 10 Effects List
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                BurstEffectType.entries.forEachIndexed { index, effect ->
+                    val isChosen = activeEffectForSection.equals(effect.displayName, ignoreCase = true)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isChosen) Color(0xFFE5F6EA) else Color.White,
+                        border = BorderStroke(
+                            width = if (isChosen) 2.dp else 1.dp,
+                            color = if (isChosen) Color(0xFF16A34A) else Color(0xFFE2E8F0)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                cardBurstEffect = effect.displayName
+                                cardBurstTrigger++
+                                onSelectEffect(selectedSection, effect)
+                                onTriggerPreview(effect.displayName)
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Radio indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .border(
+                                        2.dp,
+                                        if (isChosen) Color(0xFF16A34A) else Color(0xFF94A3B8),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isChosen) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF16A34A))
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Emoji icon
+                            Text(
+                                text = effect.emoji,
+                                fontSize = 18.sp
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Name & Description
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "${index + 1}. ${effect.displayName}",
+                                        fontWeight = if (isChosen) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isChosen) Color(0xFF14532D) else Color(0xFF0F172A),
+                                        fontSize = 13.5.sp
+                                    )
+                                    if (effect.isDefault) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = Color(0xFF16A34A)
+                                        ) {
+                                            Text(
+                                                text = "Default",
+                                                color = Color.White,
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                    text = effect.description,
+                                    color = Color(0xFF64748B),
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            // Play button
+                            IconButton(
+                                onClick = {
+                                    cardBurstEffect = effect.displayName
+                                    cardBurstTrigger++
+                                    onTriggerPreview(effect.displayName)
+                                },
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayCircle,
+                                    contentDescription = "Test effect",
+                                    tint = if (isChosen) Color(0xFF16A34A) else Color(0xFF64748B),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = Color(0xFFF1F5F9))
+
+            // 4-Section Summary Matrix
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFF8FAFC),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Current Section Configuration:",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155),
+                        fontSize = 12.sp
+                    )
+                    PracticeSectionType.entries.forEach { section ->
+                        val eff = currentSettings.getEffectForSection(section)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = section.displayName,
+                                color = Color(0xFF64748B),
+                                fontSize = 11.5.sp
+                            )
+                            Text(
+                                text = eff + if (eff == BurstEffectType.DEFAULT.displayName) " (Default)" else "",
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (eff == BurstEffectType.DEFAULT.displayName) Color(0xFF16A34A) else Color(0xFF0052CC),
+                                fontSize = 11.5.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom action buttons: Apply and Reset to Default
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFE2E8F0),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onResetToDefault() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = null,
+                            tint = Color(0xFF0F172A),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Reset to Default",
+                            color = Color(0xFF0F172A),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF16A34A),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onApply() }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Apply Changes",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnswerFeedbackEffectsSummaryCard(
+    settings: PracticeAppearanceSettings,
+    onNavigateToEffects: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF16A34A),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Answer Feedback Effects",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A),
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = "Independent effect per section (Confetti Pop default)",
+                            color = Color(0xFF64748B),
+                            fontSize = 11.5.sp
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = onNavigateToEffects,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0052CC)),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Configure", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+            // Summary chips
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                PracticeSectionType.entries.forEach { section ->
+                    val effectName = settings.getEffectForSection(section)
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFF8FAFC),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(section.displayName, fontSize = 12.sp, color = Color(0xFF334155))
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    effectName,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (effectName == BurstEffectType.DEFAULT.displayName) Color(0xFF16A34A) else Color(0xFF0052CC)
+                                )
+                                if (effectName == BurstEffectType.DEFAULT.displayName) {
+                                    Text("(Default)", fontSize = 10.sp, color = Color(0xFF16A34A))
+                                }
                             }
                         }
                     }

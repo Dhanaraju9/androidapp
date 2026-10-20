@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.model.PracticeAppearanceSettings
 import com.example.model.PracticeSectionAppearance
+import com.example.model.PracticeSectionType
+import com.example.model.BurstEffectType
 
 object PracticeAppearanceManager {
     private const val PREF_NAME = "practice_appearance_settings"
@@ -169,6 +171,10 @@ object PracticeAppearanceManager {
                 cornerRadius = prefs.getInt("e_corner_radius", defaultSettings.explanation.cornerRadius)
             ),
             answerAnimationEffect = prefs.getString("answer_animation_effect", defaultSettings.answerAnimationEffect) ?: defaultSettings.answerAnimationEffect,
+            setsEffect = prefs.getString(PracticeSectionType.SETS.prefKey, defaultSettings.setsEffect) ?: defaultSettings.setsEffect,
+            subtopicsEffect = prefs.getString(PracticeSectionType.SUBTOPICS.prefKey, defaultSettings.subtopicsEffect) ?: defaultSettings.subtopicsEffect,
+            currentAffairsEffect = prefs.getString(PracticeSectionType.CURRENT_AFFAIRS.prefKey, defaultSettings.currentAffairsEffect) ?: defaultSettings.currentAffairsEffect,
+            offlineEffect = prefs.getString(PracticeSectionType.OFFLINE.prefKey, defaultSettings.offlineEffect) ?: defaultSettings.offlineEffect,
             lastUpdated = prefs.getLong("updated_at", System.currentTimeMillis())
         )
     }
@@ -203,12 +209,56 @@ object PracticeAppearanceManager {
             putInt("e_corner_radius", settings.explanation.cornerRadius)
             
             putString("answer_animation_effect", settings.answerAnimationEffect)
+            putString(PracticeSectionType.SETS.prefKey, settings.setsEffect)
+            putString(PracticeSectionType.SUBTOPICS.prefKey, settings.subtopicsEffect)
+            putString(PracticeSectionType.CURRENT_AFFAIRS.prefKey, settings.currentAffairsEffect)
+            putString(PracticeSectionType.OFFLINE.prefKey, settings.offlineEffect)
             putLong("updated_at", System.currentTimeMillis())
+            apply()
+        }
+    }
+
+    /**
+     * Retrieves the persisted correct-answer burst effect for a specific practice section.
+     * Defaults to "Confetti Pop" if not explicitly set.
+     */
+    fun getEffectForSection(context: Context, section: PracticeSectionType): String {
+        val prefs = getPrefs(context)
+        return prefs.getString(section.prefKey, BurstEffectType.DEFAULT.displayName)
+            ?.takeIf { it.isNotBlank() } ?: BurstEffectType.DEFAULT.displayName
+    }
+
+    /**
+     * Persistently saves the selected burst effect for a specific practice section.
+     */
+    fun saveEffectForSection(context: Context, section: PracticeSectionType, effectName: String) {
+        val prefs = getPrefs(context)
+        prefs.edit().putString(section.prefKey, effectName).apply()
+    }
+
+    /**
+     * Returns a snapshot map of currently saved effects across all 4 practice sections.
+     */
+    fun getAllSectionEffects(context: Context): Map<PracticeSectionType, String> {
+        return PracticeSectionType.entries.associateWith { getEffectForSection(context, it) }
+    }
+
+    /**
+     * Resets all 4 practice sections to the default "Confetti Pop" effect.
+     */
+    fun resetEffectsToDefault(context: Context) {
+        val prefs = getPrefs(context)
+        prefs.edit().apply {
+            PracticeSectionType.entries.forEach { section ->
+                putString(section.prefKey, BurstEffectType.DEFAULT.displayName)
+            }
+            putString("answer_animation_effect", BurstEffectType.DEFAULT.displayName)
             apply()
         }
     }
 
     fun resetToDefault(context: Context) {
         getPrefs(context).edit().clear().apply()
+        resetEffectsToDefault(context)
     }
 }

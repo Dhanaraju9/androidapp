@@ -59,6 +59,7 @@ import com.example.ui.components.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.repository.AppConfigRepository
 import com.example.util.FontSettingsManager
+import com.example.model.PracticeSectionType
 import kotlinx.coroutines.delay
 
 import com.example.ui.theme.*
@@ -153,6 +154,7 @@ fun PracticeArenaScreen(
     initialBookmarkedIds: Set<String> = emptySet(),
     onToggleBookmark: (Question) -> Unit = {},
     onNavigateToHome: (() -> Unit)? = null,
+    sectionType: PracticeSectionType? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -164,6 +166,25 @@ fun PracticeArenaScreen(
     }
     val appSettings = appConfig.advancedFontSettings
     val pa = appSettings.practiceAppearance
+
+    val currentSectionType = remember(sectionType, practiceSessionId, title) {
+        sectionType ?: when {
+            com.example.util.OfflineSyncManager.isOfflineModeSimulated.value ||
+            practiceSessionId.contains("offline", ignoreCase = true) ||
+            title.contains("offline", ignoreCase = true) -> PracticeSectionType.OFFLINE
+
+            practiceSessionId.contains("current-affairs", ignoreCase = true) ||
+            title.contains("Current Affairs", ignoreCase = true) -> PracticeSectionType.CURRENT_AFFAIRS
+
+            practiceSessionId.startsWith("subtopic") ||
+            title.contains("subtopic", ignoreCase = true) -> PracticeSectionType.SUBTOPICS
+
+            else -> PracticeSectionType.SETS
+        }
+    }
+    val activeBurstEffect = remember(pa, currentSectionType) {
+        pa.getEffectForSection(currentSectionType)
+    }
 
     val savedSession = remember(practiceSessionId) {
         val s = PracticeSessionManager.getSession(context, practiceSessionId)
@@ -714,11 +735,14 @@ fun PracticeArenaScreen(
                                         autoShowExplanation = autoShowExplanation,
                                         isMockTest = isMockTest,
                                         onOptionSelected = { key ->
-                                            userAnswers[currentQuestion.id] = key
-                                            onAnswerSelected(userAnswers.toMap())
-                                            performResultHaptic(key.equals(currentQuestion.correctOption, ignoreCase = true))
-                                            if (!isMockTest && key.equals(currentQuestion.correctOption, ignoreCase = true)) {
-                                                correctAnswerTrigger++
+                                            if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                                userAnswers[currentQuestion.id] = key
+                                                onAnswerSelected(userAnswers.toMap())
+                                                val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
+                                                performResultHaptic(isCorrect)
+                                                if (!isMockTest && isCorrect) {
+                                                    correctAnswerTrigger++
+                                                }
                                             }
                                         },
                                         onHapticSelection = performSelectionHaptic,
@@ -771,10 +795,14 @@ fun PracticeArenaScreen(
                                     autoShowExplanation = autoShowExplanation,
                                     isMockTest = isMockTest,
                                     onOptionSelected = { key ->
-                                        userAnswers[currentQuestion.id] = key
-                                        onAnswerSelected(userAnswers.toMap())
-                                        if (!isMockTest && key.equals(currentQuestion.correctOption, ignoreCase = true)) {
-                                            correctAnswerTrigger++
+                                        if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                            userAnswers[currentQuestion.id] = key
+                                            onAnswerSelected(userAnswers.toMap())
+                                            val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
+                                            performResultHaptic(isCorrect)
+                                            if (!isMockTest && isCorrect) {
+                                                correctAnswerTrigger++
+                                            }
                                         }
                                     },
                                     onToggleReview = {
@@ -829,10 +857,14 @@ fun PracticeArenaScreen(
                                     autoShowExplanation = autoShowExplanation,
                                     isMockTest = isMockTest,
                                     onOptionSelected = { key ->
-                                        userAnswers[currentQuestion.id] = key
-                                        onAnswerSelected(userAnswers.toMap())
-                                        if (!isMockTest && key.equals(currentQuestion.correctOption, ignoreCase = true)) {
-                                            correctAnswerTrigger++
+                                        if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                            userAnswers[currentQuestion.id] = key
+                                            onAnswerSelected(userAnswers.toMap())
+                                            val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
+                                            performResultHaptic(isCorrect)
+                                            if (!isMockTest && isCorrect) {
+                                                correctAnswerTrigger++
+                                            }
                                         }
                                     },
                                     onToggleReview = {
@@ -1138,10 +1170,11 @@ fun PracticeArenaScreen(
                 }
             }
 
-            // Premium Success Burst Animation for Correct Answer (Sets, Subtopics, Current Affairs)
+            // Premium Success Burst Animation for Correct Answer (Sets, Subtopics, Current Affairs, Offline)
             if (!isMockTest) {
                 CorrectAnswerBurstEffect(
                     trigger = correctAnswerTrigger,
+                    effectName = activeBurstEffect,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -1475,45 +1508,32 @@ fun QuestionDetailPanel(
                                 else -> null
                             }
 
-                            // Smooth animation transitions for options
-                            val animatedBgColor by animateColorAsState(targetValue = targetBgColor, animationSpec = tween(250), label = "BgAnim")
-                            val animatedBorderColor by animateColorAsState(targetValue = targetBorderColor, animationSpec = tween(250), label = "BorderAnim")
-                            val animatedTextColor by animateColorAsState(targetValue = targetTextColor, animationSpec = tween(250), label = "TextAnim")
-                            val animatedBorderWidth by animateDpAsState(targetValue = targetBorderWidth, animationSpec = tween(200), label = "WidthAnim")
-                            val optionScale = 1.0f
-                            val optionElevation by animateDpAsState(
-                                targetValue = if (!isMockTest && hasAnswered && isCorrectOption) 2.dp else 1.dp,
-                                animationSpec = tween(200),
-                                label = "OptionElevation"
-                            )
+                            // Smooth color transitions for options without layout shifts or dimension changes
+                            val animatedBgColor by animateColorAsState(targetValue = targetBgColor, animationSpec = tween(220), label = "BgAnim")
+                            val animatedBorderColor by animateColorAsState(targetValue = targetBorderColor, animationSpec = tween(220), label = "BorderAnim")
+                            val animatedTextColor by animateColorAsState(targetValue = targetTextColor, animationSpec = tween(220), label = "TextAnim")
+                            val fixedBorderWidth = pa.optionBorderWidth.dp.coerceAtLeast(1.5.dp)
 
-                            val optionIndex = optionKeys.indexOf(key).coerceAtLeast(0)
-                            val optionFeedbackModifier = Modifier
-                                .premiumTargetAnimation(
-                                    target = com.example.model.AnimatableTarget.MCQ_OPTION_CARDS,
-                                    screenKey = "Practice Arena",
-                                    visible = true,
-                                    index = optionIndex
-                                )
-                                .premiumAnswerFeedback(
-                                    isSelected = hasAnswered && isUserSelection,
-                                    isCorrect = if (!isMockTest && hasAnswered) isCorrectOption else null,
-                                    triggerKey = Pair(currentQuestion.id, currentSelectedOption)
-                                )
-                            Box(modifier = Modifier.fillMaxWidth().then(optionFeedbackModifier)) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
                                 Surface(
                                     shape = RoundedCornerShape(pa.optionCornerRadius.dp),
                                     color = animatedBgColor,
                                     border = BorderStroke(
-                                        width = animatedBorderWidth,
-                                        brush = Brush.linearGradient(listOf(animatedBorderColor, animatedBorderColor.copy(alpha = 0.7f), Color(0xFFE2E8F0)))
+                                        width = fixedBorderWidth,
+                                        brush = Brush.linearGradient(listOf(animatedBorderColor, animatedBorderColor.copy(alpha = 0.85f), Color(0xFFE2E8F0)))
                                     ),
-                                    shadowElevation = (optionElevation + 0.5.dp).coerceAtLeast(1.5.dp),
+                                    shadowElevation = 1.dp,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable(enabled = isMockTest || !hasAnswered) {
-                                            onHapticSelection()
-                                            onOptionSelected(key)
+                                        .clickable(
+                                            enabled = isMockTest || !hasAnswered,
+                                            interactionSource = remember(key) { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = ripple()
+                                        ) {
+                                            if (isMockTest || !hasAnswered) {
+                                                onHapticSelection()
+                                                onOptionSelected(key)
+                                            }
                                         }
                                 ) {
                                     Row(
@@ -1557,12 +1577,6 @@ fun QuestionDetailPanel(
 
                                         Spacer(modifier = Modifier.width(12.dp))
 
-                                        // Particle Animation
-                                        CorrectAnswerCelebration(
-                                            trigger = !isMockTest && hasAnswered && isCorrectOption && isUserSelection,
-                                            modifier = Modifier.size(80.dp)
-                                        )
-
                                         Box(modifier = Modifier.weight(1f)) {
                                             MathAndHighlightText(
                                                 text = optionText,
@@ -1577,39 +1591,46 @@ fun QuestionDetailPanel(
                                             )
                                         }
 
-                                        // Right indicator matching reference
-                                        if (rightIcon != null) {
-                                            if (isCorrectOption && !isMockTest) {
-                                                com.example.ui.components.ElegantAnimatedCheckmark(
-                                                    visible = true,
-                                                    size = 26.dp,
-                                                    badgeColor = Color(0xFF16A34A),
-                                                    checkmarkColor = Color.White
-                                                )
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        // Right indicator matching reference in fixed 26.dp container
+                                        Box(
+                                            modifier = Modifier.size(26.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (rightIcon != null) {
+                                                if (isCorrectOption && !isMockTest) {
+                                                    com.example.ui.components.ElegantAnimatedCheckmark(
+                                                        visible = true,
+                                                        size = 26.dp,
+                                                        badgeColor = Color(0xFF16A34A),
+                                                        checkmarkColor = Color.White
+                                                    )
+                                                } else {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(26.dp)
+                                                            .background(
+                                                                Color(0xFFDC2626),
+                                                                CircleShape
+                                                            ),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = rightIcon,
+                                                            contentDescription = null,
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
+                                                }
                                             } else {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(26.dp)
-                                                        .background(
-                                                            Color(0xFFDC2626),
-                                                            CircleShape
-                                                        ),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = rightIcon,
-                                                        contentDescription = null,
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                }
+                                                        .size(22.dp)
+                                                        .border(2.dp, Color(0xFF0284C7), CircleShape)
+                                                )
                                             }
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(24.dp)
-                                                    .border(2.dp, Color(0xFF0284C7), CircleShape)
-                                            )
                                         }
                                     }
                                 }

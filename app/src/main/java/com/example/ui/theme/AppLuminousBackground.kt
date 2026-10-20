@@ -1,6 +1,7 @@
 package com.example.ui.theme
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -158,24 +160,7 @@ fun AppLuminousBackground(
     }
 
     val activeWallpaperUrl = remember(activeWallpaper, screenName) {
-        activeWallpaper?.url ?: run {
-            val pinkScreens = listOf(
-                "Syllabus Explorer",
-                "Unit Topics Screen",
-                "Topic Sets Screen",
-                "Set Subtopics Screen",
-                "Current Affairs",
-                "My Progress",
-                "Home Screen",
-                "App Surface",
-                "Global Default"
-            )
-            if (screenName == null || pinkScreens.contains(screenName)) {
-                com.example.R.drawable.premium_pink_wallpaper
-            } else {
-                null
-            }
-        }
+        activeWallpaper?.url ?: com.example.R.drawable.premium_pink_wallpaper
     }
 
     val wallpaperModel: Any? = remember(activeWallpaperUrl) {
@@ -190,28 +175,40 @@ fun AppLuminousBackground(
         modifier = modifier.fillMaxSize()
     ) {
         if (wallpaperModel != null) {
-            val context = LocalContext.current
-            val wallpaperRequest = remember(wallpaperModel, context) {
-                ImageRequest.Builder(context)
-                    .data(wallpaperModel)
-                    .crossfade(true)
-                    .allowHardware(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .build()
+            if (wallpaperModel is Int) {
+                // High-performance direct native Compose Image with ContentScale.Crop
+                Image(
+                    painter = painterResource(id = wallpaperModel),
+                    contentDescription = "Background Wallpaper",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                val context = LocalContext.current
+                val wallpaperRequest = remember(wallpaperModel, context) {
+                    ImageRequest.Builder(context)
+                        .data(wallpaperModel)
+                        .crossfade(true)
+                        .allowHardware(true)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .build()
+                }
+                // Render Custom Wallpaper background asynchronously with hardware bitmap caching
+                AsyncImage(
+                    model = wallpaperRequest,
+                    contentDescription = "Background Wallpaper",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
-            // Render Custom Wallpaper background asynchronously with hardware bitmap caching
-            AsyncImage(
-                model = wallpaperRequest,
-                contentDescription = "Background Wallpaper",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(if (isDark) Color.Black.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f))
-            )
+            if (wallpaperModel != com.example.R.drawable.premium_pink_wallpaper) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (isDark) Color.Black.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.35f))
+                )
+            }
         } else {
             // Render breathtaking luxury luminous canvas
             Box(

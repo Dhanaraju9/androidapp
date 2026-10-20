@@ -860,7 +860,16 @@ fun AppNavigationHost() {
                 is AppScreen.Performance -> {
                     PerformanceBoardScreen(
                         onBack = { goBack() },
-                        onNavigateToHome = { navigateToHome() }
+                        onNavigateToHome = { navigateToHome() },
+                        onNavigateToSubject = { subject ->
+                            navigateTo(AppScreen.SyllabusExplorer(subject))
+                        },
+                        onNavigateToTopic = { subject, unit, topic ->
+                            navigateTo(AppScreen.TopicSets(subject, unit, topic))
+                        },
+                        onNavigateToMockTests = {
+                            navigateTo(AppScreen.MockTests)
+                        }
                     )
                 }
             }

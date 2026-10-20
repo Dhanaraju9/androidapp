@@ -426,8 +426,8 @@ fun PremiumAchievementResultOverlay(
     minThreshold: Double = 70.0,
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
-    // Strictly do not show celebration for 70% or below
-    if (scorePercentage <= minThreshold) return
+    // Strictly do not show celebration for below 70%
+    if (scorePercentage < minThreshold) return
 
     val haptic = LocalHapticFeedback.current
     var hasTriggeredHaptic by remember { mutableStateOf(false) }

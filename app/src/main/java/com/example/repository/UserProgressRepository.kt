@@ -182,8 +182,9 @@ class UserProgressRepository(
             testResultDao.getTotalCorrectAnswers(appId)
         ) { testCount, avgScore, maxScore, totalQuestions, totalCorrect ->
             val attempts = totalQuestions ?: 0
-            val corrects = totalCorrect ?: 0
-            val accuracy = if (attempts > 0) "${((corrects * 100) / attempts)}%" else "0%"
+            val corrects = (totalCorrect ?: 0).coerceIn(0, attempts.coerceAtLeast(1))
+            val accuracyPct = if (attempts > 0) ((corrects.toDouble() / attempts) * 100).toInt().coerceIn(0, 100) else 0
+            val accuracy = "$accuracyPct%"
 
             MockTestPerformanceSummary(
                 totalTestsTaken = testCount,

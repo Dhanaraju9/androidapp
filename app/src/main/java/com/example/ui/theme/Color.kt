@@ -11,3 +11,10 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val PremiumNavyCard = Color(0xFF1E293B)
+
+val BlushPink = Color(0xFFFCE4EC)
+val Ivory = Color(0xFFFFFDF5)
+val SoftPeach = Color(0xFFFFE0B2)
+val Lavender = Color(0xFFE1BEE7)
+val ChampagneAccent = Color(0xFFD4AF37)
+val DeepCharcoal = Color(0xFF263238)

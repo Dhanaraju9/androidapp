@@ -191,7 +191,7 @@ fun LeftNavigationDrawerContent(
                     val resolvedItem = when (item.id) {
                         "available_mock_tests" -> item.copy(badgeText = "$availableCount TESTS")
                         "state_leaderboard" -> item.copy(
-                            title = "Rank #$displayRank",
+                            title = "Leaderboard",
                             subtitle = "State Live Leaderboard",
                             badgeText = "LIVE",
                             badgeBgColorHex = 0xFFEAB308,

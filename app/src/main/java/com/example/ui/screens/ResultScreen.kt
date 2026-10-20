@@ -71,11 +71,12 @@ fun ResultScreen(
     BackHandler { onBackToPrevious() }
     val context = LocalContext.current
     var bookmarkedIds by remember(initialBookmarkedIds) { mutableStateOf(initialBookmarkedIds) }
-    val totalQs = questions.size
-    val attempted = correctCount + wrongCount
+    val totalQs = questions.size.coerceAtLeast(1)
+    val safeCorrectCount = correctCount.coerceIn(0, totalQs)
+    val attempted = (safeCorrectCount + wrongCount).coerceIn(0, totalQs)
     val unattempted = (totalQs - attempted).coerceAtLeast(0)
-    val accuracy = if (attempted > 0) (correctCount.toDouble() / attempted * 100).toInt() else 0
-    val scorePercentage = if (totalQs > 0) ((correctCount.toDouble() / totalQs) * 100).roundToInt().coerceIn(0, 100) else 0
+    val accuracy = if (attempted > 0) ((safeCorrectCount.toDouble() / attempted) * 100).roundToInt().coerceIn(0, 100) else 0
+    val scorePercentage = if (totalQs > 0) ((safeCorrectCount.toDouble() * 100.0) / totalQs).roundToInt().coerceIn(0, 100) else 0
 
     val suggestionConfig = remember(scorePercentage) {
         getAiSuggestionConfig(scorePercentage)
@@ -86,6 +87,8 @@ fun ResultScreen(
     val filteredQs = remember(questions, userAnswers, selectedFilter) {
         questions.filter { q ->
             val ans = userAnswers[q.id]
+                ?: userAnswers[q.questionText]
+                ?: userAnswers[questions.indexOf(q).toString()]
             when (selectedFilter) {
                 "Mistakes" -> ans != null && !ans.equals(q.correctOption, ignoreCase = true)
                 "Skipped" -> ans == null
@@ -97,12 +100,12 @@ fun ResultScreen(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8FAFC)),
+            .background(Color(0xFFFFF8F0)), // Warm ivory / soft champagne cream
         contentAlignment = Alignment.TopCenter
     ) {
         val isTablet = maxWidth >= 600.dp
 
-        // Nature/Study Hero Background
+        // Champagne/Peach Hero Background
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,9 +113,8 @@ fun ResultScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFFFF1EB), // Light warm peach
-                            Color(0xFFE2F0CB), // Light nature green
-                            Color(0xFFF8FAFC)  // Background match
+                            Color(0xFFFFEFE6), // Soft peach cream
+                            Color(0xFFFFF8F0)  // Warm ivory background match
                         ),
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY
@@ -279,7 +281,7 @@ fun ResultScreen(
 
             // Hero Performance Card
             item {
-                val isHighAchiever = scorePercentage > 70
+                val isHighAchiever = scorePercentage >= 70
                 val cardScale = remember { Animatable(if (isHighAchiever) 0.92f else 1.0f) }
 
                 LaunchedEffect(isHighAchiever) {
@@ -946,10 +948,15 @@ fun ResultScreen(
             // Questions List
             itemsIndexed(filteredQs) { index, question ->
                 val isBm = bookmarkedIds.contains(question.id)
+                val selectedOpt = userAnswers[question.id]
+                    ?: userAnswers[question.questionText]
+                    ?: userAnswers[index.toString()]
+                    ?: userAnswers[questions.indexOf(question).toString()]
+
                 QuestionSolutionCard(
                     question = question,
                     index = questions.indexOf(question) + 1,
-                    selectedOption = userAnswers[question.id],
+                    selectedOption = selectedOpt,
                     isBookmarked = isBm,
                     onToggleBookmark = { q ->
                         onToggleBookmark(q)
@@ -960,8 +967,8 @@ fun ResultScreen(
         }
 
         // Premium Achievement Celebration Overlay on Result Screen (Sets, Subtopics, Current Affairs)
-        // Strictly displayed ONLY when score is above 70% (> 70.0)
-        if (scorePercentage > 70) {
+        // Strictly displayed ONLY when score is 70% or higher (>= 70.0)
+        if (scorePercentage >= 70) {
             com.example.ui.components.PremiumAchievementResultOverlay(
                 scorePercentage = scorePercentage.toDouble(),
                 minThreshold = 70.0,
@@ -975,15 +982,16 @@ fun ResultScreen(
 fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit, color: Color) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) color else Color(0xFFF1F5F9),
+        color = if (selected) Color(0xFFC76B91) else Color(0xFFFFF1E8),
+        border = BorderStroke(1.dp, if (selected) Color(0xFFC76B91) else Color(0xFFF2D3DC)),
         modifier = Modifier.clickable { onClick() }
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 12.5.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) Color.White else Color(0xFF475569),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            color = if (selected) Color.White else Color(0xFF786575),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
         )
     }
 }
@@ -1004,8 +1012,8 @@ fun StatCard(modifier: Modifier, icon: androidx.compose.ui.graphics.vector.Image
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(title, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = iconTint, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(value, fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
-            Text(subtitle, fontSize = 9.sp, color = Color(0xFF475569), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(value, fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color(0xFF49333F))
+            Text(subtitle, fontSize = 9.sp, color = Color(0xFF786575), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -1023,39 +1031,61 @@ fun QuestionSolutionCard(
     val isSkipped = selectedOption == null
 
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        shadowElevation = 1.dp
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White, // Warm white
+        border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(0xFFC76B91), Color(0xFFD4AF37), Color(0xFFB8527A)))), // Premium Rose-Gold & Champagne Gradient Border
+        shadowElevation = 3.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
+            // Header Row: Q# Badge, Status Badge (Correct / Incorrect / Skipped), Bookmark, Topic/Subtopic
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(6.dp), color = Color(0xFFF1F5F9)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Question Number Badge
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFFFF1E8), // Soft blush cream
+                        border = BorderStroke(1.5.dp, Color(0xFFB8527A)) // Richer Rose Gold border
+                    ) {
                         Text(
                             text = "Q${index.toString().padStart(2, '0')}",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = Color(0xFF0F172A),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            fontSize = 13.sp,
+                            color = Color(0xFF49333F), // Deep plum-brown
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Status Badge (Correct / Incorrect / Skipped)
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = when {
-                            isSkipped -> Color(0xFFF1F5F9)
-                            isCorrect -> Color(0xFFDCFCE7)
-                            else -> Color(0xFFFFE4E6)
-                        }
+                            isSkipped -> Color(0xFFFFF1E8)
+                            isCorrect -> Color(0xFFEAF8F1) // Very light green bg
+                            else -> Color(0xFFFDECEF) // Very light blush-red bg
+                        },
+                        border = BorderStroke(
+                            1.5.dp,
+                            when {
+                                isSkipped -> Color(0xFFE0ADBD)
+                                isCorrect -> Color(0xFF1B6B48) // Bold emerald green
+                                else -> Color(0xFFA83244) // Bold ruby red
+                            }
+                        )
                     ) {
-                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = when {
                                     isSkipped -> Icons.Default.RemoveCircleOutline
@@ -1064,30 +1094,31 @@ fun QuestionSolutionCard(
                                 },
                                 contentDescription = null,
                                 tint = when {
-                                    isSkipped -> Color(0xFF64748B)
-                                    isCorrect -> Color(0xFF16A34A)
-                                    else -> Color(0xFFE11D48)
+                                    isSkipped -> Color(0xFF786575)
+                                    isCorrect -> Color(0xFF1B6B48)
+                                    else -> Color(0xFFA83244)
                                 },
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(15.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = when {
                                     isSkipped -> "Skipped"
                                     isCorrect -> "Correct"
                                     else -> "Incorrect"
                                 },
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = when {
-                                    isSkipped -> Color(0xFF475569)
-                                    isCorrect -> Color(0xFF15803D)
-                                    else -> Color(0xFFBE123C)
+                                    isSkipped -> Color(0xFF786575)
+                                    isCorrect -> Color(0xFF1B6B48)
+                                    else -> Color(0xFFA83244)
                                 }
                             )
                         }
                     }
                 }
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = {
@@ -1098,117 +1129,129 @@ fun QuestionSolutionCard(
                                 Toast.LENGTH_SHORT
                             ).show()
                         },
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
                             contentDescription = "Bookmark Question",
-                            tint = if (isBookmarked) Color(0xFFD97706) else Color(0xFF64748B),
-                            modifier = Modifier.size(18.dp)
+                            tint = if (isBookmarked) Color(0xFFB8527A) else Color(0xFF786575),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    val labelText = if (question.subtopic.isNotBlank()) question.subtopic
+                    else if (question.topicId.isNotBlank()) question.topicId
+                    else question.subjectId
                     Text(
-                        text = if (question.subtopic.isNotBlank()) question.subtopic else if (question.topicId.isNotBlank()) question.topicId else question.subjectId,
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        fontWeight = FontWeight.Medium
+                        text = labelText,
+                        fontSize = 12.sp,
+                        color = Color(0xFF786575), // Muted mauve
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Question Text
+            // Prominent Question Text Box
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFF0F9FF), // Light blue box
-                border = BorderStroke(1.dp, Color(0xFFBAE6FD))
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFFFF1E8), // Soft blush cream background for question text
+                border = BorderStroke(1.5.dp, Color(0xFFE5A9B8)), // Crisp Rose Gold accent border
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
+                MathAndHighlightText(
                     text = question.questionText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A),
-                    modifier = Modifier.padding(12.dp)
+                    highlights = question.questionHighlights,
+                    location = HighlightLocation.OTHER,
+                    highlightConfig = LocalAppConfig.current.questionHighlightConfig,
+                    fontSize = 18.sp, // Prominent 17-19sp spec
+                    color = Color(0xFF49333F), // Deep plum-brown
+                    modifier = Modifier.padding(14.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Options in vertical list layout
+            // Answer Options List
             val optionEntries = question.options.entries.toList()
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 optionEntries.forEach { (key, value) ->
                     val isThisCorrect = key.equals(question.correctOption, ignoreCase = true)
                     val isThisSelected = key.equals(selectedOption, ignoreCase = true)
 
                     val bgColor = when {
-                        isThisCorrect -> Color(0xFFDCFCE7)
-                        isThisSelected && !isThisCorrect -> Color(0xFFFFE4E6)
-                        else -> Color(0xFFF8FAFC)
+                        isThisCorrect -> Color(0xFFEAF8F1) // Very light green background
+                        isThisSelected && !isThisCorrect -> Color(0xFFFDECEF) // Very light blush-red background
+                        else -> Color(0xFFFFF1E8) // Soft blush cream background
                     }
                     val borderColor = when {
-                        isThisCorrect -> Color(0xFF86EFAC)
-                        isThisSelected && !isThisCorrect -> Color(0xFFFDA4AF)
-                        else -> Color(0xFFE2E8F0)
+                        isThisCorrect -> Color(0xFF1B6B48) // Bold 2.dp Emerald green border accent
+                        isThisSelected && !isThisCorrect -> Color(0xFFA83244) // Bold 2.dp Ruby red border accent
+                        else -> Color(0xFFE0ADBD) // Crisp 1.5.dp Rose Gold border
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = bgColor,
-                        border = BorderStroke(1.dp, borderColor),
+                        border = BorderStroke(if (isThisCorrect || isThisSelected) 2.dp else 1.5.dp, borderColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Circle label (A, B, C, D)
                             Surface(
                                 shape = CircleShape,
                                 color = when {
-                                    isThisCorrect -> Color(0xFF16A34A)
-                                    isThisSelected && !isThisCorrect -> Color(0xFFE11D48)
-                                    else -> Color(0xFFE2E8F0)
+                                    isThisCorrect -> Color(0xFF1B6B48)
+                                    isThisSelected && !isThisCorrect -> Color(0xFFA83244)
+                                    else -> Color(0xFFE0ADBD)
                                 },
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(28.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = key.uppercase(),
-                                        fontSize = 12.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isThisCorrect || isThisSelected) Color.White else Color(0xFF475569)
+                                        color = if (isThisCorrect || isThisSelected) Color.White else Color(0xFF49333F)
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
                             Box(modifier = Modifier.weight(1f)) {
                                 MathAndHighlightText(
                                     text = value,
                                     highlights = emptyList(),
                                     location = HighlightLocation.OTHER,
                                     highlightConfig = LocalAppConfig.current.questionHighlightConfig,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF1E293B),
+                                    fontSize = 16.sp, // 15-17sp spec
+                                    color = Color(0xFF49333F), // Deep plum-brown
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
                             if (isThisCorrect) {
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Surface(shape = CircleShape, color = Color(0xFF16A34A), modifier = Modifier.size(16.dp)) {
+                                    Surface(shape = CircleShape, color = Color(0xFF1B6B48), modifier = Modifier.size(18.dp)) {
                                         Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.padding(2.dp))
                                     }
-                                    Text("Correct Answer", fontSize = 8.5.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("Correct Answer", fontSize = 9.sp, color = Color(0xFF1B6B48), fontWeight = FontWeight.Bold)
                                 }
                             } else if (isThisSelected) {
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Surface(shape = CircleShape, color = Color(0xFFE11D48), modifier = Modifier.size(16.dp)) {
+                                    Surface(shape = CircleShape, color = Color(0xFFA83244), modifier = Modifier.size(18.dp)) {
                                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.padding(2.dp))
                                     }
-                                    Text("Your Answer", fontSize = 8.5.sp, color = Color(0xFFE11D48), fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("Your Answer", fontSize = 9.sp, color = Color(0xFFA83244), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -1222,42 +1265,41 @@ fun QuestionSolutionCard(
                     question.explanation.trim().lowercase() != "no explanation available."
 
             if (hasValidExplanation) {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFF0F9FF), // Light blue box
-                    border = BorderStroke(1.dp, Color(0xFFBAE6FD))
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF4EEFA), // Pale lavender cream
+                    border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(0xFF9D72C3), Color(0xFFC76B91), Color(0xFF9D72C3)))), // Royal Amethyst & Rose Gold gradient border
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(shape = CircleShape, color = Color(0xFF3B82F6), modifier = Modifier.size(24.dp)) {
+                                Surface(shape = CircleShape, color = Color(0xFF9D72C3), modifier = Modifier.size(26.dp)) {
                                     Box(contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                        Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    "Explanation & Concept Breakdown",
-                                    fontSize = 13.sp,
+                                    text = "Explanation",
+                                    fontSize = 17.sp, // Distinct heading weight & color
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1D4ED8)
+                                    color = Color(0xFF49333F) // Deep plum-brown
                                 )
                             }
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         MathAndHighlightText(
                             text = question.explanation ?: "",
                             highlights = question.explanationHighlights,
                             location = HighlightLocation.OTHER,
                             highlightConfig = LocalAppConfig.current.questionHighlightConfig,
-                            fontSize = 12.5.sp,
-                            color = Color(0xFF334155),
+                            fontSize = 15.5.sp, // 15-16sp spec with comfortable line spacing
+                            color = Color(0xFF49333F), // Deep plum-brown
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

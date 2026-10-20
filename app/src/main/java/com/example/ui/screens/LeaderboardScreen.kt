@@ -2,747 +2,1160 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.SampleData
+import com.example.db.AppDatabase
 import com.example.model.*
 import com.example.repository.LeaderboardRepository
-import com.example.ui.components.*
-import kotlinx.coroutines.launch
+import com.example.repository.UserProgressRepository
 
-/**
- * Premium Competitive Leaderboard Screen for Exam Preparation App.
- * Built with Midnight Navy, Emerald, and Metallic Gold design aesthetics.
- * Features Overall, Weekly, Monthly, Exam-wise, Subject-wise rankings,
- * League/Tier progress, Top 3 Podium, Nearby Ranks, and Anti-Cheat XP.
- */
+// Pastel Pink & Champagne Luxury Palette
+private val PaletteHeaderBgStart = Color(0xFFFFF0F5)
+private val PaletteHeaderBgEnd = Color(0xFFFFF8FA)
+private val PaletteTitleMagenta = Color(0xFFD81B60)
+private val PaletteSubtitleText = Color(0xFF8C6274)
+private val PaletteActiveTabBg = Color(0xFFE91E63)
+private val PaletteInactiveTabBorder = Color(0xFFF8BBD0)
+private val PaletteGoldAccent = Color(0xFFFFA000)
+private val PaletteSilverAccent = Color(0xFF9E9E9E)
+private val PaletteBronzeAccent = Color(0xFFE65100)
+private val PaletteCardBorder = Color(0xFFF8BBD0)
+private val PaletteCardBg = Color(0xFFFFFFFF)
+private val PaletteYourRankBg = Color(0xFFFFEBF2)
+private val PaletteYourRankBorder = Color(0xFFF48FB1)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardScreen(
     onBack: () -> Unit,
-    onNavigateToHome: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNavigateToHome: () -> Unit = {}
 ) {
     BackHandler { onBack() }
+
     val context = LocalContext.current
-    val repository = remember { LeaderboardRepository.getInstance(context) }
-    val coroutineScope = rememberCoroutineScope()
+    val currentAppId = SampleData.currentActiveAppId.value
+    val db = remember { AppDatabase.getInstance(context) }
+    val leaderboardRepo = remember { LeaderboardRepository.getInstance(context) }
+    val userProgressRepo = remember { UserProgressRepository(db) }
 
-    // Repository states
-    val config by repository.configState.collectAsState()
-    val allCandidates by repository.allCandidates.collectAsState()
-    val currentUserEntry by repository.currentUserEntry.collectAsState()
-    val isLoading by repository.isLoading.collectAsState()
+    val allCandidates by leaderboardRepo.allCandidates.collectAsState()
+    val currentUserCandidate by leaderboardRepo.currentUserEntry.collectAsState()
+    val isLoading by leaderboardRepo.isLoading.collectAsState()
 
-    // UI States
-    var selectedTab by remember { mutableStateOf(LeaderboardTab.OVERALL) }
-    var selectedDistrict by remember { mutableStateOf("All") }
-    var showDistrictDropdown by remember { mutableStateOf(false) }
-    var selectedSubjectKey by remember { mutableStateOf<String?>("indian_history") }
-    var isFullLeaderboardExpanded by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
+    val userProgress by userProgressRepo.getUserProgress(currentAppId)
+        .collectAsState(initial = UserProgress(appId = currentAppId))
+    val performanceSummary by userProgressRepo.getPerformanceSummary(currentAppId)
+        .collectAsState(initial = MockTestPerformanceSummary())
 
-    // Dialog States
-    var selectedCandidateForProfile by remember { mutableStateOf<LeaderboardCandidate?>(null) }
-    var showPrivacyDialog by remember { mutableStateOf(false) }
-    var showHistoryDialog by remember { mutableStateOf(false) }
-    var showAdminDialog by remember { mutableStateOf(false) }
+    // Active Filter Tabs
+    var selectedFilterTab by remember { mutableStateOf("Overall") }
+    var selectedTimePeriod by remember { mutableStateOf("Overall") }
+    var showPeriodMenu by remember { mutableStateOf(false) }
 
-    val districts = listOf(
-        "All", "Visakhapatnam", "Vijayawada", "Guntur", "Tirupati",
-        "Kurnool", "Nellore", "Rajahmundry", "Kakinada", "Anantapur", "Kadapa"
-    )
+    var selectedTablePeriod by remember { mutableStateOf("This Month") }
+    var showTablePeriodMenu by remember { mutableStateOf(false) }
 
-    val subjects = listOf(
-        "indian_history" to "Indian History",
-        "indian_polity" to "Indian Polity",
-        "indian_economy" to "Economy & Planning",
-        "geography_ap" to "Geography of AP & India"
-    )
-
-    // Ranked candidates based on active tab and filters
-    val rankedCandidates = remember(allCandidates, selectedTab, selectedDistrict, selectedSubjectKey) {
-        repository.getRankedCandidates(
-            tab = selectedTab,
-            selectedDistrict = selectedDistrict,
-            activeAppId = "appsc-group2",
-            subjectFilter = if (selectedTab == LeaderboardTab.SUBJECT) selectedSubjectKey else null
+    // Top 3 Candidates
+    val top1 = remember(allCandidates) {
+        allCandidates.find { it.rank == 1 } ?: LeaderboardCandidate(
+            userId = "1", displayName = "Priya S", xp = 3450, accuracyPercentage = 96f,
+            testsCompleted = 1250, streakDays = 42, rank = 1
+        )
+    }
+    val top2 = remember(allCandidates) {
+        allCandidates.find { it.rank == 2 } ?: LeaderboardCandidate(
+            userId = "2", displayName = "Karthik M", xp = 2980, accuracyPercentage = 96f,
+            testsCompleted = 1250, streakDays = 42, rank = 2
+        )
+    }
+    val top3 = remember(allCandidates) {
+        allCandidates.find { it.rank == 3 } ?: LeaderboardCandidate(
+            userId = "3", displayName = "Sneha P", xp = 2760, accuracyPercentage = 90f,
+            testsCompleted = 980, streakDays = 28, rank = 3
         )
     }
 
-    // Top 3 Podium Candidates
-    val topThree = remember(rankedCandidates) {
-        rankedCandidates.take(3)
-    }
-
-    // Nearby Candidates (3-5 above, user, 3-5 below)
-    val nearbyCandidates = remember(allCandidates, selectedTab, selectedDistrict) {
-        repository.getNearbyCandidates(
-            tab = selectedTab,
-            selectedDistrict = selectedDistrict,
-            activeAppId = "appsc-group2"
+    // Ranks 4 to 10 for table
+    val tableCandidates = remember(allCandidates) {
+        val filtered = allCandidates.filter { it.rank in 4..10 }
+        if (filtered.isNotEmpty()) filtered
+        else listOf(
+            LeaderboardCandidate(userId = "4", displayName = "Aditya K", xp = 2660, accuracyPercentage = 88f, testsCompleted = 920, streakDays = 24, rank = 4),
+            LeaderboardCandidate(userId = "5", displayName = "Divya R", xp = 2420, accuracyPercentage = 86f, testsCompleted = 860, streakDays = 22, rank = 5),
+            LeaderboardCandidate(userId = "6", displayName = "Manoj R", xp = 2310, accuracyPercentage = 84f, testsCompleted = 780, streakDays = 20, rank = 6),
+            LeaderboardCandidate(userId = "7", displayName = "Harsha V", xp = 2150, accuracyPercentage = 82f, testsCompleted = 720, streakDays = 18, rank = 7),
+            LeaderboardCandidate(userId = "8", displayName = "Meena K", xp = 1980, accuracyPercentage = 80f, testsCompleted = 680, streakDays = 16, rank = 8),
+            LeaderboardCandidate(userId = "9", displayName = "Rohit P", xp = 1760, accuracyPercentage = 78f, testsCompleted = 620, streakDays = 14, rank = 9),
+            LeaderboardCandidate(userId = "10", displayName = "Nikhil T", xp = 1620, accuracyPercentage = 76f, testsCompleted = 580, streakDays = 12, rank = 10)
         )
     }
 
-    // Current User Standing
-    val userStanding = remember(rankedCandidates, currentUserEntry) {
-        rankedCandidates.find { it.isCurrentUser } ?: currentUserEntry ?: rankedCandidates.firstOrNull()
-    }
+    // User's Own Performance Values
+    val userRankDisplay = currentUserCandidate?.rank ?: 15
+    val userPointsDisplay = currentUserCandidate?.xp ?: (userProgress.totalXp.takeIf { it > 0 } ?: 1380)
+    val userAccuracyDisplay = (currentUserCandidate?.accuracyPercentage ?: (performanceSummary.overallAccuracy.replace("%", "").toFloatOrNull() ?: 86f)).toInt()
+    val userQuestionsDisplay = currentUserCandidate?.testsCompleted ?: (userProgress.completedQuestionsCount.takeIf { it > 0 } ?: 520)
+    val userStreakDisplay = currentUserCandidate?.streakDays ?: (userProgress.streakDays.takeIf { it > 0 } ?: 18)
 
-    // League progress calculation
-    val userLeague = userStanding?.league ?: ExamLeague.BRONZE
-    val userXp = userStanding?.xp ?: 0
-    val leagueProgress = remember(userXp, userLeague, config) {
-        repository.getLeagueProgress(userXp, userLeague, config)
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "🏆 Leaderboard",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color(0xFF10B981).copy(alpha = 0.2f),
-                                border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.4f))
-                            ) {
-                                Text(
-                                    text = "LIVE",
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFF34D399),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                        Text(
-                            text = "APPSC Group-2 • Competitive Aspirant Rankings",
-                            fontSize = 11.5.sp,
-                            color = Color(0xFFD4AF37)
-                        )
-                    }
-                },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 8.dp)) {
-                        BackAndHomeTopActions(
-                            onBack = onBack,
-                            onNavigateToHome = onNavigateToHome,
-                            size = 36,
-                            iconSize = 18
-                        )
-                    }
-                },
-                actions = {
-                    // Privacy Mode Button
-                    IconButton(
-                        onClick = { showPrivacyDialog = true },
-                        modifier = Modifier.testTag("btn_leaderboard_privacy")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = "Privacy Settings",
-                            tint = Color(0xFF60A5FA),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Historical Standings Button
-                    IconButton(
-                        onClick = { showHistoryDialog = true },
-                        modifier = Modifier.testTag("btn_leaderboard_history")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "Leaderboard History",
-                            tint = Color(0xFFFFD700),
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    // Admin Engine Controls
-                    IconButton(
-                        onClick = { showAdminDialog = true },
-                        modifier = Modifier.testTag("btn_admin_leaderboard_controls")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AdminPanelSettings,
-                            contentDescription = "Admin Engine Controls",
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0A0F1D),
-                    navigationIconContentColor = Color.White
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        PaletteHeaderBgStart,
+                        PaletteHeaderBgEnd,
+                        Color(0xFFFFF8F0)
+                    )
                 )
             )
-        },
-        bottomBar = {
-            // Sticky User Rank Bar at bottom for rapid accessibility
-            if (userStanding != null) {
+    ) {
+        val isTablet = maxWidth >= 600.dp
+
+        Scaffold(
+            topBar = {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("sticky_user_standing_bar"),
-                    color = Color(0xFF0F172A),
-                    border = BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.4f)),
-                    shadowElevation = 12.dp
+                    color = Color.Transparent,
+                    modifier = Modifier.statusBarsPadding()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // Back Arrow + Leaderboard Title Header
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White,
+                                border = BorderStroke(1.dp, PaletteCardBorder),
+                                shadowElevation = 2.dp,
                                 modifier = Modifier
                                     .size(38.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF10B981).copy(alpha = 0.2f))
-                                    .border(1.5.dp, Color(0xFF10B981), CircleShape)
+                                    .clickable { onBack() }
                             ) {
-                                Text(
-                                    text = "#${userStanding.rank}",
-                                    color = Color(0xFF34D399),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "Your Current Rank",
-                                        fontSize = 10.5.sp,
-                                        color = Color(0xFF94A3B8),
-                                        fontWeight = FontWeight.Medium
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = PaletteTitleMagenta,
+                                        modifier = Modifier.size(18.dp)
                                     )
-                                    RankMovementPill(rankDelta = userStanding.rankDelta)
                                 }
-                                Text(
-                                    text = "${userStanding.displayName} (${userStanding.district})",
-                                    fontSize = 13.5.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
                             }
-                        }
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "${userStanding.xp} XP",
-                                    fontSize = 13.5.sp,
-                                    color = Color(0xFFFFD700),
-                                    fontWeight = FontWeight.Black
-                                )
-                                Text(
-                                    text = "${userStanding.accuracyPercentage.toInt()}% Acc",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF34D399),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        containerColor = Color(0xFF0A0F1D),
-        modifier = modifier
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // 1. Sub-Tabs Selector: Overall | Weekly | Monthly | Exam | Subject
-            item {
-                TabRow(
-                    selectedTabIndex = selectedTab.ordinal,
-                    containerColor = Color(0xFF131D31),
-                    contentColor = Color.White,
-                    indicator = {},
-                    divider = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .testTag("leaderboard_sub_tabs")
-                ) {
-                    LeaderboardTab.values().forEach { tab ->
-                        val isSelected = selectedTab == tab
-                        Box(
-                            modifier = Modifier
-                                .padding(3.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) Color(0xFF1E293B) else Color.Transparent)
-                                .clickable { selectedTab = tab }
-                                .padding(vertical = 9.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = tab.title,
-                                color = if (isSelected) Color(0xFFFFD700) else Color(0xFF94A3B8),
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
+                            Spacer(modifier = Modifier.width(10.dp))
 
-            // 2. Filters Row (District Dropdown & Subject Selector)
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // District Filter Dropdown Pill
-                        Box {
+                            // 3D Trophy Icon
                             Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = Color(0xFF131D31),
-                                border = BorderStroke(1.dp, Color(0xFF334155)),
+                                shape = CircleShape,
+                                color = Color(0xFFFFF8E1),
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.EmojiEvents,
+                                        contentDescription = "Trophy",
+                                        tint = PaletteGoldAccent,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Column {
+                                Text(
+                                    text = "LeaderBoard",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = PaletteTitleMagenta,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "Top Learners Make a Brighter Future",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = PaletteSubtitleText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Right actions: Home Shortcut + Time Period Dropdown
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White,
+                                border = BorderStroke(1.dp, PaletteCardBorder),
+                                shadowElevation = 1.dp,
                                 modifier = Modifier
-                                    .clickable { showDistrictDropdown = true }
-                                    .testTag("btn_district_filter")
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .clickable { onNavigateToHome() }
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Home,
+                                        contentDescription = "Home",
+                                        tint = PaletteTitleMagenta,
+                                        modifier = Modifier.size(17.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Time Period Dropdown
+                            Box {
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = Color.White,
+                                    border = BorderStroke(1.dp, PaletteCardBorder),
+                                    shadowElevation = 1.dp,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .clickable { showPeriodMenu = true }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CalendarToday,
+                                            contentDescription = null,
+                                            tint = PaletteTitleMagenta,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = selectedTimePeriod,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PaletteTitleMagenta
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDropDown,
+                                            contentDescription = null,
+                                            tint = PaletteTitleMagenta,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+
+                                DropdownMenu(
+                                    expanded = showPeriodMenu,
+                                    onDismissRequest = { showPeriodMenu = false }
+                                ) {
+                                    listOf("Overall", "This Month", "This Week", "Today").forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option, fontWeight = FontWeight.Bold) },
+                                            onClick = {
+                                                selectedTimePeriod = option
+                                                showPeriodMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            containerColor = Color.Transparent
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .widthIn(max = if (isTablet) 860.dp else 600.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
+                // SECTION 1: 5 Horizontal Filter Tabs Bar
+                item {
+                    val filterTabs = listOf(
+                        Triple("Overall", Icons.Default.LocalFireDepartment, "Overall"),
+                        Triple("Prelims", Icons.Outlined.MenuBook, "Prelims"),
+                        Triple("Mains", Icons.Outlined.Description, "Mains"),
+                        Triple("Subjects", Icons.Outlined.School, "Subjects"),
+                        Triple("Monthly", Icons.Outlined.CalendarMonth, "Monthly")
+                    )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(filterTabs) { (tabKey, icon, label) ->
+                            val isActive = selectedFilterTab == tabKey
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (isActive) PaletteActiveTabBg else Color.White,
+                                border = BorderStroke(1.dp, if (isActive) PaletteActiveTabBg else PaletteInactiveTabBorder),
+                                shadowElevation = if (isActive) 3.dp else 1.dp,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable { selectedFilterTab = tabKey }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.LocationOn,
-                                        contentDescription = null,
-                                        tint = Color(0xFF38BDF8),
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Text(
-                                        text = if (selectedDistrict == "All") "District: All AP" else selectedDistrict,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Color(0xFF94A3B8),
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = if (isActive) Color.White else PaletteTitleMagenta,
                                         modifier = Modifier.size(16.dp)
                                     )
-                                }
-                            }
-
-                            DropdownMenu(
-                                expanded = showDistrictDropdown,
-                                onDismissRequest = { showDistrictDropdown = false },
-                                modifier = Modifier.background(Color(0xFF0F172A))
-                            ) {
-                                districts.forEach { district ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = if (district == "All") "All AP Districts" else district,
-                                                color = Color.White,
-                                                fontSize = 13.sp
-                                            )
-                                        },
-                                        onClick = {
-                                            selectedDistrict = district
-                                            showDistrictDropdown = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        // Live Candidates Counter
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF10B981))
-                            )
-                            Text(
-                                text = "${rankedCandidates.size} Aspirants Competing",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF94A3B8)
-                            )
-                        }
-                    }
-
-                    // Subject Pills (Displayed if Subject tab is active)
-                    if (selectedTab == LeaderboardTab.SUBJECT) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            subjects.forEach { (key, label) ->
-                                val isSelected = selectedSubjectKey == key
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (isSelected) Color(0xFF1E293B) else Color(0xFF131D31),
-                                    border = BorderStroke(
-                                        1.dp,
-                                        if (isSelected) Color(0xFFFFD700) else Color(0xFF334155)
-                                    ),
-                                    modifier = Modifier.clickable { selectedSubjectKey = key }
-                                ) {
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color(0xFFFFD700) else Color(0xFF94A3B8),
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isActive) Color.White else PaletteTitleMagenta
                                     )
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // 3. Competitive League / Tier Progress Banner
-            item {
-                LeagueProgressCard(
-                    currentLeague = userLeague,
-                    currentXp = userXp,
-                    leagueRank = userStanding?.rank ?: 14,
-                    progress = leagueProgress
-                )
-            }
-
-            // 4. Top 3 Podium
-            item {
-                PodiumTopThreeView(
-                    topThree = topThree,
-                    onCandidateClick = { candidate ->
-                        selectedCandidateForProfile = candidate
-                    }
-                )
-            }
-
-            // 5. User's Personal Rank Card (Detailed In-Stream View)
-            if (userStanding != null) {
+                // SECTION 2: Top 3 Learners Podium Section (Gold, Silver, Bronze)
                 item {
-                    PersonalRankCard(
-                        userCandidate = userStanding,
-                        onPrivacyClick = { showPrivacyDialog = true }
+                    TopThreePodiumView(
+                        top1 = top1,
+                        top2 = top2,
+                        top3 = top3
                     )
                 }
-            }
 
-            // 6. Nearby Ranks Display (3-5 above, user, 3-5 below)
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "NEARBY COMPETITION ORBIT",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
-                                color = Color(0xFFD4AF37)
-                            )
-                            Text(
-                                text = "Aspirants ranked closely around your score",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-
-                        // Toggle button for full leaderboard
-                        TextButton(
-                            onClick = { isFullLeaderboardExpanded = !isFullLeaderboardExpanded },
-                            modifier = Modifier.testTag("btn_toggle_full_leaderboard")
-                        ) {
-                            Text(
-                                text = if (isFullLeaderboardExpanded) "Show Orbit Only" else "View All (${rankedCandidates.size})",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF38BDF8)
-                            )
-                        }
-                    }
-
-                    // Render Nearby Ranks if not expanded to full view
-                    if (!isFullLeaderboardExpanded) {
-                        nearbyCandidates.forEach { candidate ->
-                            CandidateRowItem(
-                                candidate = candidate,
-                                onClick = { selectedCandidateForProfile = candidate }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 7. Full Leaderboard (When expanded) with Search filter
-            if (isFullLeaderboardExpanded) {
+                // SECTION 3: Top Learners Table Card (Ranks 4-10)
                 item {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("leaderboard_search_input"),
-                        placeholder = { Text("Search candidate or district...", color = Color(0xFF64748B), fontSize = 12.5.sp) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(18.dp))
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotBlank()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF94A3B8), modifier = Modifier.size(16.dp))
+                    TopLearnersTableCard(
+                        candidates = tableCandidates,
+                        selectedPeriod = selectedTablePeriod,
+                        onPeriodClick = { showTablePeriodMenu = true },
+                        showPeriodMenu = showTablePeriodMenu,
+                        onDismissMenu = { showTablePeriodMenu = false },
+                        onSelectPeriod = { period ->
+                            selectedTablePeriod = period
+                            showTablePeriodMenu = false
+                        }
+                    )
+                }
+
+                // SECTION 4: Your Rank Highlight Banner
+                item {
+                    YourRankBannerCard(
+                        rank = userRankDisplay,
+                        points = userPointsDisplay,
+                        accuracy = userAccuracyDisplay,
+                        questions = userQuestionsDisplay,
+                        streak = userStreakDisplay
+                    )
+                }
+
+                // SECTION 5: 4-Quadrant Performance Grid
+                item {
+                    if (isTablet) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    YourPerformanceQuadrantCard(
+                                        accuracy = userAccuracyDisplay,
+                                        points = userPointsDisplay,
+                                        questions = userQuestionsDisplay,
+                                        streak = userStreakDisplay
+                                    )
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    BadgesAndAchievementsQuadrantCard()
                                 }
                             }
-                        },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF38BDF8),
-                            unfocusedBorderColor = Color(0xFF334155),
-                            focusedContainerColor = Color(0xFF131D31),
-                            unfocusedContainerColor = Color(0xFF131D31),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-
-                val filteredList = rankedCandidates.filter {
-                    if (searchQuery.isBlank()) true
-                    else it.displayName.contains(searchQuery, ignoreCase = true) || it.district.contains(searchQuery, ignoreCase = true)
-                }
-
-                items(filteredList) { candidate ->
-                    CandidateRowItem(
-                        candidate = candidate,
-                        onClick = { selectedCandidateForProfile = candidate }
-                    )
-                }
-            }
-
-            // 8. Weekly Competitive Challenges Card
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("weekly_challenges_card"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF131D31)),
-                    border = BorderStroke(1.dp, Color(0xFF334155))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "WEEKLY COMPETITIVE CHALLENGES",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.8.sp,
-                                color = Color.White
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    SubjectWiseRankQuadrantCard()
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    WeeklyProgressQuadrantCard()
+                                }
+                            }
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        ChallengeProgressRow(title = "Complete 5 Mock Tests", progress = 3, target = 5, xpReward = 50)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChallengeProgressRow(title = "Maintain 90% Practice Accuracy", progress = 88, target = 90, xpReward = 40, isPercentage = true)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChallengeProgressRow(title = "Solve 200 Practice MCQs", progress = 145, target = 200, xpReward = 30)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChallengeProgressRow(title = "Complete Monthly Current Affairs Set", progress = 1, target = 1, xpReward = 25)
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            YourPerformanceQuadrantCard(
+                                accuracy = userAccuracyDisplay,
+                                points = userPointsDisplay,
+                                questions = userQuestionsDisplay,
+                                streak = userStreakDisplay
+                            )
+                            BadgesAndAchievementsQuadrantCard()
+                            SubjectWiseRankQuadrantCard()
+                            WeeklyProgressQuadrantCard()
+                        }
                     }
                 }
-            }
-
-            // Bottom Spacing for sticky rank bar
-            item {
-                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
+}
 
-    // -----------------------------------------------------------------------
-    // Interactive Dialogs
-    // -----------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// COMPOSABLE 1: Top 3 Learners Podium View
+// ----------------------------------------------------------------------------
+@Composable
+private fun TopThreePodiumView(
+    top1: LeaderboardCandidate,
+    top2: LeaderboardCandidate,
+    top3: LeaderboardCandidate
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(230.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                // Rank 2 (Silver/Purple - Left)
+                PodiumColumnItem(
+                    candidate = top2,
+                    rank = 2,
+                    podiumHeight = 110.dp,
+                    accentColor = PaletteSilverAccent,
+                    podiumColor = Color(0xFFE1BEE7),
+                    crownColor = Color(0xFFBA68C8)
+                )
 
-    // Public Candidate Profile Dialog
-    if (selectedCandidateForProfile != null) {
-        CandidatePublicProfileDialog(
-            candidate = selectedCandidateForProfile!!,
-            onDismissRequest = { selectedCandidateForProfile = null }
-        )
-    }
+                // Rank 1 (Gold - Center)
+                PodiumColumnItem(
+                    candidate = top1,
+                    rank = 1,
+                    podiumHeight = 145.dp,
+                    accentColor = PaletteGoldAccent,
+                    podiumColor = Color(0xFFFFECB3),
+                    crownColor = Color(0xFFFFD54F)
+                )
 
-    // Privacy Settings Dialog
-    if (showPrivacyDialog && userStanding != null) {
-        PrivacySettingsDialog(
-            currentMode = userStanding.privacyMode,
-            onSaveMode = { newMode ->
-                coroutineScope.launch {
-                    repository.updatePrivacyMode(newMode)
-                }
-            },
-            onDismissRequest = { showPrivacyDialog = false }
-        )
-    }
-
-    // Historical Performance Dialog
-    if (showHistoryDialog) {
-        LeaderboardHistoryDialog(
-            userStanding = userStanding,
-            onDismissRequest = { showHistoryDialog = false }
-        )
-    }
-
-    // Admin Controls Dialog
-    if (showAdminDialog) {
-        val monitoringStats = remember(allCandidates) { repository.getMonitoringStats() }
-        AdminLeaderboardControlsDialog(
-            config = config,
-            monitoringStats = monitoringStats,
-            onSaveConfig = { newConfig ->
-                coroutineScope.launch {
-                    repository.updateConfig(newConfig)
-                }
-            },
-            onResetWeekly = {
-                coroutineScope.launch {
-                    repository.resetWeeklyPeriod()
-                }
-            },
-            onDismissRequest = { showAdminDialog = false }
-        )
+                // Rank 3 (Bronze/Pink - Right)
+                PodiumColumnItem(
+                    candidate = top3,
+                    rank = 3,
+                    podiumHeight = 90.dp,
+                    accentColor = PaletteBronzeAccent,
+                    podiumColor = Color(0xFFFFCDD2),
+                    crownColor = Color(0xFFE57373)
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun ChallengeProgressRow(
-    title: String,
-    progress: Int,
-    target: Int,
-    xpReward: Int,
-    isPercentage: Boolean = false
+private fun PodiumColumnItem(
+    candidate: LeaderboardCandidate,
+    rank: Int,
+    podiumHeight: androidx.compose.ui.unit.Dp,
+    accentColor: Color,
+    podiumColor: Color,
+    crownColor: Color
 ) {
-    val pct = if (target > 0) (progress.toFloat() / target.toFloat()).coerceIn(0f, 1f) else 0f
-    val isCompleted = progress >= target
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        // Crown Icon
+        Icon(
+            imageVector = Icons.Default.EmojiEvents,
+            contentDescription = null,
+            tint = crownColor,
+            modifier = Modifier.size(if (rank == 1) 28.dp else 22.dp)
+        )
 
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                fontSize = 11.5.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Avatar with Badge
+        Box(contentAlignment = Alignment.BottomCenter) {
+            Surface(
+                shape = CircleShape,
+                color = Color(0xFFF3E5F5),
+                border = BorderStroke(2.dp, crownColor),
+                modifier = Modifier.size(if (rank == 1) 56.dp else 48.dp)
             ) {
-                Text(
-                    text = if (isPercentage) "$progress%" else "$progress/$target",
-                    fontSize = 11.sp,
-                    color = if (isCompleted) Color(0xFF34D399) else Color(0xFF94A3B8),
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = Color(0xFFFFD700).copy(alpha = 0.15f)
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "+$xpReward XP",
-                        fontSize = 9.5.sp,
+                        text = candidate.displayName.take(2).uppercase().ifBlank { "AP" },
+                        fontSize = if (rank == 1) 18.sp else 15.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFFFFD700),
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        color = PaletteTitleMagenta
                     )
                 }
             }
+
+            // Medal / Rank Number pill
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = crownColor,
+                shadowElevation = 2.dp,
+                modifier = Modifier
+                    .offset(y = 6.dp)
+                    .height(18.dp)
+            ) {
+                Text(
+                    text = "#$rank",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 6.dp)
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { pct },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(5.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = if (isCompleted) Color(0xFF10B981) else Color(0xFF38BDF8),
-            trackColor = Color(0xFF1E293B)
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Name
+        Text(
+            text = candidate.displayName.ifBlank { "Aspirant" },
+            fontSize = if (rank == 1) 13.5.sp else 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E181C),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+
+        // Points
+        Text(
+            text = "${candidate.xp} pts",
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = PaletteSubtitleText
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Podium Block
+        Surface(
+            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+            color = podiumColor,
+            border = BorderStroke(1.dp, crownColor.copy(alpha = 0.5f)),
+            modifier = Modifier
+                .width(if (rank == 1) 85.dp else 75.dp)
+                .height(podiumHeight)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "$rank",
+                    fontSize = if (rank == 1) 36.sp else 28.sp,
+                    fontWeight = FontWeight.Black,
+                    color = crownColor.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 2: Top Learners Table Card (Ranks 4-10)
+// ----------------------------------------------------------------------------
+@Composable
+private fun TopLearnersTableCard(
+    candidates: List<LeaderboardCandidate>,
+    selectedPeriod: String,
+    onPeriodClick: () -> Unit,
+    showPeriodMenu: Boolean,
+    onDismissMenu: () -> Unit,
+    onSelectPeriod: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteCardBg),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header Row: Title & Subtitle + Period Dropdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Top Learners",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PaletteTitleMagenta
+                    )
+                    Text(
+                        text = "Real-time state candidate standings",
+                        fontSize = 11.sp,
+                        color = PaletteSubtitleText
+                    )
+                }
+
+                Box {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFFF0F5),
+                        border = BorderStroke(1.dp, PaletteCardBorder),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onPeriodClick() }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedPeriod,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PaletteTitleMagenta
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = PaletteTitleMagenta,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showPeriodMenu,
+                        onDismissRequest = onDismissMenu
+                    ) {
+                        listOf("This Month", "This Week", "Overall").forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option, fontWeight = FontWeight.Bold) },
+                                onClick = { onSelectPeriod(option) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Candidates rows (4 to 10)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                candidates.forEach { candidate ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF8F9), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Left: Rank Number + Avatar + Name
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "#${candidate.rank}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = PaletteSubtitleText,
+                                modifier = Modifier.width(32.dp)
+                            )
+
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFF3E5F5),
+                                modifier = Modifier.size(34.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = candidate.displayName.take(2).uppercase().ifBlank { "AP" },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PaletteTitleMagenta
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Column {
+                                Text(
+                                    text = candidate.displayName.ifBlank { "Aspirant" },
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E181C),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "${candidate.streakDays}d Streak • ${candidate.accuracyPercentage.toInt()}% Acc",
+                                    fontSize = 10.5.sp,
+                                    color = PaletteSubtitleText
+                                )
+                            }
+                        }
+
+                        // Right: Points + Chevron
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${candidate.xp} pts",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = PaletteTitleMagenta
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = PaletteSubtitleText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 3: Your Rank Highlight Banner
+// ----------------------------------------------------------------------------
+@Composable
+private fun YourRankBannerCard(
+    rank: Int,
+    points: Int,
+    accuracy: Int,
+    questions: Int,
+    streak: Int
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteYourRankBg),
+        border = BorderStroke(1.5.dp, PaletteYourRankBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = CircleShape,
+                        color = PaletteActiveTabBg,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = "Your Current Rank",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = PaletteSubtitleText
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "#$rank",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Black,
+                                color = PaletteTitleMagenta
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFFFF0F5)
+                            ) {
+                                Text(
+                                    text = "Top 15% State Merit",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PaletteTitleMagenta,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = PaletteActiveTabBg
+                ) {
+                    Text(
+                        text = "$points pts",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = PaletteCardBorder.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 3 mini stats
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "$accuracy%", fontSize = 16.sp, fontWeight = FontWeight.Black, color = PaletteTitleMagenta)
+                    Text(text = "Accuracy", fontSize = 10.5.sp, color = PaletteSubtitleText)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "$questions", fontSize = 16.sp, fontWeight = FontWeight.Black, color = PaletteTitleMagenta)
+                    Text(text = "Questions", fontSize = 10.5.sp, color = PaletteSubtitleText)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "🔥 ${streak}d", fontSize = 16.sp, fontWeight = FontWeight.Black, color = PaletteTitleMagenta)
+                    Text(text = "Active Streak", fontSize = 10.5.sp, color = PaletteSubtitleText)
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 4: Quadrant 1 - Your Performance
+// ----------------------------------------------------------------------------
+@Composable
+private fun YourPerformanceQuadrantCard(
+    accuracy: Int,
+    points: Int,
+    questions: Int,
+    streak: Int
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteCardBg),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.BarChart, contentDescription = null, tint = PaletteTitleMagenta, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Your Performance", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                }
+                Text("Diagnostics", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Donut Chart on Left
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
+                    Canvas(modifier = Modifier.size(80.dp)) {
+                        drawArc(color = Color(0xFFFFEBEE), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round))
+                        drawArc(color = PaletteActiveTabBg, startAngle = -90f, sweepAngle = 360f * (accuracy / 100f), useCenter = false, style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round))
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("$accuracy%", fontSize = 18.sp, fontWeight = FontWeight.Black, color = PaletteTitleMagenta)
+                        Text("Accuracy", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = PaletteSubtitleText)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Stats List on Right
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("👑", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text("$points", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E181C))
+                            Text("Total Points", fontSize = 10.sp, color = PaletteSubtitleText)
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🟢", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text("$questions", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E181C))
+                            Text("Questions Attempted", fontSize = 10.sp, color = PaletteSubtitleText)
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🔥", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
+                            Text("$streak Days", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Color(0xFF1E181C))
+                            Text("Current Streak", fontSize = 10.sp, color = PaletteSubtitleText)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 5: Quadrant 2 - Badges & Achievements
+// ----------------------------------------------------------------------------
+@Composable
+private fun BadgesAndAchievementsQuadrantCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteCardBg),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = PaletteTitleMagenta, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Badges & Achievements", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                }
+                Text("Honors", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                BadgeItem(emoji = "👑", title = "Top 100", bg = Color(0xFFFFF8E1), border = Color(0xFFFFD54F))
+                BadgeItem(emoji = "🎓", title = "Master", bg = Color(0xFFF3E5F5), border = Color(0xFFCE93D8))
+                BadgeItem(emoji = "🎯", title = "Accuracy", bg = Color(0xFFE3F2FD), border = Color(0xFF90CAF9))
+                BadgeItem(emoji = "🔥", title = "Streak", bg = Color(0xFFFBE9E7), border = Color(0xFFFFAB91))
+            }
+        }
+    }
+}
+
+@Composable
+private fun BadgeItem(emoji: String, title: String, bg: Color, border: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = bg,
+            border = BorderStroke(1.5.dp, border),
+            modifier = Modifier.size(52.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(emoji, fontSize = 24.sp)
+            }
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(title, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = PaletteSubtitleText)
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 6: Quadrant 3 - Subject-wise Rank
+// ----------------------------------------------------------------------------
+@Composable
+private fun SubjectWiseRankQuadrantCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteCardBg),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.MenuBook, contentDescription = null, tint = PaletteTitleMagenta, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Subject-wise Rank", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                }
+                Text("State Merit", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val subjectsList = listOf(
+                Triple("🏛️ Indian Polity", "#8", "2,450 pts"),
+                Triple("💹 Economy", "#12", "2,180 pts"),
+                Triple("🌐 Geography", "#15", "1,760 pts"),
+                Triple("📜 Modern History", "#18", "1,420 pts")
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                subjectsList.forEach { (subject, rankStr, ptsStr) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF8F9), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(subject, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E181C))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = RoundedCornerShape(6.dp), color = Color(0xFFFFE0B2)) {
+                                Text(rankStr, fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color(0xFFE65100), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("🏆 $ptsStr", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = PaletteSubtitleText, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// COMPOSABLE 7: Quadrant 4 - Weekly Progress Chart
+// ----------------------------------------------------------------------------
+@Composable
+private fun WeeklyProgressQuadrantCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = PaletteCardBg),
+        border = BorderStroke(1.dp, PaletteCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.BarChart, contentDescription = null, tint = PaletteTitleMagenta, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Weekly Progress", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                }
+                Text("7-Day Trend", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val weekData = listOf(
+                "Mon" to 120, "Tue" to 150, "Wed" to 180,
+                "Thu" to 160, "Fri" to 200, "Sat" to 220, "Sun" to 190
+            )
+            val maxVal = 250f
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                weekData.forEach { (day, valNum) ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("$valNum", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = PaletteTitleMagenta)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(18.dp)
+                                .height((80 * (valNum / maxVal)).dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(PaletteActiveTabBg, Color(0xFFFFB74D))
+                                    ),
+                                    RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)
+                                )
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(day, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = PaletteSubtitleText)
+                    }
+                }
+            }
+        }
     }
 }

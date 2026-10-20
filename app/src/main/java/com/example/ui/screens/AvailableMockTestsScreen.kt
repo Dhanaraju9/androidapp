@@ -1154,7 +1154,9 @@ private fun MockTestItemCard(
                     // COMPLETED STATE: Show Score & Accuracy, View Result + Retest buttons
                     val lastRecord = test.attemptsHistory.lastOrNull()
                     val accuracy = lastRecord?.accuracyStr ?: if (test.correctAnswers + test.wrongAnswers > 0) {
-                        "${((test.correctAnswers * 100) / (test.correctAnswers + test.wrongAnswers))}%"
+                        val totalAtt = (test.correctAnswers + test.wrongAnswers).coerceAtLeast(1)
+                        val accVal = ((test.correctAnswers * 100.0) / totalAtt).toInt().coerceIn(0, 100)
+                        "$accVal%"
                     } else "100%"
 
                     Row(

@@ -61,6 +61,9 @@ import com.example.repository.AppConfigRepository
 import com.example.util.FontSettingsManager
 import kotlinx.coroutines.delay
 
+import com.example.ui.theme.*
+import kotlinx.coroutines.delay
+
 @Composable
 fun StateLogoEmblem(modifier: Modifier = Modifier.size(36.dp)) {
     val ringColor = remember { Color(0XFF15803D) }
@@ -386,23 +389,23 @@ fun PracticeArenaScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = if (isDarkMode) Color(0xFF0F172A) else Color(0xFFFAF5FF), // Soft premium lavender background to match PRACTICE SCREEN.jpg
+        containerColor = Ivory, // Soft luxury ivory background
         topBar = {
             // Floating Card Header with 2 clean rows
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (isDarkMode) Color(0xFF0F172A) else Color(0xFFFAF5FF))
+                    .background(Ivory)
                     .statusBarsPadding()
             ) {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E293B) else Color.White),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                    border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
+                    border = BorderStroke(1.dp, Lavender.copy(alpha = 0.5f))
                 ) {
                     Column(
                         modifier = Modifier

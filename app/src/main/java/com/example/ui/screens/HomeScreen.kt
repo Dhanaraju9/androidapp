@@ -559,14 +559,14 @@ fun HomeScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 2.dp, bottom = 2.dp)
+                                .padding(top = 2.dp, bottom = 1.dp)
                                 .homeSmoothReveal(
                                     index = 2,
                                     scrollState = homeScrollState
                                 )
                         )
 
-                        // Refined, luxurious horizontal divider between Live Content Dashboard and Prelims, Mains, General cards
+                        // Refined, thin divider line between Live Content Dashboard and Prelims, Mains, General cards
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -580,42 +580,42 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .widthIn(max = 680.dp)
-                                    .padding(horizontal = 24.dp, vertical = 7.dp),
+                                    .padding(horizontal = 20.dp, vertical = 2.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 // Subtle ambient warm glow behind the center line
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth(0.82f)
-                                        .height(4.dp)
+                                        .fillMaxWidth(0.85f)
+                                        .height(3.dp)
                                         .background(
                                             brush = Brush.horizontalGradient(
                                                 listOf(
                                                     Color.Transparent,
-                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.16f else 0.20f),
-                                                    Color(0xFFFDE68A).copy(alpha = if (isDarkMode) 0.22f else 0.28f),
-                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.16f else 0.20f),
+                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.22f else 0.26f),
+                                                    Color(0xFFFDE68A).copy(alpha = if (isDarkMode) 0.30f else 0.38f),
+                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.22f else 0.26f),
                                                     Color.Transparent
                                                 )
                                             ),
                                             shape = RoundedCornerShape(2.dp)
                                         )
                                 )
-                                // Refined, thin gradient line with warm champagne, soft orange, and restrained cream highlight
+                                // Refined, thin gradient line with warm champagne, soft orange, and restrained cream highlight - clearly visible
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(1.25.dp)
+                                        .height(1.5.dp)
                                         .background(
                                             brush = Brush.horizontalGradient(
                                                 listOf(
                                                     Color.Transparent,
-                                                    Color(0xFFF7D9A4).copy(alpha = 0.35f),
-                                                    Color(0xFFFF9E43).copy(alpha = 0.80f),
+                                                    Color(0xFFF7D9A4).copy(alpha = 0.45f),
+                                                    Color(0xFFFF9E43).copy(alpha = 0.95f),
                                                     Color(0xFFFFFDF5),
                                                     Color(0xFFF7D9A4),
-                                                    Color(0xFFFF8A24).copy(alpha = 0.80f),
-                                                    Color(0xFFF7D9A4).copy(alpha = 0.35f),
+                                                    Color(0xFFFF8A24).copy(alpha = 0.95f),
+                                                    Color(0xFFF7D9A4).copy(alpha = 0.45f),
                                                     Color.Transparent
                                                 )
                                             ),
@@ -638,7 +638,7 @@ fun HomeScreen(
                             generalCount = dynamicCategoryCounts.generalCount,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 2.dp, bottom = 1.dp)
+                                .padding(top = 1.dp, bottom = 1.dp)
                                 .homeSmoothReveal(
                                     index = 4,
                                     scrollState = homeScrollState
@@ -1042,775 +1042,6 @@ fun HomeScreen(
                                         }
                                     }
                                 }
-                                }
-                            }
-                        }
-
-                        Column {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                thickness = 1.dp,
-                                color = Color(0xFF2563EB).copy(alpha = 0.15f)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
-
-                        // 4. Current Affairs Feature Card
-                        Column(
-                            modifier = Modifier.homeSmoothReveal(
-                                index = 6 + filteredDisplaySubjects.size,
-                                scrollState = homeScrollState
-                            )
-                        ) {
-                            val caGradient = remember {
-                                com.example.ui.theme.PremiumCardColorSystem.getGradientForDashboard("Current Affairs")
-                            }
-                            HomeCardContainer(
-                                modifier = Modifier.fillMaxWidth(),
-                                accentBorderColor = caGradient.borderColor
-                            ) {
-                                Card(
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                    border = null,
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Brush.linearGradient(colors = caGradient.colors))
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(168.dp)
-                                                .background(
-                                                    Brush.linearGradient(
-                                                        colors = caGradient.colors,
-                                                        start = Offset(0f, 0f),
-                                                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                                    )
-                                                )
-                                                .clickable { onNavigateToCurrentAffairs() }
-                                        ) {
-                                            // Ambient concentric luminous sheen rings (exact match to Subjects Cards)
-                                            Box(
-                                                modifier = Modifier
-                                                    .matchParentSize()
-                                                    .drawBehind {
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                                                                radius = size.width * 0.75f,
-                                                                center = Offset(size.width * 0.35f, size.height * 0.5f)
-                                                            )
-                                                        )
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
-                                                                radius = size.width * 0.95f,
-                                                                center = Offset(size.width * 0.85f, size.height * 0.2f)
-                                                            )
-                                                        )
-                                                    }
-                                            )
-
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                                verticalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                // Top Row: "★ PREMIUM • DAILY CAPSULES" badge + Circular action button
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(12.dp),
-                                                        color = Color(0x38000000),
-                                                        border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.65f))
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "★ ",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Bold
-                                                            )
-                                                            Text(
-                                                                text = "PREMIUM • DAILY CAPSULES",
-                                                                color = Color(0xFFFDE68A),
-                                                                fontSize = 10.5.sp,
-                                                                fontWeight = FontWeight.Black,
-                                                                letterSpacing = 0.4.sp
-                                                            )
-                                                        }
-                                                    }
-
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = Color(0x44000000),
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clip(CircleShape)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                                contentDescription = "Open",
-                                                                tint = Color.White.copy(alpha = 0.9f),
-                                                                modifier = Modifier.size(17.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-
-                                                // Middle Row: Squircle Icon + Title & Subtitle
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(14.dp),
-                                                        color = Color(0x33000000),
-                                                        border = BorderStroke(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.85f)),
-                                                        modifier = Modifier.size(52.dp)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.Public,
-                                                                contentDescription = null,
-                                                                tint = Color(0xFFFFD700),
-                                                                modifier = Modifier.size(28.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                        Text(
-                                                            text = "Current Affairs 2026",
-                                                            color = Color.White,
-                                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                                            fontSize = 17.sp,
-                                                            lineHeight = 21.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                        Spacer(modifier = Modifier.height(2.dp))
-                                                        Text(
-                                                            text = "Daily updates, monthly capsules & state special events",
-                                                            color = Color.White.copy(alpha = 0.8f),
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            fontSize = 11.5.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                }
-
-                                                // Bottom Stats Strip: [12 Months | 365 Days | Daily Quiz]
-                                                Surface(
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = Color(0x38000000),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(34.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "12",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Months",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "365",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Days",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Daily",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Quiz",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // 5. Mock Test Generator Feature Card
-                        Column(
-                            modifier = Modifier.homeSmoothReveal(
-                                index = 7 + filteredDisplaySubjects.size,
-                                scrollState = homeScrollState
-                            )
-                        ) {
-                            val mtGradient = remember {
-                                com.example.ui.theme.PremiumCardColorSystem.getGradientForDashboard("Mock Test Generator")
-                            }
-                            HomeCardContainer(
-                                modifier = Modifier.fillMaxWidth(),
-                                accentBorderColor = mtGradient.borderColor
-                            ) {
-                                Card(
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                    border = null,
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Brush.linearGradient(colors = mtGradient.colors))
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(168.dp)
-                                                .background(
-                                                    Brush.linearGradient(
-                                                        colors = mtGradient.colors,
-                                                        start = Offset(0f, 0f),
-                                                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                                    )
-                                                )
-                                                .clickable { onNavigateToMockTestGenerator() }
-                                        ) {
-                                            // Ambient concentric luminous sheen rings (exact match to Subjects Cards)
-                                            Box(
-                                                modifier = Modifier
-                                                    .matchParentSize()
-                                                    .drawBehind {
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                                                                radius = size.width * 0.75f,
-                                                                center = Offset(size.width * 0.35f, size.height * 0.5f)
-                                                            )
-                                                        )
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
-                                                                radius = size.width * 0.95f,
-                                                                center = Offset(size.width * 0.85f, size.height * 0.2f)
-                                                            )
-                                                        )
-                                                    }
-                                            )
-
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                                verticalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                // Top Row: "★ PREMIUM • SMART TEST BUILDER" badge + Circular action button
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(12.dp),
-                                                        color = Color(0x38000000),
-                                                        border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.65f))
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "★ ",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Bold
-                                                            )
-                                                            Text(
-                                                                text = "PREMIUM • SMART BUILDER",
-                                                                color = Color(0xFFFDE68A),
-                                                                fontSize = 10.5.sp,
-                                                                fontWeight = FontWeight.Black,
-                                                                letterSpacing = 0.4.sp
-                                                            )
-                                                        }
-                                                    }
-
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = Color(0x44000000),
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clip(CircleShape)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                                contentDescription = "Open",
-                                                                tint = Color.White.copy(alpha = 0.9f),
-                                                                modifier = Modifier.size(17.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-
-                                                // Middle Row: Squircle Icon + Title & Subtitle
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(14.dp),
-                                                        color = Color(0x33000000),
-                                                        border = BorderStroke(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.85f)),
-                                                        modifier = Modifier.size(52.dp)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.AutoAwesome,
-                                                                contentDescription = null,
-                                                                tint = Color(0xFFFFD700),
-                                                                modifier = Modifier.size(28.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                        Text(
-                                                            text = "Mock Test Generator",
-                                                            color = Color.White,
-                                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                                            fontSize = 17.sp,
-                                                            lineHeight = 21.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                        Spacer(modifier = Modifier.height(2.dp))
-                                                        Text(
-                                                            text = "Intelligent MCQ selector • Pick subjects, units & custom counts",
-                                                            color = Color.White.copy(alpha = 0.8f),
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            fontSize = 11.5.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                }
-
-                                                // Bottom Stats Strip: [Custom Subjects | Instant Sets | Timed Mode]
-                                                Surface(
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = Color(0x38000000),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(34.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Custom",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Subjects",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Instant",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Sets",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Timed",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Mode",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Divider / spacing between the two mock test options
-                        Column {
-                            Spacer(modifier = Modifier.height(2.dp))
-                        }
-
-                        // 6. Available Mock Tests Feature Card
-                        Column(
-                            modifier = Modifier.homeSmoothReveal(
-                                index = 8 + filteredDisplaySubjects.size,
-                                scrollState = homeScrollState
-                            )
-                        ) {
-                            val availableCount = SampleData.generatedMockTestsState.size
-                            val amtGradient = remember {
-                                com.example.ui.theme.PremiumCardColorSystem.getGradientForDashboard("Available Mock Tests")
-                            }
-                            HomeCardContainer(
-                                modifier = Modifier.fillMaxWidth(),
-                                accentBorderColor = amtGradient.borderColor
-                            ) {
-                                Card(
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                    border = null,
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Brush.linearGradient(colors = amtGradient.colors))
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(168.dp)
-                                                .background(
-                                                    Brush.linearGradient(
-                                                        colors = amtGradient.colors,
-                                                        start = Offset(0f, 0f),
-                                                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                                                    )
-                                                )
-                                                .clickable { onNavigateToAvailableMockTests() }
-                                        ) {
-                                            // Ambient concentric luminous sheen rings (exact match to Subjects Cards)
-                                            Box(
-                                                modifier = Modifier
-                                                    .matchParentSize()
-                                                    .drawBehind {
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent),
-                                                                radius = size.width * 0.75f,
-                                                                center = Offset(size.width * 0.35f, size.height * 0.5f)
-                                                            )
-                                                        )
-                                                        drawCircle(
-                                                            brush = Brush.radialGradient(
-                                                                colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
-                                                                radius = size.width * 0.95f,
-                                                                center = Offset(size.width * 0.85f, size.height * 0.2f)
-                                                            )
-                                                        )
-                                                    }
-                                            )
-
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                                verticalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                // Top Row: "★ PREMIUM • TEST SERIES" badge + Circular action button
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(12.dp),
-                                                        color = Color(0x38000000),
-                                                        border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.65f))
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "★ ",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Bold
-                                                            )
-                                                            Text(
-                                                                text = "PREMIUM • TEST SERIES",
-                                                                color = Color(0xFFFDE68A),
-                                                                fontSize = 10.5.sp,
-                                                                fontWeight = FontWeight.Black,
-                                                                letterSpacing = 0.4.sp
-                                                            )
-                                                        }
-                                                    }
-
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = Color(0x44000000),
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clip(CircleShape)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                                contentDescription = "Open",
-                                                                tint = Color.White.copy(alpha = 0.9f),
-                                                                modifier = Modifier.size(17.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-
-                                                // Middle Row: Squircle Icon + Title & Subtitle
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(14.dp),
-                                                        color = Color(0x33000000),
-                                                        border = BorderStroke(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.85f)),
-                                                        modifier = Modifier.size(52.dp)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.FactCheck,
-                                                                contentDescription = null,
-                                                                tint = Color(0xFFFFD700),
-                                                                modifier = Modifier.size(28.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                        Text(
-                                                            text = "Available Mock Tests",
-                                                            color = Color.White,
-                                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                                            fontSize = 17.sp,
-                                                            lineHeight = 21.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                        Spacer(modifier = Modifier.height(2.dp))
-                                                        Text(
-                                                            text = "Attempt saved exams, resume in-progress papers & review",
-                                                            color = Color.White.copy(alpha = 0.8f),
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            fontSize = 11.5.sp,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                }
-
-                                                // Bottom Stats Strip: [$availableCount Tests | Full Length | Live Ranks]
-                                                Surface(
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = Color(0x38000000),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(34.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "$availableCount",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Tests",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Full",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Length",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .width(1.dp)
-                                                                .height(18.dp)
-                                                                .background(Color.White.copy(alpha = 0.2f))
-                                                        )
-                                                        Row(
-                                                            modifier = Modifier.weight(1f),
-                                                            horizontalArrangement = Arrangement.Center,
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Text(
-                                                                text = "Live",
-                                                                color = Color(0xFFFFD700),
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Black
-                                                            )
-                                                            Spacer(modifier = Modifier.width(4.dp))
-                                                            Text(
-                                                                text = "Ranks",
-                                                                color = Color.White.copy(alpha = 0.85f),
-                                                                fontSize = 11.sp,
-                                                                fontWeight = FontWeight.Medium
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -3177,69 +2408,59 @@ fun HomeLiveContentDashboard(
         subjectMcqs + caMonthlyMcqs + caAttachedMcqs + otherAppMcqs
     }
 
-    val liveBeaconColor = com.example.model.parseHexColor(config.liveIndicatorColor, Color(0xFF00C853))
-    val liveColor = if (isAppOffline) Color(0xFF94A3B8) else liveBeaconColor
-    val liveDotInnerColor = if (isAppOffline) Color(0xFFCBD5E1) else Color(0xFF4ADE80)
-    val liveBankBtnColor = com.example.model.parseHexColor(config.liveBankButtonColor, Color(0xFF00A844))
-    val containerBgStart = com.example.model.parseHexColor(config.containerBgStart, Color(0xFFFFFDF9))
-    val containerBgEnd = com.example.model.parseHexColor(config.containerBgEnd, Color(0xFFFFFDF9))
-    val containerBorder = com.example.model.parseHexColor(config.containerBorderColor, Color(0xFFF1EAD8))
+    val liveColor = Color(0xFF10B981)
+    val liveDotInnerColor = Color(0xFF34D399)
+    val containerBgStart = Color(0xFFFFF3EE)
+    val containerBgEnd = Color(0xFFFCE4EC)
+    val containerBorder = Color(0xFFFED7AA)
+    val liveBankBtnColor = Color(0xFF16A34A)
 
-    // Pulse animation for live beacon
-    val infiniteTransition = rememberInfiniteTransition(label = "liveBeaconPulse")
-    val beaconPulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.15f,
+    val beaconInfiniteTransition = rememberInfiniteTransition(label = "beaconPulse")
+    val beaconPulseScale by beaconInfiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.25f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "beaconScale"
+        label = "beaconPulseScale"
     )
-    val beaconPulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.55f,
+    val beaconPulseAlpha by beaconInfiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.95f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "beaconAlpha"
+        label = "beaconPulseAlpha"
     )
-    val refreshSpinAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "refreshSpinAngle"
-    )
-
-    val premiumBorderBrush = remember {
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFFFFD700), // Pure Gold
-                Color(0xFF059669), // Emerald Green
-                Color(0xFF34D399), // Mint Green
-                Color(0xFFFBBF24), // Amber Gold
-                Color(0xFF10B981), // Light Emerald
-                Color(0xFFFFD700)  // Pure Gold
-            )
-        )
+    var refreshSpinAngle by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            while (isRefreshing) {
+                refreshSpinAngle = (refreshSpinAngle + 12f) % 360f
+                delay(16)
+            }
+        } else {
+            refreshSpinAngle = 0f
+        }
     }
-
     Card(
-        shape = RoundedCornerShape(16.dp),
         modifier = modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 6.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = Color(0xFFF59E0B).copy(alpha = 0.25f),
-                spotColor = Color(0xFF059669).copy(alpha = 0.25f)
-            ),
-        colors = CardDefaults.cardColors(containerColor = containerBgStart),
-        border = BorderStroke(2.dp, premiumBorderBrush),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        border = BorderStroke(
+            width = 1.5.dp,
+            brush = Brush.horizontalGradient(
+                colors = listOf(
+                    Color(0xFFD4AF37),
+                    Color(0xFFF8BBD0),
+                    Color(0xFFD4AF37)
+                )
+            )
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -3250,8 +2471,8 @@ fun HomeLiveContentDashboard(
                         colors = listOf(containerBgStart, containerBgEnd)
                     )
                 )
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = 6.dp, vertical = 5.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // Header: Status Beacon + Title + Subtitle + Refresh Button + "Live Bank >" Button
             Row(
@@ -3472,67 +2693,74 @@ fun HomeLiveContentDashboard(
                 )
             }
 
-            // SINGLE HORIZONTAL ROW: All 5 Statistic Cards fitting screen width cleanly in ONE row
+            // SINGLE HORIZONTAL ROW: All 5 Statistic Cards with exact reference color treatments
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val richOrangeStart = Color(0xFFFF9800)
-                val richOrangeEnd = Color(0xFFFF6D00)
-
-                // Card 1: Subjects
+                // Card 1: 10 Subjects — blush pink background & border, solid pink badge
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.subjectsCard.title,
                     count = config.subjectsCard.overrideValue ?: totalSubjects,
                     icon = Icons.AutoMirrored.Filled.Article,
-                    bgStart = richOrangeStart,
-                    bgEnd = richOrangeEnd,
+                    cardBgColor = Color(0xFFFDE8E9),
+                    cardBorderColor = Color(0xFFF472B6),
+                    badgeBgColor = Color(0xFFE91E63),
+                    textColor = Color(0xFF880E4F),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.SUBJECTS }
                 )
 
-                // Card 2: Units
+                // Card 2: 19 Units — champagne peach background & border, solid orange badge
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.unitsCard.title,
                     count = config.unitsCard.overrideValue ?: totalUnits,
-                    icon = Icons.Default.MenuBook,
-                    bgStart = richOrangeStart,
-                    bgEnd = richOrangeEnd,
+                    icon = Icons.Default.Layers,
+                    cardBgColor = Color(0xFFFFF3E0),
+                    cardBorderColor = Color(0xFFFFB74D),
+                    badgeBgColor = Color(0xFFFF6D00),
+                    textColor = Color(0xFF7C2D12),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.UNITS }
                 )
 
-                // Card 3: Topics
+                // Card 3: 22 Topics — soft lavender background & border, solid purple badge
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.topicsCard.title,
                     count = config.topicsCard.overrideValue ?: totalTopics,
-                    icon = Icons.Default.Layers,
-                    bgStart = richOrangeStart,
-                    bgEnd = richOrangeEnd,
+                    icon = Icons.Default.Description,
+                    cardBgColor = Color(0xFFF3E5F5),
+                    cardBorderColor = Color(0xFFCE93D8),
+                    badgeBgColor = Color(0xFF8E24AA),
+                    textColor = Color(0xFF4A148C),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOPICS }
                 )
 
-                // Card 4: Practice Sets (Sets)
+                // Card 4: 72 Sets — soft mint background & border, solid green badge
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.practiceSetsCard.title,
                     count = config.practiceSetsCard.overrideValue ?: totalSets,
-                    icon = Icons.Default.GridView,
-                    bgStart = richOrangeStart,
-                    bgEnd = richOrangeEnd,
+                    icon = Icons.Default.Checklist,
+                    cardBgColor = Color(0xFFE8F5E9),
+                    cardBorderColor = Color(0xFFA5D6A7),
+                    badgeBgColor = Color(0xFF10B981),
+                    textColor = Color(0xFF064E3B),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.PRACTICE_SETS }
                 )
 
-                // Card 5: Total MCQs (MCQs)
+                // Card 5: 187 MCQs — warm ivory-gold background & border, solid gold badge
                 SingleRowMetricCard(
                     modifier = Modifier.weight(1f),
                     title = config.totalMcqsCard.title,
                     count = config.totalMcqsCard.overrideValue ?: totalMcqs,
-                    icon = Icons.Default.FactCheck,
-                    bgStart = richOrangeStart,
-                    bgEnd = richOrangeEnd,
+                    icon = Icons.Default.GridView,
+                    cardBgColor = Color(0xFFFFFDE7),
+                    cardBorderColor = Color(0xFFFFE082),
+                    badgeBgColor = Color(0xFFFFB300),
+                    textColor = Color(0xFF78350F),
                     onClick = { activeMetricsSheet = LiveMetricsSheetType.TOTAL_MCQS }
                 )
             }
@@ -3588,8 +2816,10 @@ fun SingleRowMetricCard(
     title: String,
     count: Int,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    bgStart: Color,
-    bgEnd: Color,
+    cardBgColor: Color,
+    cardBorderColor: Color,
+    badgeBgColor: Color,
+    textColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -3603,26 +2833,7 @@ fun SingleRowMetricCard(
             else -> title
         }
     }
-    // Outer strong orange-gold border brush
-    val outerOrangeBorderBrush = remember(bgStart, bgEnd) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFFFB300),
-                bgStart,
-                bgEnd
-            )
-        )
-    }
-    // Inner crisp white-and-warm-gold layered border brush
-    val innerWhiteLayeredBorderBrush = remember {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.92f),
-                Color(0xFFFFF8E1).copy(alpha = 0.82f),
-                Color.White.copy(alpha = 0.72f)
-            )
-        )
-    }
+
     val pressState = rememberCardPressAnimationState(
         targetScale = 0.96f,
         defaultElevation = 3.dp,
@@ -3630,111 +2841,73 @@ fun SingleRowMetricCard(
         durationMs = 120
     )
 
-    Surface(
+    Card(
         modifier = modifier
-            .height(58.dp)
+            .height(92.dp)
             .graphicsLayer {
                 scaleX = pressState.scale
                 scaleY = pressState.scale
             }
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(9.dp),
-                ambientColor = Color(0xFFFF9800).copy(alpha = 0.55f),
-                spotColor = Color(0xFFFF6D00).copy(alpha = 0.65f)
-            )
-            .clip(RoundedCornerShape(9.dp))
             .clickable(
                 interactionSource = pressState.interactionSource,
                 indication = null
             ) { onClick() },
-        shape = RoundedCornerShape(9.dp),
-        color = Color.Transparent,
-        border = BorderStroke(1.5.dp, outerOrangeBorderBrush),
-        shadowElevation = pressState.elevation
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+        border = BorderStroke(1.5.dp, cardBorderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = pressState.elevation)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(bgStart, bgEnd)
-                    )
-                )
-                // Inner layered white rounded border ring
-                .padding(1.5.dp)
-                .border(
-                    width = 1.dp,
-                    brush = innerWhiteLayeredBorderBrush,
-                    shape = RoundedCornerShape(7.5.dp)
-                )
-                .clip(RoundedCornerShape(7.5.dp))
-                // Subtle non-floral top-left luminous sheen
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.16f),
-                            Color.Transparent,
-                            Color(0xFFE65100).copy(alpha = 0.12f)
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(140f, 160f)
-                    )
-                )
-                .padding(horizontal = 2.dp, vertical = 2.dp),
-            contentAlignment = Alignment.Center
+                .padding(vertical = 6.dp, horizontal = 2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+            // Circular solid icon badge
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(badgeBgColor),
+                contentAlignment = Alignment.Center
             ) {
-                // Top: Mini frosted white circular icon container
-                Box(
-                    modifier = Modifier
-                        .size(17.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.24f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(10.dp)
-                    )
-                }
-
-                // Middle: Dynamic animated count number
-                AnimatedContent(
-                    targetState = count,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
-                    },
-                    label = "singleRowCardCountAnim"
-                ) { targetCount ->
-                    Text(
-                        text = "$targetCount",
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        lineHeight = 13.sp,
-                        maxLines = 1,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // Bottom: Clean concise title
-                Text(
-                    text = displayTitle,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.95f),
-                    maxLines = 1,
-                    textAlign = TextAlign.Center,
-                    overflow = TextOverflow.Ellipsis
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
+
+            // Dynamic animated statistic count number
+            AnimatedContent(
+                targetState = count,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
+                },
+                label = "singleRowCardCountAnim"
+            ) { targetCount ->
+                Text(
+                    text = "$targetCount",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black,
+                    color = textColor,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Clean concise label
+            Text(
+                text = displayTitle,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor.copy(alpha = 0.9f),
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -4056,7 +3229,7 @@ fun HomeCommunityAndOfflineBar(
             horizontalArrangement = Arrangement.spacedBy(cardSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Card 1 (Left): Yellow to Orange Gradient (Rank #28 / State Rank)
+            // Card 1 (Left): Pink-Orange Gradient (Leaderboard / Top Learners)
             Card(
                 modifier = Modifier
                     .weight(1f)
@@ -4081,9 +3254,9 @@ fun HomeCommunityAndOfflineBar(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xFFFFA000),
-                                    Color(0xFFFF8F00),
-                                    Color(0xFFFF6D00)
+                                    Color(0xFFE91E63),
+                                    Color(0xFFFF5722),
+                                    Color(0xFFFF8F00)
                                 )
                             )
                         )
@@ -4094,7 +3267,7 @@ fun HomeCommunityAndOfflineBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Left White Circle with Trophy Icon (filled, orange)
+                        // Left White Circle with Trophy Icon (filled, magenta)
                         Surface(
                             shape = CircleShape,
                             color = Color.White,
@@ -4108,7 +3281,7 @@ fun HomeCommunityAndOfflineBar(
                                 Icon(
                                     imageVector = Icons.Default.EmojiEvents,
                                     contentDescription = "Trophy",
-                                    tint = Color(0xFFE65100),
+                                    tint = Color(0xFFE91E63),
                                     modifier = Modifier.size(iconInnerSize)
                                 )
                             }
@@ -4122,7 +3295,7 @@ fun HomeCommunityAndOfflineBar(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "Rank #$displayRank",
+                                text = "Leaderboard",
                                 fontSize = titleFontSize,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -4130,7 +3303,7 @@ fun HomeCommunityAndOfflineBar(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "State Rank",
+                                text = "Top Learners",
                                 fontSize = subtitleFontSize,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White.copy(alpha = 0.95f),

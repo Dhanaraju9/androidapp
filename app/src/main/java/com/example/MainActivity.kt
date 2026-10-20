@@ -126,13 +126,21 @@ sealed class AppScreen {
     }
 
     data class Result(
-        val score: Int,
-        val total: Int,
-        val correct: Int,
-        val incorrect: Int,
-        val timeSpent: Long
+        val subjectId: String = "",
+        val unitId: String = "",
+        val topicId: String = "",
+        val setName: String = "",
+        val setId: String = "",
+        val subtopicId: String = "",
+        val subtopicTitle: String = "",
+        val questions: List<Question> = emptyList(),
+        val userAnswers: Map<String, String> = emptyMap(),
+        val correctCount: Int = 0,
+        val wrongCount: Int = 0,
+        val score: Double = 0.0,
+        val timeSpent: Long = 0L
     ) : AppScreen() {
-        override val routeKey: String = "result_${score}_${total}_$correct"
+        override val routeKey: String = "result_${subjectId}_${unitId}_${topicId}_${setId}_${subtopicId}_${correctCount}_${wrongCount}_${score.toInt()}"
     }
 
     data object Subscription : AppScreen() {
@@ -193,12 +201,20 @@ sealed class AppScreen {
         override val routeKey: String = "performance"
     }
 
+    data object Leaderboard : AppScreen() {
+        override val routeKey: String = "leaderboard"
+    }
+
     data object ContactUs : AppScreen() {
         override val routeKey: String = "contact_us"
     }
 
     data class LegalSupport(val initialSection: String? = null) : AppScreen() {
         override val routeKey: String = "legal_support_${initialSection ?: "default"}"
+    }
+
+    data object PreviousYearPapers : AppScreen() {
+        override val routeKey: String = "previous_year_papers"
     }
 }
 
@@ -366,12 +382,14 @@ fun AppNavigationHost() {
                                 )
                             )
                         },
-                        onNavigateToLeaderboard = {},
+                        onNavigateToLeaderboard = { navigateTo(AppScreen.Leaderboard) },
                         onNavigateToOfflineManager = {},
                         onNavigateToNotifications = {
                             navigateTo(AppScreen.Notifications)
                         },
-                        onNavigateToPreviousYearPapers = {}
+                        onNavigateToPreviousYearPapers = {
+                            navigateTo(AppScreen.PreviousYearPapers)
+                        }
                     )
                 }
 
@@ -549,23 +567,94 @@ fun AppNavigationHost() {
                         questions = questions,
                         title = screen.subtopicTitle.ifBlank { screen.setName },
                         onBack = { goBack() },
-                        onSubmitTest = { score, total, _, _, correctCount ->
-                            val wrongCount = total - correctCount
-                            navigateTo(AppScreen.Result(score.toInt(), total, correctCount, wrongCount, 0L))
+                        onSubmitTest = { correctCount, wrongCount, scoreVal, userAnsMap, elapsedSec ->
+                            navigateTo(
+                                AppScreen.Result(
+                                    subjectId = screen.subjectId,
+                                    unitId = screen.unitId,
+                                    topicId = screen.topicId,
+                                    setName = screen.setName,
+                                    setId = screen.setId,
+                                    subtopicId = screen.subtopicId,
+                                    subtopicTitle = screen.subtopicTitle,
+                                    questions = questions,
+                                    userAnswers = userAnsMap,
+                                    correctCount = correctCount,
+                                    wrongCount = wrongCount,
+                                    score = scoreVal,
+                                    timeSpent = elapsedSec.toLong()
+                                )
+                            )
                         }
                     )
                 }
 
                 is AppScreen.Result -> {
-                    val questions = SampleData.questionsState.take(screen.total.coerceAtLeast(1))
+                    val resultQuestions = screen.questions.ifEmpty { SampleData.questionsState.take(10) }
+
+                    // Resolve next set or next subtopic navigation
+                    val (hasNextItem, nextTitle, nextNavAction) = resolveNextNavigation(
+                        screen = screen,
+                        navigateToPractice = { nSub, nUnit, nTopic, nSetTitle, nSetId, nSubId, nSubTitle, nQs ->
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = nSub,
+                                    unitId = nUnit,
+                                    topicId = nTopic,
+                                    setName = nSetTitle,
+                                    setId = nSetId,
+                                    subtopicId = nSubId,
+                                    subtopicTitle = nSubTitle,
+                                    preloadedQuestions = nQs
+                                )
+                            )
+                        }
+                    )
+
                     ResultScreen(
-                        questions = questions,
-                        userAnswers = emptyMap(),
-                        correctCount = screen.correct,
-                        wrongCount = screen.incorrect,
-                        score = screen.score.toDouble(),
-                        onPracticeAgain = { goBack() },
-                        onBackToHome = { navigateToHome() }
+                        questions = resultQuestions,
+                        userAnswers = screen.userAnswers,
+                        correctCount = screen.correctCount,
+                        wrongCount = screen.wrongCount,
+                        score = screen.score,
+                        onPracticeAgain = {
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = screen.subjectId,
+                                    unitId = screen.unitId,
+                                    topicId = screen.topicId,
+                                    setName = screen.setName,
+                                    setId = screen.setId,
+                                    subtopicId = screen.subtopicId,
+                                    subtopicTitle = screen.subtopicTitle,
+                                    preloadedQuestions = resultQuestions
+                                )
+                            )
+                        },
+                        onBackToPrevious = { goBack() },
+                        onBackToHome = { navigateToHome() },
+                        onNextSet = nextNavAction,
+                        nextItemTitle = nextTitle,
+                        isSubtopicPractice = screen.subtopicTitle.isNotBlank(),
+                        hasNextItem = hasNextItem
+                    )
+                }
+
+                is AppScreen.PreviousYearPapers -> {
+                    PreviousYearPapersScreen(
+                        onStartPaperAttempt = { paperTitle, questions, paperId ->
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = "pyq",
+                                    unitId = "pyq",
+                                    topicId = paperId,
+                                    setName = paperTitle,
+                                    setId = paperId,
+                                    preloadedQuestions = questions
+                                )
+                            )
+                        },
+                        onBack = { goBack() }
                     )
                 }
 
@@ -599,7 +688,8 @@ fun AppNavigationHost() {
                         onNavigateToLogin = { navigateTo(AppScreen.Login) },
                         onNavigateToSavedQuestions = { navigateTo(AppScreen.SavedQuestions) },
                         onNavigateToContact = { navigateTo(AppScreen.ContactUs) },
-                        onNavigateToPrivacy = { navigateTo(AppScreen.LegalSupport("privacy_policy")) }
+                        onNavigateToPrivacy = { navigateTo(AppScreen.LegalSupport("privacy_policy")) },
+                        onNavigateToPerformance = { navigateTo(AppScreen.Performance) }
                     )
                 }
 
@@ -872,7 +962,84 @@ fun AppNavigationHost() {
                         }
                     )
                 }
+
+                is AppScreen.Leaderboard -> {
+                    LeaderboardScreen(
+                        onBack = { goBack() },
+                        onNavigateToHome = { navigateToHome() }
+                    )
+                }
             }
         }
     }
+}
+
+private fun resolveNextNavigation(
+    screen: AppScreen.Result,
+    navigateToPractice: (String, String, String, String, String, String, String, List<Question>) -> Unit
+): Triple<Boolean, String?, (() -> Unit)?> {
+    val activeAppId = SampleData.currentActiveAppId.value
+
+    // 1. If subtopic practice session, check if there is a next subtopic
+    if (screen.subtopicTitle.isNotBlank()) {
+        val subtopics = SampleData.getSubtopics(activeAppId, screen.topicId)
+        val currentIdx = subtopics.indexOfFirst { it.equals(screen.subtopicTitle, ignoreCase = true) }
+        if (currentIdx != -1 && currentIdx < subtopics.size - 1) {
+            val nextSubTitle = subtopics[currentIdx + 1]
+            val nextQs = SampleData.getQuestionsForPractice(screen.subjectId, screen.unitId, screen.topicId, nextSubTitle)
+            val action = {
+                navigateToPractice(
+                    screen.subjectId,
+                    screen.unitId,
+                    screen.topicId,
+                    nextSubTitle,
+                    screen.setId,
+                    "subtopic-$nextSubTitle",
+                    nextSubTitle,
+                    nextQs
+                )
+            }
+            return Triple(true, nextSubTitle, action)
+        }
+    }
+
+    // 2. Resolve sets for hierarchy level
+    val sets = SampleData.getSetsForHierarchyLevel(screen.subjectId, screen.unitId, screen.topicId)
+    val currentSetIdx = sets.indexOfFirst { it.title.equals(screen.setName, ignoreCase = true) || it.id == screen.setId }
+    if (currentSetIdx != -1 && currentSetIdx < sets.size - 1) {
+        val nextSet = sets[currentSetIdx + 1]
+        val action = {
+            navigateToPractice(
+                screen.subjectId,
+                screen.unitId,
+                screen.topicId,
+                nextSet.title,
+                nextSet.id,
+                "",
+                "",
+                nextSet.questions
+            )
+        }
+        return Triple(true, nextSet.title, action)
+    }
+
+    // 3. Fallback: If sets exist and size > 1
+    if (sets.size > 1) {
+        val nextSet = sets[1]
+        val action = {
+            navigateToPractice(
+                screen.subjectId,
+                screen.unitId,
+                screen.topicId,
+                nextSet.title,
+                nextSet.id,
+                "",
+                "",
+                nextSet.questions
+            )
+        }
+        return Triple(true, nextSet.title, action)
+    }
+
+    return Triple(false, null, null)
 }

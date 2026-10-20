@@ -252,7 +252,7 @@ fun defaultDrawerItems(): List<DrawerMenuItemConfig> {
             title = "State Live Leaderboard",
             subtitle = "Compete with aspirants",
             iconName = "emoji_events",
-            badgeText = "RANK #28",
+            badgeText = "TOP LEARNERS",
             badgeBgColorHex = 0xFFEAB308,
             badgeTextColorHex = 0xFF0F172A,
             cardBgColorHex = 0xFFFEFCE8,

@@ -21,10 +21,8 @@ import com.example.model.TopicModel
 import com.example.model.UnitModel
 import com.example.model.PracticeSectionType
 import com.example.ui.screens.*
-import com.example.ui.screens.LuxuryFontStudioScreen
 import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.SyllabusProTheme
-import com.example.ui.theme.LuxuryFontStudioTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 
@@ -187,11 +185,12 @@ sealed class AppScreen {
         override val routeKey: String = "downloaded_materials"
     }
 
+
+
+
     data object LuxuryFontStudio : AppScreen() {
         override val routeKey: String = "luxury_font_studio"
     }
-
-
     data object MockTestGenerator : AppScreen() {
         override val routeKey: String = "mock_test_generator"
     }
@@ -358,7 +357,7 @@ fun AppNavigationHost() {
                 }
 
                 is AppScreen.Home -> {
-                    LuxuryFontStudioTheme {
+                    SyllabusProTheme {
                         HomeScreen(
                             onNavigateToSubject = { subject ->
                                 navigateTo(AppScreen.SyllabusExplorer(subject.id, subject))
@@ -581,6 +580,7 @@ fun AppNavigationHost() {
                 is AppScreen.LuxuryFontStudio -> {
                     LuxuryFontStudioScreen(onBack = { goBack() })
                 }
+
 
                 is AppScreen.PracticeArena -> {
                     val questions = remember(

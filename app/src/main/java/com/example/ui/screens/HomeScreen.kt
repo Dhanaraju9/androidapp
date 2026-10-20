@@ -47,7 +47,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.repository.UserProgressRepository
 import com.example.viewmodel.PracticeStateViewModel
 import com.example.ui.components.ReportIssueDialog
-import com.example.ui.theme.LuxuryFontStudioTheme
+import com.example.ui.theme.SyllabusProTheme
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale

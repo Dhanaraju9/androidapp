@@ -38,9 +38,16 @@ import androidx.compose.ui.unit.sp
 import com.example.data.SampleData
 import com.example.model.AppTenantModel
 import com.example.model.PromotionalPosterModel
-import com.example.util.AdminRole
 import com.example.util.AdminSessionManager
+import com.example.util.AdminRole
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import java.util.UUID
+import java.util.concurrent.TimeUnit
+import android.app.Activity
 
 /**
  * Admin Login Dialog / Full Screen Composable
@@ -53,44 +60,25 @@ fun AdminLoginDialog(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    
-    var isOtpStep by remember { mutableStateOf(false) }
+    var phoneNumber by remember { mutableStateOf("") }
+    var verificationId by remember { mutableStateOf<String?>(null) }
     var otpCode by remember { mutableStateOf("") }
-    var cooldownSeconds by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(cooldownSeconds) {
-        if (cooldownSeconds > 0) {
-            kotlinx.coroutines.delay(1000L)
-            cooldownSeconds--
-        }
-    }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isOtpSent by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
         shape = RoundedCornerShape(24.dp),
         title = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF1E3A8A), Color(0xFF2563EB))
-                            )
-                        ),
+                    modifier = Modifier.size(56.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF1E3A8A), Color(0xFF2563EB)))),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isOtpStep) Icons.Default.LockReset else Icons.Default.AdminPanelSettings,
+                        imageVector = Icons.Default.AdminPanelSettings,
                         contentDescription = null,
                         tint = Color(0xFFFBBF24),
                         modifier = Modifier.size(32.dp)
@@ -98,243 +86,92 @@ fun AdminLoginDialog(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = if (isOtpStep) "Verify Your Admin Access" else "${SampleData.getActiveApp().name} Admin Portal",
+                    text = "${SampleData.getActiveApp().name} Admin Login",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFF0F172A),
                     textAlign = TextAlign.Center
                 )
-                Text(
-                    text = if (isOtpStep) "OTP Verification Required" else "అడ్మిన్ డాష్‌బోర్డ్ లాగిన్",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2563EB),
-                    textAlign = TextAlign.Center
-                )
             }
         },
         text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Text(
-                    text = if (isOtpStep) "Enter the OTP sent to your authorized email." else "Enter authorized Admin credentials to manage APPSC Group-2 content, current affairs, and announcements.",
-                    fontSize = 12.5.sp,
-                    color = Color(0xFF64748B),
-                    lineHeight = 17.sp
-                )
-
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (errorMessage != null) {
-                    Surface(
-                        color = Color(0xFFFEF2F2),
-                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.ErrorOutline,
-                                contentDescription = null,
-                                tint = Color(0xFFDC2626),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = errorMessage ?: "",
-                                color = Color(0xFFDC2626),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                    Surface(color = Color(0xFFFEF2F2), border = BorderStroke(1.dp, Color(0xFFFCA5A5)), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text(errorMessage!!, modifier = Modifier.padding(10.dp), color = Color(0xFFDC2626), fontSize = 12.sp)
                     }
                 }
 
-                if (!isOtpStep) {
+                if (!isOtpSent) {
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            errorMessage = null
-                        },
-                        label = { Text("Admin Email ID") },
-                        placeholder = { Text("sobhadhanaraju0@gmail.com") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2563EB))
-                        },
+                        value = phoneNumber,
+                        onValueChange = { phoneNumber = it },
+                        label = { Text("Phone Number (+91...)") },
+                        placeholder = { Text("+91XXXXXXXXXX") },
+                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = {
-                            password = it
-                            errorMessage = null
-                        },
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter admin password") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF2563EB))
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = "Toggle password visibility",
-                                    tint = Color(0xFF64748B)
-                                )
-                            }
-                        },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                     )
                 } else {
                     OutlinedTextField(
                         value = otpCode,
-                        onValueChange = {
-                            otpCode = it
-                            errorMessage = null
-                        },
-                        label = { Text("6-Digit OTP") },
-                        placeholder = { Text("Enter OTP") },
-                        leadingIcon = {
-                            Icon(Icons.Default.VpnKey, contentDescription = null, tint = Color(0xFF2563EB))
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(
+                        onValueChange = { otpCode = it },
+                        label = { Text("Enter OTP") },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "OTP sent to ${email.trim()}",
-                            fontSize = 12.sp,
-                            color = Color(0xFF16A34A),
-                            fontWeight = FontWeight.Medium
-                        )
-                        TextButton(
-                            enabled = cooldownSeconds == 0,
-                            onClick = {
-                                val isRev = AdminSessionManager.isReviewerEmail(email, context)
-                                AdminSessionManager.generateOtp(email = email, isReviewer = isRev, context = context)
-                                cooldownSeconds = 30
-                                Toast.makeText(context, "OTP resent to email", Toast.LENGTH_SHORT).show()
-                            }
-                        ) {
-                            Text(
-                                text = if (cooldownSeconds > 0) "Resend in ${cooldownSeconds}s" else "Resend OTP",
-                                fontSize = 12.sp,
-                                color = if (cooldownSeconds > 0) Color.Gray else Color(0xFF2563EB)
-                            )
-                        }
-                    }
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val isReviewer = AdminSessionManager.isReviewerEmail(email, context)
-                    if (!isOtpStep) {
-                        if (!AdminSessionManager.validateEmail(email, context)) {
-                            errorMessage = "Admin or Reviewer access is not authorized for this email."
-                            return@Button
-                        }
-                        if (!AdminSessionManager.validatePassword(email, password, context)) {
-                            errorMessage = "Invalid credentials."
-                            return@Button
-                        }
-                        // Send OTP or initialize reviewer evaluation session
-                        AdminSessionManager.generateOtp(email = email, isReviewer = isReviewer, context = context)
-                        isOtpStep = true
-                        cooldownSeconds = 30
-                        errorMessage = null
-                        if (isReviewer) {
-                            Toast.makeText(context, "Reviewer evaluation session ready. Use verification code.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "OTP sent to authorized email.", Toast.LENGTH_SHORT).show()
-                        }
+                    isLoading = true
+                    if (!isOtpSent) {
+                        val options = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
+                            .setPhoneNumber(phoneNumber)
+                            .setTimeout(60L, TimeUnit.SECONDS)
+                            .setActivity(context as Activity)
+                            .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                                    FirebaseAuth.getInstance().signInWithCredential(credential)
+                                        .addOnCompleteListener { task ->
+                                            isLoading = false
+                                            if (task.isSuccessful) onLoginSuccess()
+                                            else errorMessage = "Auto-verification failed."
+                                        }
+                                }
+                                override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
+                                    verificationId = id
+                                    isOtpSent = true
+                                    isLoading = false
+                                }
+                                override fun onVerificationFailed(e: com.google.firebase.FirebaseException) {
+                                    isLoading = false
+                                    errorMessage = e.message
+                                }
+                            })
+                            .build()
+                        PhoneAuthProvider.verifyPhoneNumber(options)
                     } else {
-                        if (AdminSessionManager.verifyOtp(otpCode, isReviewer = isReviewer)) {
-                            val role = if (isReviewer) AdminRole.REVIEWER else AdminRole.SUPER_ADMIN
-                            AdminSessionManager.setAdminLoggedIn(context, true, email.trim().lowercase(), role = role)
-                            val welcomeName = if (isReviewer) AdminSessionManager.REVIEWER_NAME else AdminSessionManager.ADMIN_NAME
-                            Toast.makeText(
-                                context,
-                                if (isReviewer) "🔍 Google Reviewer mode active. Test environment loaded." else "🎉 Admin Login Successful! Welcome $welcomeName",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = if (isReviewer) "Invalid Reviewer test code. (Use 888999 or 123456)" else "Invalid or expired OTP."
-                        }
+                        val credential = PhoneAuthProvider.getCredential(verificationId!!, otpCode)
+                        FirebaseAuth.getInstance().signInWithCredential(credential)
+                            .addOnCompleteListener { task ->
+                                isLoading = false
+                                if (task.isSuccessful) onLoginSuccess()
+                                else errorMessage = "Verification failed."
+                            }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (isOtpStep) "Verify & Enter Admin Panel" else "Continue to Verification", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(if (isLoading) "Loading..." else if (isOtpSent) "Verify OTP" else "Send OTP")
             }
         },
         dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-            ) {
-                Text("Cancel", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
-            }
+            OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
         }
     )
 }

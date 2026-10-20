@@ -2,46 +2,56 @@ package com.example.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 
 @Composable
-fun LuxuryFontStudioTheme(
-    content: @Composable () -> Unit
-) {
+fun LuxuryFontStudioTheme(content: @Composable () -> Unit) {
     val config by LuxuryFontStudioManager.fontConfig.collectAsState()
-    val fontFamily = LuxuryFontStudioManager.getFontFamily(config.fontFamilyName)
 
-    val typography = Typography(
-        bodyLarge = TextStyle(
-            fontFamily = fontFamily,
-            fontWeight = FontWeight(config.fontWeight),
+    val fontWeight = when (config.fontWeight) {
+        "Light" -> FontWeight.Light
+        "Medium" -> FontWeight.Medium
+        "Semi Bold" -> FontWeight.SemiBold
+        "Bold" -> FontWeight.Bold
+        else -> FontWeight.Normal
+    }
+
+    val fontStyle = if (config.fontStyle == "Italic") FontStyle.Italic else FontStyle.Normal
+
+    val customTypography = Typography(
+        bodyLarge = MaterialTheme.typography.bodyLarge.copy(
             fontSize = config.fontSizeSp.sp,
-            lineHeight = config.lineHeightSp.sp,
-            letterSpacing = config.letterSpacingSp.sp
+            fontWeight = fontWeight,
+            fontStyle = fontStyle,
+            letterSpacing = config.letterSpacing.em,
+            lineHeight = (config.fontSizeSp * config.lineSpacing).sp
         ),
-        titleMedium = TextStyle(
-            fontFamily = fontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = (config.fontSizeSp + 2).sp
+        bodyMedium = MaterialTheme.typography.bodyMedium.copy(
+            fontSize = (config.fontSizeSp * 0.9f).sp,
+            fontWeight = fontWeight,
+            fontStyle = fontStyle
+        ),
+        titleLarge = MaterialTheme.typography.titleLarge.copy(
+            fontSize = (config.fontSizeSp * 1.3f).sp,
+            fontWeight = fontWeight,
+            fontStyle = fontStyle
+        ),
+        titleMedium = MaterialTheme.typography.titleMedium.copy(
+            fontSize = (config.fontSizeSp * 1.1f).sp,
+            fontWeight = fontWeight,
+            fontStyle = fontStyle
         )
-    )
-    
-    val colorScheme = lightColorScheme(
-        background = Color(android.graphics.Color.parseColor(config.backgroundColor)),
-        onBackground = Color(android.graphics.Color.parseColor(config.textColor)),
-        primary = Color(android.graphics.Color.parseColor(config.headingColor))
     )
 
     MaterialTheme(
-        typography = typography,
-        colorScheme = colorScheme,
+        typography = customTypography,
         content = content
     )
 }

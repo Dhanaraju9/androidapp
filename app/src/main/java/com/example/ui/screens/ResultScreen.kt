@@ -8,6 +8,7 @@ import com.example.model.HighlightLocation
 import com.example.ui.theme.LocalAppConfig
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.isSystemInDarkTheme
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -49,6 +50,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Question
 import kotlin.math.*
+
+
+private val colorBackground = Color(0xFFFAF7F2)
+private val colorQuestionCard = Color(0xFFFFFFFF)
+private val colorQuestionText = Color(0xFF292524)
+private val colorOptionBackground = Color(0xFFF0F4FA)
+private val colorOptionText = Color(0xFF334155)
+private val colorExplanationBackground = Color(0xFFFFF3E8)
+private val colorExplanationText = Color(0xFF633F2D)
+private val colorPremium = Color(0xFFD4AF37)
+private val colorSecondaryText = Color(0xFF64748B)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,10 +109,15 @@ fun ResultScreen(
         }
     }
 
+    val appConfig = LocalAppConfig.current
+    val pa = appConfig.advancedFontSettings.practiceAppearance
+    val isDark = isSystemInDarkTheme()
+    val screenBg = colorBackground
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFF8F0)), // Warm ivory / soft champagne cream
+            .background(screenBg),
         contentAlignment = Alignment.TopCenter
     ) {
         val isTablet = maxWidth >= 600.dp
@@ -162,7 +179,7 @@ fun ResultScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Return to Sets / Subtopics",
-                                    tint = Color(0xFF0F172A),
+                                    tint = colorQuestionText,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(5.dp))
@@ -170,7 +187,7 @@ fun ResultScreen(
                                     text = "Back",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
-                                    color = Color(0xFF0F172A)
+                                    color = colorQuestionText
                                 )
                             }
                         }
@@ -178,7 +195,7 @@ fun ResultScreen(
                         // 2. Direct Home Shortcut
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Color.White,
+                            color = colorQuestionCard,
                             shadowElevation = 2.dp,
                             border = BorderStroke(1.dp, Color(0xFFDBEAFE)),
                             modifier = Modifier
@@ -202,7 +219,7 @@ fun ResultScreen(
                                     text = "Home",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
-                                    color = Color(0xFF0F172A)
+                                    color = colorQuestionText
                                 )
                             }
                         }
@@ -216,7 +233,7 @@ fun ResultScreen(
                         // Set Pill
                         Surface(
                             shape = RoundedCornerShape(12.dp),
-                            color = Color.White.copy(alpha = 0.9f),
+                            color = colorQuestionCard.copy(alpha = 0.9f),
                             border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                         ) {
                             Row(
@@ -227,7 +244,7 @@ fun ResultScreen(
                                     imageVector = Icons.Outlined.Description,
                                     contentDescription = null,
                                     modifier = Modifier.size(13.dp),
-                                    tint = Color(0xFF475569)
+                                    tint = colorSecondaryText
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 val setName = questions.firstOrNull()?.setName?.takeIf { it.isNotBlank() } ?: "Set 1"
@@ -235,7 +252,7 @@ fun ResultScreen(
                                     text = setName,
                                     fontSize = 12.5.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF1E293B)
+                                    color = colorQuestionText
                                 )
                             }
                         }
@@ -323,9 +340,9 @@ fun ResultScreen(
                         ),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isHighAchiever) Color(0xFFFFFFFD) else Color.White
+                        containerColor = colorQuestionCard
                     ),
-                    border = heroBorder,
+                    border = BorderStroke(1.dp, colorPremium),
                     elevation = CardDefaults.cardElevation(defaultElevation = if (isHighAchiever) 6.dp else 2.dp)
                 ) {
                     if (isTablet) {
@@ -1027,6 +1044,9 @@ fun QuestionSolutionCard(
     onToggleBookmark: (Question) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val appConfig = LocalAppConfig.current
+    val pa = appConfig.advancedFontSettings.practiceAppearance
+    val isDark = isSystemInDarkTheme()
     val isCorrect = selectedOption != null && selectedOption.equals(question.correctOption, ignoreCase = true)
     val isSkipped = selectedOption == null
 
@@ -1035,8 +1055,8 @@ fun QuestionSolutionCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White, // Warm white
-        border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(0xFFC76B91), Color(0xFFD4AF37), Color(0xFFB8527A)))), // Premium Rose-Gold & Champagne Gradient Border
+        color = if (isDark) Color(0xFF1E293B) else Color(pa.questionBgColor),
+        border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(pa.questionBorderColor), Color(0xFFD4AF37), Color(pa.questionBorderColor)))), // Premium Rose-Gold & Champagne Gradient Border
         shadowElevation = 3.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -1183,15 +1203,26 @@ fun QuestionSolutionCard(
                     val isThisCorrect = key.equals(question.correctOption, ignoreCase = true)
                     val isThisSelected = key.equals(selectedOption, ignoreCase = true)
 
+                    // Actually, the user gave specific colors, I should use those and not calculate them.
+                    // Screen background: #FAF7F2
+                    // Question card: #FFFFFF
+                    // Answer option background: #F0F4FA
+                    // Option text: #334155
+                    // Explanation background: #FFF3E8
+                    // Explanation text: #633F2D
+                    // Premium borders and highlights: #D4AF37
+                    // Secondary text: #64748B
+
+                    // Let's use the requested colors.
                     val bgColor = when {
-                        isThisCorrect -> Color(0xFFEAF8F1) // Very light green background
-                        isThisSelected && !isThisCorrect -> Color(0xFFFDECEF) // Very light blush-red background
-                        else -> Color(0xFFFFF1E8) // Soft blush cream background
+                        isThisCorrect -> Color(0xFFD1FAE5) // Kept the original correct color
+                        isThisSelected && !isThisCorrect -> Color(0xFFFEE2E2) // Kept the original wrong color
+                        else -> colorOptionBackground
                     }
                     val borderColor = when {
-                        isThisCorrect -> Color(0xFF1B6B48) // Bold 2.dp Emerald green border accent
-                        isThisSelected && !isThisCorrect -> Color(0xFFA83244) // Bold 2.dp Ruby red border accent
-                        else -> Color(0xFFE0ADBD) // Crisp 1.5.dp Rose Gold border
+                        isThisCorrect -> Color(0xFF059669)
+                        isThisSelected && !isThisCorrect -> Color(0xFFDC2626)
+                        else -> Color(0xFFCBD5E1)
                     }
 
                     Surface(
@@ -1208,9 +1239,9 @@ fun QuestionSolutionCard(
                             Surface(
                                 shape = CircleShape,
                                 color = when {
-                                    isThisCorrect -> Color(0xFF1B6B48)
-                                    isThisSelected && !isThisCorrect -> Color(0xFFA83244)
-                                    else -> Color(0xFFE0ADBD)
+                                    isThisCorrect -> Color(0xFF059669)
+                                    isThisSelected && !isThisCorrect -> Color(0xFFDC2626)
+                                    else -> Color(0xFFCBD5E1)
                                 },
                                 modifier = Modifier.size(28.dp)
                             ) {
@@ -1219,7 +1250,7 @@ fun QuestionSolutionCard(
                                         text = key.uppercase(),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isThisCorrect || isThisSelected) Color.White else Color(0xFF49333F)
+                                        color = if (isThisCorrect || isThisSelected) Color.White else colorOptionText
                                     )
                                 }
                             }
@@ -1231,7 +1262,7 @@ fun QuestionSolutionCard(
                                     location = HighlightLocation.OTHER,
                                     highlightConfig = LocalAppConfig.current.questionHighlightConfig,
                                     fontSize = 16.sp, // 15-17sp spec
-                                    color = Color(0xFF49333F), // Deep plum-brown
+                                    color = colorOptionText, // Deep plum-brown
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -1268,8 +1299,8 @@ fun QuestionSolutionCard(
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFF4EEFA), // Pale lavender cream
-                    border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(0xFF9D72C3), Color(0xFFC76B91), Color(0xFF9D72C3)))), // Royal Amethyst & Rose Gold gradient border
+                    color = colorExplanationBackground,
+                    border = BorderStroke(2.dp, colorPremium),
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -1278,7 +1309,7 @@ fun QuestionSolutionCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(shape = CircleShape, color = Color(0xFF9D72C3), modifier = Modifier.size(26.dp)) {
+                                Surface(shape = CircleShape, color = colorPremium, modifier = Modifier.size(26.dp)) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                                     }
@@ -1288,7 +1319,7 @@ fun QuestionSolutionCard(
                                     text = "Explanation",
                                     fontSize = 17.sp, // Distinct heading weight & color
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF49333F) // Deep plum-brown
+                                    color = colorExplanationText
                                 )
                             }
                         }
@@ -1299,7 +1330,7 @@ fun QuestionSolutionCard(
                             location = HighlightLocation.OTHER,
                             highlightConfig = LocalAppConfig.current.questionHighlightConfig,
                             fontSize = 15.5.sp, // 15-16sp spec with comfortable line spacing
-                            color = Color(0xFF49333F), // Deep plum-brown
+                            color = colorExplanationText,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

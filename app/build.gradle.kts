@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.coil.compose)
     implementation(libs.accompanist.permissions)
+    implementation(libs.androidx.datastore.preferences)
 
     // Room & WorkManager
     implementation(libs.androidx.room.runtime)
@@ -107,6 +108,9 @@ dependencies {
     implementation(libs.googleid)
 
     testImplementation(libs.junit)
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

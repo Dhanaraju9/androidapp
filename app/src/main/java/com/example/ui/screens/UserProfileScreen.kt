@@ -498,7 +498,7 @@ fun UserProfileScreen(
                             }
                         }
 
-                        // 3. EIGHT NAVIGATION OPTION CARDS
+                        // 3. FOUR NAVIGATION OPTION CARDS
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 // Option 1: My Progress & Analytics
@@ -514,7 +514,6 @@ fun UserProfileScreen(
                                     iconCircleBg = iconCircleBg,
                                     burgundyIconColor = burgundyIconColor
                                 )
-
                                 // Option 2: Bookmarked Questions
                                 PremiumOptionCard(
                                     icon = Icons.Default.Bookmark,
@@ -528,22 +527,7 @@ fun UserProfileScreen(
                                     iconCircleBg = iconCircleBg,
                                     burgundyIconColor = burgundyIconColor
                                 )
-
-                                // Option 3: Achievements & Badges
-                                PremiumOptionCard(
-                                    icon = Icons.Default.EmojiEvents,
-                                    title = "Achievements & Badges",
-                                    subtitle = "Earned badges, streaks & practice milestones",
-                                    onClick = { showAchievementsDialog = true },
-                                    creamCardBg = creamCardBg,
-                                    champagneGoldBorder = champagneGoldBorder,
-                                    burgundyTextPrimary = burgundyTextPrimary,
-                                    burgundyTextSecondary = burgundyTextSecondary,
-                                    iconCircleBg = iconCircleBg,
-                                    burgundyIconColor = burgundyIconColor
-                                )
-
-                                // Option 4: Offline Downloads
+                                // Option 3: Offline Downloads
                                 PremiumOptionCard(
                                     icon = Icons.Default.FolderZip,
                                     title = "Offline Downloads",
@@ -556,50 +540,7 @@ fun UserProfileScreen(
                                     iconCircleBg = iconCircleBg,
                                     burgundyIconColor = burgundyIconColor
                                 )
-
-                                // Option 5: Practice & Appearance
-                                PremiumOptionCard(
-                                    icon = Icons.Default.Palette,
-                                    title = "Practice & Appearance",
-                                    subtitle = "Burst effects, themes & practice settings",
-                                    onClick = { showAppearancePanel = true },
-                                    creamCardBg = creamCardBg,
-                                    champagneGoldBorder = champagneGoldBorder,
-                                    burgundyTextPrimary = burgundyTextPrimary,
-                                    burgundyTextSecondary = burgundyTextSecondary,
-                                    iconCircleBg = iconCircleBg,
-                                    burgundyIconColor = burgundyIconColor
-                                )
-
-                                // Option 6: Notifications
-                                PremiumOptionCard(
-                                    icon = Icons.Default.Notifications,
-                                    title = "Notifications",
-                                    subtitle = "Daily practice reminders & alert preferences",
-                                    onClick = { showDailyPracticeReminderDialog = true },
-                                    creamCardBg = creamCardBg,
-                                    champagneGoldBorder = champagneGoldBorder,
-                                    burgundyTextPrimary = burgundyTextPrimary,
-                                    burgundyTextSecondary = burgundyTextSecondary,
-                                    iconCircleBg = iconCircleBg,
-                                    burgundyIconColor = burgundyIconColor
-                                )
-
-                                // Option 7: Account & Security
-                                PremiumOptionCard(
-                                    icon = Icons.Default.Security,
-                                    title = "Account & Security",
-                                    subtitle = "Account details, privacy settings & security",
-                                    onClick = { showAccountSecurityDialog = true },
-                                    creamCardBg = creamCardBg,
-                                    champagneGoldBorder = champagneGoldBorder,
-                                    burgundyTextPrimary = burgundyTextPrimary,
-                                    burgundyTextSecondary = burgundyTextSecondary,
-                                    iconCircleBg = iconCircleBg,
-                                    burgundyIconColor = burgundyIconColor
-                                )
-
-                                // Option 8: Help & Support
+                                // Option 4: Help & Support
                                 PremiumOptionCard(
                                     icon = Icons.Default.SupportAgent,
                                     title = "Help & Support",

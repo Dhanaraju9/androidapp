@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.repository.UserProgressRepository
 import com.example.viewmodel.PracticeStateViewModel
 import com.example.ui.components.ReportIssueDialog
+import com.example.ui.theme.LuxuryFontStudioTheme
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -103,7 +104,8 @@ fun HomeScreen(
     onNavigateToAiMentor: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToAppSelection: () -> Unit = {},
-    onNavigateToPreviousYearPapers: () -> Unit = {}
+    onNavigateToPreviousYearPapers: () -> Unit = {},
+    onNavigateToLuxuryFontStudio: () -> Unit = {}
 ) {
     val config = LocalAppConfig.current
     val context = LocalContext.current
@@ -330,14 +332,14 @@ fun HomeScreen(
                             config = topBarConfig,
                             onMenuClick = { scope.launch { drawerState.open() } },
                             onAppIconClick = { handleAppscIconTap() },
-                            onTextSettingsClick = { onNavigateToFontSettings() },
+                            onLuxuryFontStudioClick = { onNavigateToLuxuryFontStudio() },
                             onPremiumClick = { onNavigateToSubscription() },
                             onNotificationsClick = onNavigateToNotifications,
                             unreadNotifications = SampleData.getUnreadNotificationCount()
                         )
                     }
                 },
-                containerColor = Color.Transparent
+                containerColor = Color(0xFFFFF0D9)
             ) { innerPadding ->
                 val homeScrollState = rememberScrollState()
 
@@ -755,7 +757,7 @@ fun HomeScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .height(172.dp)
+                                                    .height(254.dp)
                                                     .clickable { openSubjectFullScreen() }
                                             ) {
                                                 // Full-Width Scenic Background Image relevant to each subject
@@ -886,22 +888,6 @@ fun HomeScreen(
                                                                 fontSize = 17.sp,
                                                                 lineHeight = 20.sp,
                                                                 maxLines = 2,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                            Spacer(modifier = Modifier.height(2.dp))
-                                                            Text(
-                                                                text = subject.heroQuote.replace("\n", " • "),
-                                                                color = Color(0xFFFFFBEB),
-                                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                                    fontWeight = FontWeight.SemiBold,
-                                                                    shadow = androidx.compose.ui.graphics.Shadow(
-                                                                        color = Color(0x99000000),
-                                                                        offset = Offset(0f, 1.5f),
-                                                                        blurRadius = 4f
-                                                                    )
-                                                                ),
-                                                                fontSize = 11.sp,
-                                                                maxLines = 1,
                                                                 overflow = TextOverflow.Ellipsis
                                                             )
                                                         }
@@ -1884,7 +1870,7 @@ fun HomeUnitPreviewCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(118.dp)
+                    .height(158.dp)
                     .clickable {
                         if (onToggleUnitExpand != null) {
                             onToggleUnitExpand()
@@ -2071,7 +2057,7 @@ fun HomeUnitPreviewCard(
                                 border = BorderStroke(1.dp, if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.35f) else topicGradient.borderColor.copy(alpha = 0.5f)),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(52.dp)
+                                    .height(72.dp)
                                     .testTag("topic_card_${topic.id}")
                                     .clip(RoundedCornerShape(10.dp))
                                     .clickable {
@@ -2410,12 +2396,10 @@ fun HomeLiveContentDashboard(
 
     val liveColor = Color(0xFF10B981)
     val liveDotInnerColor = Color(0xFF34D399)
-    // Manually edit containerBgStart & containerBgEnd below to change the Live Content Dashboard card background:
-    // Examples: Light Blue = Color(0xFFE0F2FE) to Color(0xFFBAE6FD) | Vanilla Gold = Color(0xFFFFF8E7) to Color(0xFFFDE68A)
-    //           Soft Lavender = Color(0xFFF3E5F5) to Color(0xFFEDE9FE) | Mint Green = Color(0xFFECFDF5) to Color(0xFFD1FAE5)
-    val containerBgStart = Color(0xFFFFF3EE) // Top gradient color: Warm Peach (#FFF3EE)
-    val containerBgEnd = Color(0xFFFCE4EC)   // Bottom gradient color: Soft Rose (#FCE4EC)
-    val containerBorder = Color(0xFFFED7AA)
+    // Live Content Dashboard: plain warm cream matching the uploaded reference.
+    val containerBgStart = Color(0xFFFFF0D9)
+    val containerBgEnd = Color(0xFFFFF0D9)
+    val containerBorder = Color(0xFFE5B943)
     val liveBankBtnColor = Color(0xFF16A34A)
 
     val beaconInfiniteTransition = rememberInfiniteTransition(label = "beaconPulse")
@@ -3921,51 +3905,15 @@ private fun checkNetworkOnline(context: android.content.Context): Boolean {
 fun ExamSyllabusAndPapersCard(
     modifier: Modifier = Modifier
 ) {
-    // Glowing border gradient mirroring reference: cyan -> blue -> purple -> pink -> orange -> yellow
-    val borderGradient = remember {
-        Brush.horizontalGradient(
-            colors = listOf(
-                Color(0xFF38BDF8), // Bright Cyan
-                Color(0xFF2563EB), // Royal Blue
-                Color(0xFF7C3AED), // Purple
-                Color(0xFFC026D3), // Magenta
-                Color(0xFFEC4899), // Pink
-                Color(0xFFF97316), // Orange
-                Color(0xFFFBBF24), // Gold Yellow
-                Color(0xFFF59E0B)  // Amber
-            )
-        )
-    }
-
-    // Rich gradient background: Royal Blue -> Violet -> Magenta -> Coral Pink -> Gold
-    val backgroundGradient = remember {
-        Brush.horizontalGradient(
-            colors = listOf(
-                Color(0xFF0052D4),
-                Color(0xFF1E3A8A),
-                Color(0xFF4338CA),
-                Color(0xFF6B21A8),
-                Color(0xFF9333EA),
-                Color(0xFFC026D3),
-                Color(0xFFDB2777),
-                Color(0xFFE11D48),
-                Color(0xFFEA580C),
-                Color(0xFFD97706)
-            )
-        )
-    }
-
-    // Gold gradient for "Exam"
-    val goldTextGradient = remember {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFFEF08A),
-                Color(0xFFFDE047),
-                Color(0xFFFBBF24),
-                Color(0xFFF59E0B)
-            )
-        )
-    }
+    // Plain premium Soft Gold design; no gradient or decorative overlay.
+    val softGold = Color(0xFFEFF2FF)       // Soft Blue background
+    val champagneGoldBorder = Color(0xFFD4AF37)
+    val darkBrown = Color(0xFF633F2D)
+    val bluePinkBackground = Color(0xFFF5E9FF) // Light Pink-Lavender
+    val bluePinkBorder = Color(0xFF8B5CF6)  // Premium Purple border
+    val bluePinkAccent = Color(0xFFEC4899)  // Luxury Pink accent
+    val bluePinkText = Color(0xFF1E1B4B)   // Deep Navy text
+    val bluePinkArrow = Color(0xFF3B82F6)  // Blue arrow button
 
     Box(
         modifier = modifier
@@ -3973,92 +3921,56 @@ fun ExamSyllabusAndPapersCard(
     ) {
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = Color.Transparent,
-            border = BorderStroke(1.2.dp, borderGradient),
+            color = softGold,
+            border = BorderStroke(1.5.dp, champagneGoldBorder),
             shadowElevation = 3.dp
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .background(backgroundGradient)
-                    .drawBehind {
-                        val highlightPath = Path().apply {
-                            moveTo(0f, 0f)
-                            lineTo(size.width, 0f)
-                            lineTo(size.width, size.height * 0.45f)
-                            cubicTo(
-                                size.width * 0.7f, size.height * 0.55f,
-                                size.width * 0.3f, size.height * 0.35f,
-                                0f, size.height * 0.50f
-                            )
-                            close()
-                        }
-                        drawPath(
-                            path = highlightPath,
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.28f),
-                                    Color.White.copy(alpha = 0.06f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                    }
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .background(softGold)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Text(
+                    text = "Exam ",
+                    style = TextStyle(
+                        color = Color(0xFF9A6700),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.2).sp
+                    )
+                )
+                Text(
+                    text = "Syllabus & Papers",
+                    style = TextStyle(
+                        color = darkBrown,
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.1).sp
+                    ),
+                    maxLines = 1
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFE5B943),
+                    border = BorderStroke(1.2.dp, Color(0xFFB8872B)),
+                    shadowElevation = 1.dp,
+                    modifier = Modifier.size(22.dp)
                 ) {
-                    Text(
-                        text = "Exam ",
-                        style = TextStyle(
-                            brush = goldTextGradient,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-0.2).sp,
-                            shadow = androidx.compose.ui.graphics.Shadow(
-                                color = Color.Black.copy(alpha = 0.55f),
-                                offset = Offset(1f, 1.5f),
-                                blurRadius = 2f
-                            )
-                        )
-                    )
-                    Text(
-                        text = "Syllabus & Papers",
-                        style = TextStyle(
-                            color = Color.White,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = (-0.1).sp,
-                            shadow = androidx.compose.ui.graphics.Shadow(
-                                color = Color.Black.copy(alpha = 0.45f),
-                                offset = Offset(1f, 1f),
-                                blurRadius = 2f
-                            )
-                        ),
-                        maxLines = 1
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.15f),
-                        border = BorderStroke(1.2.dp, Color.White),
-                        shadowElevation = 1.dp,
-                        modifier = Modifier.size(22.dp)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Open Exam Syllabus and Papers",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
             }

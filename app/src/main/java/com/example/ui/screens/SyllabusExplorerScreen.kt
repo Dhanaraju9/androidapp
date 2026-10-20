@@ -264,7 +264,7 @@ fun SyllabusExplorerScreen(
                                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(118.dp)
+                                    .height(178.dp)
                                     .testTag("unit_card_${unit.id}")
                                     .cascadeDropItem(
                                         visible = true,
@@ -388,13 +388,27 @@ fun SyllabusExplorerScreen(
                         }
                     }
 
+                    // ==========================================
+                    // 4. TOPICS LIST (NO INLINE EXPANSION)
+                    // ==========================================
+                    // ... this is handled in TopicSetsScreen ...
+                    // (Actually the user meant Topic cards in UnitTopicsScreen)
+                    // Continuing in SyllabusExplorerScreen.kt ... (wait, topics are in UnitTopicsScreen, 
+                    // and I have SyllabusExplorerScreen which renders units)
+                    // The topic cards for the user are likely in SyllabusExplorerScreen if they meant the Topic sets,
+                    // but they specifically said "Topic cards". Let me check where UnitTopicsScreen uses Topic cards.
+
+
+
                     item(key = "bottom_spacer") {
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
             }
         }
-    }
+
+
+
 
     upgradePromptFeature?.let { feature ->
         PremiumUpgradePromptDialog(
@@ -408,6 +422,7 @@ fun SyllabusExplorerScreen(
             }
         )
     }
+}
 }
 
 /**

@@ -21,8 +21,10 @@ import com.example.model.TopicModel
 import com.example.model.UnitModel
 import com.example.model.PracticeSectionType
 import com.example.ui.screens.*
+import com.example.ui.screens.LuxuryFontStudioScreen
 import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.SyllabusProTheme
+import com.example.ui.theme.LuxuryFontStudioTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 
@@ -181,6 +183,15 @@ sealed class AppScreen {
         override val routeKey: String = "current_affairs"
     }
 
+    data object DownloadedMaterials : AppScreen() {
+        override val routeKey: String = "downloaded_materials"
+    }
+
+    data object LuxuryFontStudio : AppScreen() {
+        override val routeKey: String = "luxury_font_studio"
+    }
+
+
     data object MockTestGenerator : AppScreen() {
         override val routeKey: String = "mock_test_generator"
     }
@@ -234,6 +245,7 @@ class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataList
         com.example.repository.AppConfigRepository.getInstance().initializeWithContext(this)
         com.example.util.AnimationConfigManager.initialize(this)
         com.example.util.BillingPaymentManager.loadMerchantConfig(this)
+        com.example.ui.theme.LuxuryFontStudioManager.init(this)
         try {
             com.razorpay.Checkout.preload(applicationContext)
         } catch (_: Throwable) {}
@@ -346,89 +358,92 @@ fun AppNavigationHost() {
                 }
 
                 is AppScreen.Home -> {
-                    HomeScreen(
-                        onNavigateToSubject = { subject ->
-                            navigateTo(AppScreen.SyllabusExplorer(subject.id, subject))
-                        },
-                        onNavigateToCurrentAffairs = {
-                            navigateTo(AppScreen.CurrentAffairs)
-                        },
-                        onNavigateToPerformance = {
-                            navigateTo(AppScreen.Performance)
-                        },
-                        onNavigateToSubscription = {
-                            navigateTo(AppScreen.Subscription)
-                        },
-                        onNavigateToScientificCalculator = {},
-                        onNavigateToPrivacy = {
-                            navigateTo(AppScreen.ContactUs)
-                        },
-                        onNavigateToPrivacySection = { section ->
-                            if (section == "contact_us") {
+                    LuxuryFontStudioTheme {
+                        HomeScreen(
+                            onNavigateToSubject = { subject ->
+                                navigateTo(AppScreen.SyllabusExplorer(subject.id, subject))
+                            },
+                            onNavigateToCurrentAffairs = {
+                                navigateTo(AppScreen.CurrentAffairs)
+                            },
+                            onNavigateToPerformance = {
+                                navigateTo(AppScreen.Performance)
+                            },
+                            onNavigateToSubscription = {
+                                navigateTo(AppScreen.Subscription)
+                            },
+                            onNavigateToScientificCalculator = {},
+                            onNavigateToPrivacy = {
                                 navigateTo(AppScreen.ContactUs)
-                            } else {
-                                navigateTo(AppScreen.LegalSupport(section))
+                            },
+                            onNavigateToPrivacySection = { section ->
+                                if (section == "contact_us") {
+                                    navigateTo(AppScreen.ContactUs)
+                                } else {
+                                    navigateTo(AppScreen.LegalSupport(section))
+                                }
+                            },
+                            onNavigateToMockTestGenerator = {
+                                navigateTo(AppScreen.MockTestGenerator)
+                            },
+                            onNavigateToAvailableMockTests = {
+                                navigateTo(AppScreen.AvailableMockTests)
+                            },
+                            onNavigateToMockTests = {
+                                navigateTo(AppScreen.AvailableMockTests)
+                            },
+                            onNavigateToDailyQuiz = {
+                                navigateTo(AppScreen.AvailableMockTests)
+                            },
+                            onNavigateToProfile = {
+                                navigateTo(AppScreen.Profile)
+                            },
+                            onNavigateToLogin = {
+                                navigateTo(AppScreen.Login)
+                            },
+                            onNavigateToSavedQuestions = {
+                                navigateTo(AppScreen.SavedQuestions)
+                            },
+                            onNavigateToAdminDashboard = {
+                                navigateTo(AppScreen.AdminDashboard)
+                            },
+                            onNavigateToTopic = { subject, unit, topic ->
+                                navigateTo(
+                                    AppScreen.TopicSets(
+                                        subjectId = subject.id,
+                                        unitId = unit.id,
+                                        topicId = topic.id,
+                                        fallbackSubject = subject,
+                                        fallbackUnit = unit,
+                                        fallbackTopic = topic
+                                    )
+                                )
+                            },
+                            onNavigateToUnit = { subject, unit ->
+                                navigateTo(
+                                    AppScreen.UnitTopics(
+                                        subjectId = subject.id,
+                                        unitId = unit.id,
+                                        fallbackSubject = subject,
+                                        fallbackUnit = unit
+                                    )
+                                )
+                            },
+                            onNavigateToLeaderboard = { navigateTo(AppScreen.Leaderboard) },
+                            onNavigateToOfflineManager = {
+                                navigateTo(AppScreen.DownloadedMaterials)
+                            },
+                            onNavigateToNotifications = {
+                                navigateTo(AppScreen.Notifications)
+                            },
+                            onNavigateToPreviousYearPapers = {
+                                navigateTo(AppScreen.PreviousYearPapers)
+                            },
+                            onNavigateToLuxuryFontStudio = {
+                                navigateTo(AppScreen.LuxuryFontStudio)
                             }
-                        },
-                        onNavigateToMockTestGenerator = {
-                            navigateTo(AppScreen.MockTestGenerator)
-                        },
-                        onNavigateToAvailableMockTests = {
-                            navigateTo(AppScreen.AvailableMockTests)
-                        },
-                        onNavigateToMockTests = {
-                            navigateTo(AppScreen.AvailableMockTests)
-                        },
-                        onNavigateToDailyQuiz = {
-                            navigateTo(AppScreen.AvailableMockTests)
-                        },
-                        onNavigateToProfile = {
-                            navigateTo(AppScreen.Profile)
-                        },
-                        onNavigateToLogin = {
-                            navigateTo(AppScreen.Login)
-                        },
-                        onNavigateToSavedQuestions = {
-                            navigateTo(AppScreen.SavedQuestions)
-                        },
-                        onNavigateToAdminDashboard = {
-                            navigateTo(AppScreen.AdminDashboard)
-                        },
-                        onNavigateToTopic = { subject, unit, topic ->
-                            navigateTo(
-                                AppScreen.TopicSets(
-                                    subjectId = subject.id,
-                                    unitId = unit.id,
-                                    topicId = topic.id,
-                                    fallbackSubject = subject,
-                                    fallbackUnit = unit,
-                                    fallbackTopic = topic
-                                )
-                            )
-                        },
-                        onNavigateToUnit = { subject, unit ->
-                            navigateTo(
-                                AppScreen.UnitTopics(
-                                    subjectId = subject.id,
-                                    unitId = unit.id,
-                                    fallbackSubject = subject,
-                                    fallbackUnit = unit
-                                )
-                            )
-                        },
-                        onNavigateToLeaderboard = { navigateTo(AppScreen.Leaderboard) },
-                        onNavigateToOfflineManager = {
-                            val targetSubject = SampleData.subjectsState.firstOrNull()
-                                ?: Subject(id = "subj-history", name = "History")
-                            navigateTo(AppScreen.OfflineSubjectDetail(targetSubject))
-                        },
-                        onNavigateToNotifications = {
-                            navigateTo(AppScreen.Notifications)
-                        },
-                        onNavigateToPreviousYearPapers = {
-                            navigateTo(AppScreen.PreviousYearPapers)
-                        }
-                    )
+                        )
+                    }
                 }
 
                 is AppScreen.SyllabusExplorer -> {
@@ -557,6 +572,14 @@ fun AppNavigationHost() {
                             navigateTo(AppScreen.Subscription)
                         }
                     )
+                }
+
+                is AppScreen.DownloadedMaterials -> {
+                    DownloadedMaterialsScreen(onBack = { goBack() })
+                }
+
+                is AppScreen.LuxuryFontStudio -> {
+                    LuxuryFontStudioScreen(onBack = { goBack() })
                 }
 
                 is AppScreen.PracticeArena -> {

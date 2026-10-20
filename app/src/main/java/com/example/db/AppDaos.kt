@@ -333,3 +333,14 @@ interface CulturalCarouselDao {
     suspend fun clearAll()
 }
 
+@Dao
+interface DownloadedMaterialDao {
+    @Query("SELECT * FROM downloaded_materials WHERE appId = :appId")
+    fun getAllDownloadedMaterials(appId: String): Flow<List<DownloadedMaterialEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMaterial(material: DownloadedMaterialEntity)
+
+    @Query("DELETE FROM downloaded_materials WHERE id = :id")
+    suspend fun deleteMaterialById(id: String)
+}

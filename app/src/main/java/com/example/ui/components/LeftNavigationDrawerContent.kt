@@ -198,9 +198,9 @@ fun LeftNavigationDrawerContent(
                             badgeTextColorHex = 0xFF0F172A
                         )
                         "offline_cloud_sync" -> item.copy(
-                            title = "Sync Status",
-                            subtitle = if (isOfflineMode) "Offline Mode" else "Cloud Backup Synced",
-                            badgeText = if (isOfflineMode) "OFFLINE" else "SYNCED",
+                            title = "Downloaded Materials",
+                            subtitle = if (isOfflineMode) "Offline Mode" else "Materials Ready",
+                            badgeText = if (isOfflineMode) "OFFLINE" else "READY",
                             badgeBgColorHex = if (isOfflineMode) 0xFF0D9488 else 0xFF16A34A,
                             badgeTextColorHex = 0xFFFFFFFF
                         )

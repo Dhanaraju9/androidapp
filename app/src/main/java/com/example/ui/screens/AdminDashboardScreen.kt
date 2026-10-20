@@ -377,10 +377,10 @@ fun AdminDashboardScreen(
     // Grouped logically
     val tabs = listOf(
         "Dashboard", "App Management", "Syllabus", "MCQ Upload", "Question Reports",
-        "Highlighting", "Current Affairs", "Mock Test Gen", "Posters", "Images",
+        "Highlighting", "Current Affairs", "Posters", "Images",
         "Wallpapers", "Top Bar", "Borders", "Menu", "Carousel", "Users",
         "Subscriptions", "Coupons", "Revenue", "Notifications", "Live",
-        "Leaderboard", "Support", "Tenant Generator", "PYP Manager", "Animations"
+        "Support", "Tenant Generator", "PYP Manager"
     )
 
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -666,51 +666,43 @@ fun AdminDashboardScreen(
                         0 -> AdminDashboardTab(
                             onSwitchToUser = onSwitchToUserPage,
                             onLogoutClick = { showLogoutDialog = true },
-                            onGoToPosters = { activeTab = 8 },
+                            onGoToPosters = { activeTab = 7 },
                             onGoToSyllabus = { activeTab = 2 },
-                            onGoToWallpapers = { activeTab = 10 },
-                            onGoToAnimations = { activeTab = 25 }
+                            onGoToWallpapers = { activeTab = 9 }
                         )
                         1 -> AdminAppsManagementTab(
-                            onNavigateToTenantGenerator = { activeTab = 23 }
+                            onNavigateToTenantGenerator = { activeTab = 21 }
                         )
                         2 -> AdminSyllabusTab()
                         3 -> AdminMcqUploadTab()
                         4 -> AdminQuestionReportsTab()
                         5 -> AdminQuestionHighlightTab()
                         6 -> AdminCurrentAffairsTab()
-                        7 -> AdminMockTestGeneratorTab()
-                        8 -> AdminPosterManagement(
+                        7 -> AdminPosterManagement(
                             onNavigateToSubscription = onNavigateToSubscription,
                             onSwitchToUserHome = onSwitchToUserPage
                         )
-                        9 -> AdminCardImageManagementTab()
-                        10 -> AdminWallpaperManagementTab()
-                        11 -> AdminTopBarManagerTab()
-                        12 -> AdminCardBordersTab()
-                        13 -> AdminLeftMenuManagerTab()
-                        14 -> AdminCulturalCarouselTab()
-                        15 -> AdminUsersTab()
-                        16 -> AdminSubscriptionTab()
-                        17 -> AdminCouponTab()
-                        18 -> AdminRevenueTab()
-                        19 -> AdminNotificationsTab()
-                        20 -> AdminLiveDashboardTab()
-                        21 -> AdminLeaderboardTab()
-                        22 -> AdminLegalSupportTab()
-                        23 -> AdminTenantGeneratorTab()
-                        24 -> AdminPreviousYearPapersTab()
-                        25 -> AdminAnimationEngineTab(
-                            selectedAppId = SampleData.currentActiveAppId.value,
-                            adminEmail = "sobhadhanaraju1@gmail.com"
-                        )
+                        8 -> AdminCardImageManagementTab()
+                        9 -> AdminWallpaperManagementTab()
+                        10 -> AdminTopBarManagerTab()
+                        11 -> AdminCardBordersTab()
+                        12 -> AdminLeftMenuManagerTab()
+                        13 -> AdminCulturalCarouselTab()
+                        14 -> AdminUsersTab()
+                        15 -> AdminSubscriptionTab()
+                        16 -> AdminCouponTab()
+                        17 -> AdminRevenueTab()
+                        18 -> AdminNotificationsTab()
+                        19 -> AdminLiveDashboardTab()
+                        20 -> AdminLegalSupportTab()
+                        21 -> AdminTenantGeneratorTab()
+                        22 -> AdminPreviousYearPapersTab()
                         else -> AdminDashboardTab(
                             onSwitchToUser = onSwitchToUserPage,
                             onLogoutClick = { showLogoutDialog = true },
-                            onGoToPosters = { activeTab = 8 },
+                            onGoToPosters = { activeTab = 7 },
                             onGoToSyllabus = { activeTab = 2 },
-                            onGoToWallpapers = { activeTab = 10 },
-                            onGoToAnimations = { activeTab = 25 }
+                            onGoToWallpapers = { activeTab = 9 }
                         )
                     }
                 }

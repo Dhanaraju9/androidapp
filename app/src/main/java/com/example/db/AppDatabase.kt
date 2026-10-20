@@ -29,7 +29,8 @@ import androidx.room.TypeConverters
         UserAchievementEntity::class,
         LeaderboardHistoryEntity::class,
         LeaderboardConfigEntity::class,
-        CulturalCarouselEntity::class
+        CulturalCarouselEntity::class,
+        DownloadedMaterialEntity::class
     ],
     version = 16,
     exportSchema = false
@@ -57,6 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun leaderboardHistoryDao(): LeaderboardHistoryDao
     abstract fun leaderboardConfigDao(): LeaderboardConfigDao
     abstract fun culturalCarouselDao(): CulturalCarouselDao
+    abstract fun downloadedMaterialDao(): DownloadedMaterialDao
 
     companion object {
         private const val DATABASE_NAME = "appsc_prep_room.db"

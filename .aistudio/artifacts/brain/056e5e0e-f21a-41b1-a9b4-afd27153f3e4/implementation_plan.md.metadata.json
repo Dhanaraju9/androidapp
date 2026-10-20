@@ -1,6 +1,6 @@
 {
-  "summary": "Implementation plan for integrating the official Razorpay Android Standard Checkout SDK with support for UPI Intent/ID, Dynamic UPI QR Code, Credit/Debit Cards, NetBanking, Wallets, Android 11+ UPI package queries, Activity payment callback handling, and persistent merchant configuration.",
-  "updatedAt": "2026-10-20T11:15:57.899609083Z",
-  "requestFeedback": true,
-  "userFacing": true
+  "summary":  "Plan to upgrade Subject Cards on the Home Screen:\n1. Increase card dimensions by 20%.\n2. Align image presentation style with Unit Cards.\n3. Restrict content to Prelims/Mains/General and remove descriptive subtitles.\n4. Keep all existing functionality, navigation, and data counts intact.\n5. Skip Current Affairs cards.",
+  "updatedAt":  "2026-10-20T18:57:35.712324640Z",
+  "requestFeedback":  true,
+  "userFacing":  true
 }

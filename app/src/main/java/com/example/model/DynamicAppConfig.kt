@@ -60,9 +60,9 @@ private fun hexToColorLong(hex: String): Long {
 
 data class PracticeAppearanceSettings(
     val presetName: String = "Classic",
-    val screenBackgroundColor: String = "#EDE9FE",
+    val screenBackgroundColor: String = "#FFF7ED",
     val questionCard: PracticeSectionAppearance = PracticeSectionAppearance(
-        backgroundColor = "#FFFBEB",
+        backgroundColor = "#FDE68A",
         textColor = "#0F172A",
         fontFamily = "Poppins",
         fontSize = 16,
@@ -71,16 +71,16 @@ data class PracticeAppearanceSettings(
         cornerRadius = 16
     ),
     val options: PracticeSectionAppearance = PracticeSectionAppearance(
-        backgroundColor = "#E0F2FE",
+        backgroundColor = "#FFFFFF",
         textColor = "#0F172A",
         fontFamily = "Poppins",
         fontSize = 15,
-        borderColor = "#BAE6FD",
+        borderColor = "#E2E8F0",
         borderWidth = 1,
         cornerRadius = 14
     ),
     val explanation: PracticeSectionAppearance = PracticeSectionAppearance(
-        backgroundColor = "#DCFCE7",
+        backgroundColor = "#86EFAC",
         textColor = "#15803D",
         fontFamily = "Poppins",
         fontSize = 14,

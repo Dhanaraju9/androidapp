@@ -283,6 +283,15 @@ fun SavedQuestionsScreen(
         )
     }
 
+    val appConfig = LocalAppConfig.current
+    val pa = appConfig.advancedFontSettings.practiceAppearance
+
+    // Using the requested default colors or custom saved settings
+    val screenBg = if (isDark) Color(0xFF1E293B) else Color(pa.screenBgColor) // #FFF7ED
+    val questionCardBg = if (isDark) Color(0xFF334155) else Color(pa.questionBgColor) // #FDE68A
+    val optionsCardBg = if (isDark) Color(0xFF1E293B) else Color(pa.optionBgColor) // #FFFFFF
+    val explanationCardBg = if (isDark) Color(0xFF064E3B) else Color(pa.explanationBgColor) // #86EFAC
+
     AppLuminousBackground(screenName = "Saved Questions") {
         Scaffold(
             topBar = {
@@ -406,12 +415,13 @@ fun SavedQuestionsScreen(
                     }
                 }
             },
-            containerColor = Color.Transparent
+            containerColor = screenBg
         ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .background(screenBg) // Ensure the whole screen background is updated
                     .padding(horizontal = 16.dp)
             ) {
                 // PREMIUM HEADER BANNER
@@ -940,12 +950,14 @@ private fun SavedQuestionCard(
     onShareClick: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
+    val appConfig = LocalAppConfig.current
+    val pa = appConfig.advancedFontSettings.practiceAppearance
     val palette = getSubjectPalette(question.subjectId, isDark)
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E293B) else Color.White),
-        border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E293B) else Color(pa.questionBgColor)), // Use questionCardBg color
+        border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(pa.questionBorderColor)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {

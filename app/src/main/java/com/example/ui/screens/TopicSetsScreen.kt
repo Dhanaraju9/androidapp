@@ -1,10 +1,5 @@
 package com.example.ui.screens
 
-
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -30,7 +25,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -69,7 +63,6 @@ data class TopicSubtopicItem(
     val questions: List<Question>,
     val practiceSet: PracticeSetModel
 )
-
 
 // =========================================================================
 // 1. PALETTES FOR EXACT RECREATION OF REFERENCE DESIGN
@@ -175,7 +168,6 @@ private fun resolveTopicQuestions(
 // =========================================================================
 // 3. FULL-SCREEN SETS SCREEN FOR A TOPIC (Level 3 -> Level 4)
 // =========================================================================
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -328,7 +320,7 @@ fun TopicSetsScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(96.dp)
+                                .height(116.dp)
                                 .background(Brush.linearGradient(colors = topicHeaderGradient.colors))
                         ) {
                             TopicFhdCardImage(
@@ -471,9 +463,11 @@ fun TopicSetsScreen(
                             }
                         }
                     } else {
+                        // DESIGN 4 palette: premium orange, cyan, rose and emerald cards.
                         val solidColors = listOf(
-                            Color(0xFF059669), Color(0xFF7C3AED), Color(0xFFD97706),
-                            Color(0xFF2563EB), Color(0xFFE11D48), Color(0xFF0D9488)
+                            Color(0xFFFFF0C2), Color(0xFFD9F5FF),
+                            Color(0xFFFFE0E8), Color(0xFFDDFBE8),
+                            Color(0xFFFFF0C2), Color(0xFFD9F5FF)
                         )
                         val chunkedSets = setsList.chunked(2)
                         itemsIndexed(chunkedSets, key = { rowIndex, _ -> "set_row_$rowIndex" }) { rowIndex, rowSets ->
@@ -516,29 +510,6 @@ fun TopicSetsScreen(
                             }
                         }
                     }
-
-                    // BOTTOM STATUS LEGEND
-                    item(key = "sets_status_legend") {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
-                                LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
-                                LegendItem(color = Color(0xFF10B981), label = "Completed")
-                            }
-                        }
-                    }
                 } else {
                     // SECTION HEADER FOR SUBTOPICS
                     item(key = "subtopics_section_header") {
@@ -559,7 +530,7 @@ fun TopicSetsScreen(
                                     color = Color(0xFF1E293B)
                                 )
                                 Text(
-                                    text = "Vertically ordered serial list, one card per row",
+                                    text = "Two-column grid of topic subtopics",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF64748B)
                                 )
@@ -567,7 +538,7 @@ fun TopicSetsScreen(
                         }
                     }
 
-                    // VERTICALLY ORDERED LIST OF SUBTOPICS (ONE FULL-WIDTH CARD PER ROW)
+                    // 2-COLUMN GRID DISPLAY FOR SUBTOPICS
                     if (topicSubtopics.isEmpty()) {
                         item(key = "empty_subtopics_state") {
                             Surface(
@@ -604,16 +575,20 @@ fun TopicSetsScreen(
                             }
                         }
                     } else {
+                        // DESIGN 4 pastel palette keeps dark text clearly readable.
                         val solidColors = listOf(
-                            Color(0xFF2563EB), Color(0xFF059669), Color(0xFF7C3AED),
-                            Color(0xFFEA580C), Color(0xFFE11D48), Color(0xFF0891B2)
+                            Color(0xFFFFF0C2), Color(0xFFD9F5FF),
+                            Color(0xFFFFE0E8), Color(0xFFDDFBE8),
+                            Color(0xFFE6F4FF), Color(0xFFE7F9F0)
                         )
                         itemsIndexed(topicSubtopics, key = { _, subItem -> subItem.id }) { globalIndex, subItem ->
                             val bgCol = solidColors[globalIndex % solidColors.size]
                             val hasDbCompletedSub = testResults.any {
                                 it.testName.contains(subItem.title, ignoreCase = true)
                             }
-                            val status = PracticeSessionManager.getSessionStatus(context, subItem.id, hasDbCompletedSub)
+                            val status = PracticeSessionManager.getSessionStatus(
+                                context, subItem.id, hasDbCompletedSub
+                            )
 
                             Box(
                                 modifier = Modifier
@@ -636,29 +611,6 @@ fun TopicSetsScreen(
                                         onSelectSubtopic(subItem.practiceSet, subItem.title)
                                     }
                                 )
-                            }
-                        }
-                    }
-
-                    // BOTTOM STATUS LEGEND FOR SUBTOPICS
-                    item(key = "subtopics_status_legend") {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
-                                LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
-                                LegendItem(color = Color(0xFF10B981), label = "Completed")
                             }
                         }
                     }
@@ -735,6 +687,7 @@ fun TopicSetsScreen(
         onNavigateToSubscription = onNavigateToSubscription
     )
 }
+
 // =========================================================================
 // 4. FULL-SCREEN SUBTOPICS SCREEN FOR A SELECTED SET (Level 4 -> Level 5)
 // =========================================================================
@@ -797,8 +750,6 @@ fun SetSubtopicsScreen(
         )
     }
 
-    // Resolve subtopics for the selected Set:
-    // Combine subtopics present in activeSet.questions with explicit topic subtopics
     data class ResolvedSubtopicItem(
         val id: String,
         val code: String,
@@ -925,9 +876,7 @@ fun SetSubtopicsScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                // =========================================================
                 // 1. SET HERO SUMMARY CARD
-                // =========================================================
                 item(key = "set_header_${activeSet.id}") {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -984,27 +933,19 @@ fun SetSubtopicsScreen(
                                     Text(
                                         text = activeSet.subtitle,
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
-                                        color = Color(0xFFFDE68A).copy(alpha = 0.92f),
+                                        color = Color(0xFFFDE68A).copy(alpha = 0.9f),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
-
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     StatBadge(
-                                        label = "Set",
-                                        value = "%02d".format(activeSet.setNumber),
-                                        color = Color(0xFFD97706),
-                                        modifier = Modifier.weight(1f),
-                                        isCompact = true
-                                    )
-                                    StatBadge(
                                         label = "Subtopics",
                                         value = "${resolvedSubtopics.size}",
-                                        color = Color(0xFF2563EB),
+                                        color = Color(0xFFD97706),
                                         modifier = Modifier.weight(1f),
                                         isCompact = true
                                     )
@@ -1021,10 +962,8 @@ fun SetSubtopicsScreen(
                     }
                 }
 
-                // =========================================================
                 // 2. SECTION HEADER FOR SUBTOPICS
-                // =========================================================
-                item(key = "subtopics_section_header") {
+                item(key = "set_subtopics_section_header") {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1034,7 +973,7 @@ fun SetSubtopicsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "SET SUBTOPICS (${resolvedSubtopics.size})",
+                                text = "SUBTOPICS (${resolvedSubtopics.size})",
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Black,
                                     letterSpacing = 0.5.sp
@@ -1042,7 +981,7 @@ fun SetSubtopicsScreen(
                                 color = Color(0xFF1E293B)
                             )
                             Text(
-                                text = "Tap any subtopic card to open its dedicated full-screen practice page",
+                                text = "Select a subtopic to practice targeted questions",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFF64748B)
                             )
@@ -1050,22 +989,14 @@ fun SetSubtopicsScreen(
                     }
                 }
 
-                // =========================================================
-                // 3. FULL-SCREEN SUBTOPICS LIST
-                // =========================================================
+                // 3. 2-COLUMN GRID OF SUBTOPICS
                 if (resolvedSubtopics.isEmpty()) {
-                    item(key = "empty_subtopics_state") {
+                    item(key = "empty_set_subtopics_state") {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = Color.White,
                             border = BorderStroke(1.5.dp, Color(0xFFE2E8F0)),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .premiumTargetAnimation(
-                                    target = com.example.model.AnimatableTarget.EMPTY_ERROR_STATES,
-                                    index = 0,
-                                    screenKey = "Set Subtopics Screen"
-                                )
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
                                 modifier = Modifier.padding(28.dp),
@@ -1096,29 +1027,22 @@ fun SetSubtopicsScreen(
                     }
                 } else {
                     val solidColors = listOf(
-                        Color(0xFF2563EB), // Blue
-                        Color(0xFF059669), // Emerald
-                        Color(0xFF7C3AED), // Purple
-                        Color(0xFFEA580C), // Orange
-                        Color(0xFFE11D48), // Rose
-                        Color(0xFF0891B2)  // Cyan
+                        Color(0xFF2563EB), Color(0xFF059669), Color(0xFF7C3AED),
+                        Color(0xFFEA580C), Color(0xFFE11D48), Color(0xFF0891B2)
                     )
-                    itemsIndexed(
-                        items = resolvedSubtopics,
-                        key = { _, item -> item.id }
-                    ) { globalIndex, subItem ->
+                    itemsIndexed(resolvedSubtopics, key = { _, subItem -> subItem.id }) { globalIndex, subItem ->
                         val bgCol = solidColors[globalIndex % solidColors.size]
                         val hasDbCompletedSub = testResults.any {
                             it.testName.contains(subItem.title, ignoreCase = true)
                         }
-                        val status = remember(subItem.id, testResults) {
-                            PracticeSessionManager.getSessionStatus(context, subItem.id, hasDbCompletedSub)
-                        }
+                        val status = PracticeSessionManager.getSessionStatus(
+                            context, subItem.id, hasDbCompletedSub
+                        )
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("subtopic_card_${subItem.id}")
+                                .testTag("set_subtopic_card_${subItem.id}")
                                 .cascadeDropItem(
                                     visible = true,
                                     index = globalIndex,
@@ -1136,31 +1060,6 @@ fun SetSubtopicsScreen(
                                     onSelectSubtopic(subItem.practiceSet, subItem.title)
                                 }
                             )
-                        }
-                    }
-                }
-
-                // =========================================================
-                // 4. BOTTOM STATUS LEGEND
-                // =========================================================
-                item(key = "subtopics_status_legend") {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            LegendItem(color = Color(0xFF94A3B8), label = "Not Started")
-                            LegendItem(color = Color(0xFFF59E0B), label = "In Progress")
-                            LegendItem(color = Color(0xFF10B981), label = "Completed")
                         }
                     }
                 }
@@ -1206,10 +1105,6 @@ fun SetSubtopicsScreen(
     }
 }
 
-// =========================================================================
-// 5. TOPIC SIDE-BY-SIDE TAB BUTTONS ("SETS" & "SUBTOPICS")
-// =========================================================================
-
 @Composable
 fun TopicSideBySideTabsBar(
     selectedTab: String,
@@ -1217,11 +1112,13 @@ fun TopicSideBySideTabsBar(
     subtopicsCount: Int,
     onTabSelected: (String) -> Unit
 ) {
+    val isSetsActive = selectedTab == "SETS"
+    val isSubtopicsActive = selectedTab == "SUBTOPICS"
+
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = Color(0xFFFFFFFF),
+        color = Color(0xFFF1F5F9),
         border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1230,10 +1127,10 @@ fun TopicSideBySideTabsBar(
                 .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val isSetsActive = selectedTab == "SETS"
+            // Tab 1: SETS
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = if (isSetsActive) Color(0xFF2563EB) else Color.Transparent,
+                color = if (isSetsActive) Color(0xFF0052CC) else Color.Transparent,
                 shadowElevation = if (isSetsActive) 2.dp else 0.dp,
                 modifier = Modifier
                     .weight(1f)
@@ -1241,17 +1138,19 @@ fun TopicSideBySideTabsBar(
                     .clickable { onTabSelected("SETS") }
             ) {
                 Row(
-                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp, horizontal = 12.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Layers,
-                        contentDescription = "SETS",
-                        tint = if (isSetsActive) Color.White else Color(0xFF64748B),
-                        modifier = Modifier.size(19.dp)
+                        contentDescription = null,
+                        tint = if (isSetsActive) Color.White else Color(0xFF1E293B),
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(7.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "SETS",
                         color = if (isSetsActive) Color.White else Color(0xFF1E293B),
@@ -1262,25 +1161,25 @@ fun TopicSideBySideTabsBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Surface(
                         shape = CircleShape,
-                        color = if (isSetsActive) Color.White.copy(alpha = 0.25f) else Color(0xFFEFF6FF),
+                        color = if (isSetsActive) Color.White.copy(alpha = 0.25f) else Color(0xFFE2E8F0),
                         modifier = Modifier.size(22.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = "$setsCount",
-                                color = if (isSetsActive) Color.White else Color(0xFF2563EB),
+                                color = if (isSetsActive) Color.White else Color(0xFF1E293B),
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
+                                fontSize = 10.5.sp
                             )
                         }
                     }
                 }
             }
 
-            val isSubtopicsActive = selectedTab == "SUBTOPICS"
+            // Tab 2: SUBTOPICS
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = if (isSubtopicsActive) Color(0xFF2563EB) else Color.Transparent,
+                color = if (isSubtopicsActive) Color(0xFF059669) else Color.Transparent,
                 shadowElevation = if (isSubtopicsActive) 2.dp else 0.dp,
                 modifier = Modifier
                     .weight(1f)
@@ -1288,17 +1187,19 @@ fun TopicSideBySideTabsBar(
                     .clickable { onTabSelected("SUBTOPICS") }
             ) {
                 Row(
-                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp, horizontal = 12.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Category,
-                        contentDescription = "SUBTOPICS",
-                        tint = if (isSubtopicsActive) Color.White else Color(0xFF64748B),
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = null,
+                        tint = if (isSubtopicsActive) Color.White else Color(0xFF1E293B),
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(7.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "SUBTOPICS",
                         color = if (isSubtopicsActive) Color.White else Color(0xFF1E293B),
@@ -1309,15 +1210,15 @@ fun TopicSideBySideTabsBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Surface(
                         shape = CircleShape,
-                        color = if (isSubtopicsActive) Color.White.copy(alpha = 0.25f) else Color(0xFFEFF6FF),
+                        color = if (isSubtopicsActive) Color.White.copy(alpha = 0.25f) else Color(0xFFE2E8F0),
                         modifier = Modifier.size(22.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = "$subtopicsCount",
-                                color = if (isSubtopicsActive) Color.White else Color(0xFF2563EB),
+                                color = if (isSubtopicsActive) Color.White else Color(0xFF1E293B),
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
+                                fontSize = 10.5.sp
                             )
                         }
                     }
@@ -1326,281 +1227,6 @@ fun TopicSideBySideTabsBar(
         }
     }
 }
-
-// =========================================================================
-// 6. SET CARD ITEM & SUBTOPIC CARD ITEM COMPONENTS
-// =========================================================================
-
-@Composable
-fun SetCardItem(
-    serialNumber: String,
-    title: String,
-    subtitle: String,
-    status: String,
-    theme: SetCardTheme,
-    onClick: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.5.dp, theme.cardBorder),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(58.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .premiumPress(onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(theme.cardBgStart, theme.cardBgEnd),
-                        start = Offset(0f, 0f),
-                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                    )
-                )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = theme.accentColor,
-                    modifier = Modifier.size(34.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Layers,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = title,
-                            color = Color(0xFF0F172A),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 13.5.sp,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "• $subtitle",
-                            color = Color(0xFF475569),
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    StatusBadge(status = status, isCompact = true)
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = theme.accentColor,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Open $title",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SubtopicCardItem(
-    code: String,
-    title: String,
-    questionsCount: Int,
-    status: String,
-    theme: SubtopicCardTheme,
-    onClick: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.5.dp, theme.cardBorder),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(58.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .premiumPress(onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(theme.cardBgStart, theme.cardBgEnd),
-                        start = Offset(0f, 0f),
-                        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                    )
-                )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = theme.pillBg,
-                    border = BorderStroke(1.dp, theme.pillBorder),
-                    modifier = Modifier.size(width = 46.dp, height = 28.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text(
-                            text = code,
-                            color = theme.accentColor,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 11.5.sp
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = title,
-                        color = Color(0xFF0F172A),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "$questionsCount Questions",
-                            color = Color(0xFF475569),
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 10.5.sp
-                        )
-                        StatusBadge(status = status, isCompact = true)
-                    }
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = theme.accentColor,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Open $title",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun StatusBadge(status: String, isCompact: Boolean = false) {
-    val (bgColor, textColor, label, icon) = when (status) {
-        "Completed" -> Quadruple(
-            Color(0xFFDCFCE7),
-            Color(0xFF15803D),
-            "Completed",
-            Icons.Default.CheckCircle
-        )
-        "Attempting" -> Quadruple(
-            Color(0xFFFEF3C7),
-            Color(0xFFB45309),
-            "Attempting",
-            Icons.Default.PlayCircleFilled
-        )
-        else -> Quadruple(
-            Color(0xFFF1F5F9),
-            Color(0xFF475569),
-            "Not Attempted",
-            Icons.Default.RadioButtonUnchecked
-        )
-    }
-
-    Surface(
-        shape = RoundedCornerShape(if (isCompact) 8.dp else 12.dp),
-        color = bgColor,
-        modifier = Modifier.padding(top = if (isCompact) 0.dp else 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = if (isCompact) 5.dp else 8.dp,
-                vertical = if (isCompact) 1.5.dp else 4.dp
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = textColor,
-                modifier = Modifier.size(if (isCompact) 10.dp else 13.dp)
-            )
-            Text(
-                text = label,
-                color = textColor,
-                fontSize = if (isCompact) 9.5.sp else 11.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-data class Quadruple<out A, out B, out C, out D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D
-)
 
 @Composable
 fun CompactGridSetCard(
@@ -1611,21 +1237,63 @@ fun CompactGridSetCard(
     backgroundColor: Color,
     onClick: () -> Unit
 ) {
-    val isCompleted = status.equals("Completed", ignoreCase = true)
+    val completed = status.equals("Completed", true)
+    val inProgress = status.equals("Attempting", true) ||
+            status.equals("In Progress", true)
+
+    val green = Color(0xFF15803D)
+    val orange = Color(0xFFB45309)
+    val slate = Color(0xFF475569)
+
+    // Preserve the color assigned by the parent screen.
+    val cardBg = backgroundColor
+
+    val accent = when {
+        completed -> green
+        inProgress -> orange
+        else -> slate
+    }
+
+    val borderColor = when {
+        completed -> Color(0xFFB8E3C8)
+        inProgress -> Color(0xFFF59E0B)
+        else -> Color(0xFF94A3B8)
+    }
+
+    val progress = when {
+        completed -> 1f
+        inProgress -> 0.5f
+        else -> 0f
+    }
+
+    val action = when {
+        completed -> "Review"
+        inProgress -> "Continue"
+        else -> "Start"
+    }
+
+    val badgeText = when {
+        completed -> "✓ Completed"
+        inProgress -> "◐ In Progress"
+        else -> "○ Not Started"
+    }
 
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(115.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(190.dp)
             .premiumPress(
                 target = com.example.model.AnimatableTarget.SETS_CARDS,
                 screenKey = "Topic Sets",
                 onClick = onClick
-            )
+            ),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = BorderStroke(
+            width = 1.8.dp,
+            color = borderColor
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -1640,13 +1308,13 @@ fun CompactGridSetCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.25f),
-                    modifier = Modifier.size(28.dp)
+                    color = accent.copy(alpha = 0.13f),
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = serialNumber,
-                            color = Color.White,
+                            color = accent,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
                         )
@@ -1654,49 +1322,113 @@ fun CompactGridSetCard(
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isCompleted) Color(0xFFDCFCE7) else Color.White.copy(alpha = 0.25f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.PlayCircleFilled,
-                            contentDescription = null,
-                            tint = if (isCompleted) Color(0xFF15803D) else Color.White,
-                            modifier = Modifier.size(11.dp)
-                        )
-                        if (isCompleted) {
-                            Text(
-                                text = "Done",
-                                color = Color(0xFF15803D),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    shape = RoundedCornerShape(50),
+                    color = when {
+                        completed -> Color(0xFF15803D)
+                        inProgress -> Color(0xFFFFE3A3)
+                        else -> Color(0xFFE2E8F0)
                     }
+                ) {
+                    Text(
+                        text = badgeText,
+                        modifier = Modifier.padding(
+                            horizontal = 8.dp,
+                            vertical = 5.dp
+                        ),
+                        color = when {
+                            completed -> Color.White
+                            inProgress -> Color(0xFF854D0E)
+                            else -> slate
+                        },
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
                 Text(
                     text = title,
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
+                    color = Color(0xFF172033),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 10.5.sp,
-                    maxLines = 1,
+                    color = Color(0xFF334155),
+                    fontSize = 10.sp,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Progress",
+                        color = Color(0xFF64748B),
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = when {
+                            completed -> "Completed"
+                            inProgress -> "In progress"
+                            else -> "0%"
+                        },
+                        color = Color(0xFF334155),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = when {
+                        completed -> Color(0xFF16A34A)
+                        inProgress -> Color(0xFFD97706)
+                        else -> Color(0xFFE2E8F0)
+                    },
+                    trackColor = when {
+                        completed -> Color(0xFFC8E8D3)
+                        inProgress -> Color(0xFFF5D99A)
+                        else -> Color(0xFFE2E8F0)
+                    }
+                )
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp),
+                shape = RoundedCornerShape(13.dp),
+                color = when {
+                    inProgress -> Color(0xFFB45309)
+                    else -> Color.Transparent
+                },
+                border = if (inProgress) null
+                    else BorderStroke(1.5.dp, accent)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = action,
+                        color = if (inProgress) Color.White else accent,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -1711,23 +1443,60 @@ fun CompactGridSubtopicCard(
     backgroundColor: Color,
     onClick: () -> Unit
 ) {
-    val isCompleted = status.equals("Completed", ignoreCase = true)
-    val progress = if (isCompleted) 1f else if (status.equals("Attempting", ignoreCase = true)) 0.5f else 0f
-    val progressPercent = (progress * 100).toInt()
+    val completed = status.equals("Completed", true)
+    val inProgress = status.equals("Attempting", true) ||
+            status.equals("In Progress", true)
+
+    val green = Color(0xFF15803D)
+    val orange = Color(0xFFB45309)
+    val slate = Color(0xFF475569)
+
+    // Preserve the color assigned by the parent screen.
+    val cardBg = backgroundColor
+
+    val accent = when {
+        completed -> green
+        inProgress -> orange
+        else -> slate
+    }
+
+    val borderColor = when {
+        completed -> Color(0xFFB8E3C8)
+        inProgress -> Color(0xFFF59E0B)
+        else -> Color(0xFF94A3B8)
+    }
+
+    val progress = when {
+        completed -> 1f
+        inProgress -> 0.5f
+        else -> 0f
+    }
+
+    val action = when {
+        completed -> "Review"
+        inProgress -> "Continue"
+        else -> "Start"
+    }
+
+    val badgeText = when {
+        completed -> "✓ Completed"
+        inProgress -> "◐ In Progress"
+        else -> "○ Not Started"
+    }
 
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(130.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(190.dp)
             .premiumPress(
                 target = com.example.model.AnimatableTarget.SUBTOPIC_CARDS,
                 screenKey = "Topic Sets",
                 onClick = onClick
-            )
+            ),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = BorderStroke(1.8.dp, borderColor),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -1742,75 +1511,114 @@ fun CompactGridSubtopicCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.25f),
-                    modifier = Modifier.size(28.dp)
+                    color = accent.copy(alpha = 0.13f),
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = code,
-                            color = Color.White,
+                            color = accent,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
 
                 Surface(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.25f),
-                    modifier = Modifier.size(26.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Open $title",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    shape = RoundedCornerShape(50),
+                    color = when {
+                        completed -> green
+                        inProgress -> Color(0xFFFFE3A3)
+                        else -> Color(0xFFE2E8F0)
                     }
+                ) {
+                    Text(
+                        text = badgeText,
+                        modifier = Modifier.padding(
+                            horizontal = 7.dp,
+                            vertical = 5.dp
+                        ),
+                        color = when {
+                            completed -> Color.White
+                            inProgress -> Color(0xFF854D0E)
+                            else -> slate
+                        },
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
                 Text(
                     text = title,
-                    color = Color.White,
+                    color = Color(0xFF172033),
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+
+                Text(
+                    text = "$questionsCount Questions",
+                    color = Color(0xFF334155),
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(
+                    text = when {
+                        completed -> "Completed"
+                        inProgress -> "In progress"
+                        else -> "Progress"
+                    },
+                    color = Color(0xFF334155),
+                    fontSize = 11.sp
+                )
+
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = when {
+                        completed -> Color(0xFF16A34A)
+                        inProgress -> Color(0xFFD97706)
+                        else -> Color(0xFFE2E8F0)
+                    },
+                    trackColor = when {
+                        completed -> Color(0xFFC8E8D3)
+                        inProgress -> Color(0xFFF5D99A)
+                        else -> Color(0xFFE2E8F0)
+                    }
+                )
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp),
+                shape = RoundedCornerShape(13.dp),
+                color = if (inProgress) orange else Color.Transparent,
+                border = if (inProgress) null
+                    else BorderStroke(1.5.dp, accent)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "$questionsCount Questions",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 10.5.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "$progressPercent%",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.5.sp
+                        text = action,
+                        color = if (inProgress) Color.White else accent,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
-
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.3f),
-            )
         }
     }
 }

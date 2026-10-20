@@ -77,9 +77,9 @@ object PracticeThemePresets {
             bottomColor = Color(0xFF0284C7),
             settings = PracticeAppearanceSettings(
                 presetName = "Classic",
-                screenBackgroundColor = "#EDE9FE",
+                screenBackgroundColor = "#FFF7ED",
                 questionCard = PracticeSectionAppearance(
-                    backgroundColor = "#FFFBEB",
+                    backgroundColor = "#FDE68A",
                     textColor = "#0F172A",
                     fontFamily = "Poppins",
                     fontSize = 16,
@@ -88,16 +88,16 @@ object PracticeThemePresets {
                     cornerRadius = 16
                 ),
                 options = PracticeSectionAppearance(
-                    backgroundColor = "#E0F2FE",
+                    backgroundColor = "#FFFFFF",
                     textColor = "#0F172A",
                     fontFamily = "Poppins",
                     fontSize = 15,
-                    borderColor = "#BAE6FD",
+                    borderColor = "#E2E8F0",
                     borderWidth = 1,
                     cornerRadius = 14
                 ),
                 explanation = PracticeSectionAppearance(
-                    backgroundColor = "#DCFCE7",
+                    backgroundColor = "#86EFAC",
                     textColor = "#15803D",
                     fontFamily = "Poppins",
                     fontSize = 14,

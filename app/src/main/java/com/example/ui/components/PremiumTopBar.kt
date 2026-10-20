@@ -200,6 +200,7 @@ fun PremiumTopBar(
     onMenuClick: () -> Unit = {},
     onAppIconClick: () -> Unit = {},
     onTextSettingsClick: () -> Unit = {},
+    onLuxuryFontStudioClick: () -> Unit = {},
     onPremiumClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     unreadNotifications: Int = 1
@@ -603,7 +604,7 @@ fun PremiumTopBar(
                                         BorderStroke(1.2.dp, ButtonGoldMetallicBorderGradient),
                                         RoundedCornerShape(10.dp)
                                     )
-                                    .clickable { onTextSettingsClick() }
+                                    .clickable { onLuxuryFontStudioClick() }
                                     .testTag("premium_topbar_font_button"),
                                 contentAlignment = Alignment.Center
                             ) {

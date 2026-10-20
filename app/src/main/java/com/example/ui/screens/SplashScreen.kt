@@ -257,7 +257,12 @@ fun AppSplashScreen(
 
         // Phase D — Inspirational quote character-by-character typing
         val quoteLength = selectedQuote.text.length
-        val safeInterval = typingIntervalMs.coerceIn(35L, 50L)
+        val adaptiveInterval = when {
+            quoteLength > 120 -> 24L
+            quoteLength > 95 -> 28L
+            else -> typingIntervalMs
+        }
+        val safeInterval = adaptiveInterval.coerceIn(24L, 50L)
         for (i in 1..quoteLength) {
             typedCharCount = i
             if (i == quoteLength / 2) {

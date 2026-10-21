@@ -1,114 +1,120 @@
-# Real SMS OTP Authentication via Firebase Phone Auth
+# Build Premium Downloaded Materials Screen with Hierarchy Grouping, Offline MCQs & Typography Options
 
-Integrating real SMS OTP verification into the Android application's phone login flow using Firebase Authentication (`PhoneAuthProvider`), with pre-configured bypass logic for instant test logins.
+Transform the empty Downloaded Materials screen into a luxurious, feature-rich offline vault. Downloaded MCQs will be structured hierarchically by Subject, Unit, Topic, and Practice Sets using expandable cards, styled with premium serif typography (Cinzel and Playfair Display), and equipped with direct download icons on subtopic and set cards.
+
+## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> **Confirmed Choices from Interview**:
-> - **Authentication Engine**: Real SMS OTP via Firebase Authentication (`PhoneAuthProvider`).
-> - **Test Number Strategy**: Pre-configured test mobile numbers (e.g., `9493512768`, `9876543210`, `9999999999`) bypass SMS gateway delay for instant developer/reviewer testing, while all other mobile numbers trigger real SMS delivery via Firebase Auth.
+> The following design decisions were confirmed by the user and govern this implementation:
+
+- **Confirmed Grouping**: MCQs and materials are hierarchically structured by **Subject -> Unit -> Topic -> Set** inside interactive expandable cards.
+- **Confirmed Download Behavior**: Clicking the Download icon on Subtopic or Set cards saves MCQs locally for offline access with instant status badge updates (`✓ Downloaded`).
+- **Confirmed Typography**: Styled with **Cinzel** and **Playfair Display** premium serif headers paired with clean body text, plus a font styling panel for custom sizing and font selection.
 
 ---
 
 ## 1. Overview & Core Concept
 
-Currently, entering a phone number in `LoginScreen.kt` simulates OTP verification locally. This update replaces the mock flow with a production-grade Firebase Phone Authentication integration.
-
-When a user enters a mobile number:
-1. **Test Number Check**: If the number is a pre-configured test/demo number, the app immediately transitions to the OTP entry screen with instant verification (`123456`).
-2. **Real SMS Delivery**: For all other 10-digit mobile numbers, Firebase Auth dispatches a real SMS OTP via `PhoneAuthProvider.verifyPhoneNumber`.
-3. **Verification**: Entering the received 6-digit code constructs a `PhoneAuthCredential` and signs the user in via `Firebase.auth.signInWithCredential(credential)`, syncing their profile to Cloud Firestore.
+- **What It Does**: Provides a dedicated, offline-capable vault for APPSC / competitive exam aspirants to browse, search, and practice downloaded MCQs grouped strictly by Subject, Unit, Topic, and Practice Sets without an internet connection.
+- **Target Audience**: Students preparing on the go or in low-connectivity environments who need reliable offline practice access.
+- **Key Value**: Replaces the empty screen with a luxurious visual experience, instant offline practice access, encrypted local MCQ storage, and real-time download badges on all subtopic and set cards.
 
 ---
 
 ## 2. User Experience & Visual Design
 
-```
-┌─────────────────────────────────────────┐
-│              Login Screen               │
-│                                         │
-│  [ Enter 10-digit Mobile Number ]       │
-│  ┌───────────────────────────────────┐  │
-│  │ +91 | 9876543210                  │  │
-│  └───────────────────────────────────┘  │
-│  [ Send OTP Button ]                    │
-│                                         │
-│  ─── OR ───                             │
-│  [ Sign in with Google Button ]         │
-└────────────────────┬────────────────────┘
-                     │ (Triggers PhoneAuthProvider)
-                     ▼
-┌─────────────────────────────────────────┐
-│          OTP Verification Screen        │
-│                                         │
-│  OTP sent to +91 9876543210             │
-│  ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐    │
-│  │ 5 │ │ 8 │ │ 2 │ │ 1 │ │ 9 │ │ 0 │    │
-│  └───┘ └───┘ └───┘ └───┘ └───┘ └───┘    │
-│  [ Resend OTP in 0:58 ]                 │
-│  [ Verify OTP Button ]                  │
-└────────────────────┬────────────────────┘
-                     │ (signInWithCredential)
-                     ▼
-┌─────────────────────────────────────────┐
-│    Authenticated Session (Firestore)   │
-└─────────────────────────────────────────┘
-```
+### Key User Flows
 
-- **Clear Progress Feedback**: Shows loading indicators during `PhoneAuthProvider` phone verification and credential sign-in.
-- **Resend Countdown**: 60-second timer before enabling the "Resend OTP" button.
-- **Error Handling**: Displays friendly Toasts and error messages for invalid phone numbers, incorrect OTP codes, or network timeouts.
+1. **Viewing Downloaded Materials**:
+   - User opens **Downloaded Materials** from the home screen or side menu.
+   - Screen displays an offline status header, total downloaded question count, local storage usage, search bar, and typography selector.
+   - Expandable **Subject Cards** display subject titles, total questions, and size (e.g., *History • 320 MCQs • 450 MB*).
+
+2. **Exploring Units, Topics, and Sets**:
+   - Tapping a **Subject Card** expands to show its **Units**.
+   - Tapping a **Unit Card** expands to reveal **Topic / Subtopic Cards**.
+   - Each **Topic / Subtopic Card** and **Practice Set Card** features a download badge, MCQ count, and a direct **"Practice Offline"** button.
+
+3. **Downloading Subtopics & Sets**:
+   - Tapping the **Download Icon** on any Subtopic Card or Practice Set Card in the Syllabus or Topic Sets views triggers an instant local download, updating the badge to `✓ Downloaded` and making it immediately visible in the Downloaded Materials vault.
+
+4. **Offline MCQ Practice & Inspection**:
+   - User can tap any downloaded topic or set to launch offline practice mode or view the list of downloaded questions with answer explanations.
+
+### Visual Identity & Theme
+
+- **Header Typography**: **Cinzel** (`res/font/cinzel.ttf`) and **Playfair Display** (`res/font/playfair_display.ttf`) serif headers.
+- **Color Palette**: Deep Obsidian background (`#0B0F19`), Gold/Amber primary accents (`#F59E0B`), Emerald download badges (`#10B981`), and M3 dark surface elevation cards.
+- **Cards & Icons**: Glassmorphism translucent borders, rounded corners (16.dp), glowing download icons, and subtle elevation drop shadows.
 
 ---
 
 ## 3. Key Product Decisions & Trade-Offs
 
-- **Firebase Phone Auth Integration**:
-  - *Chosen Approach*: Use `PhoneAuthProvider.verifyPhoneNumber` with `PhoneAuthOptions` and `OnVerificationStateChangedCallbacks`.
-  - *Why*: Standard, secure Android SDK method for phone authentication that handles SMS dispatch, reCAPTCHA / Play Integrity verification, and credential generation automatically.
+- **Decision 1: Dynamic Expandable Hierarchy**:
+  - *Chosen Approach*: Use nested animated `Column` containers (`AnimatedVisibility`) inside `LazyColumn` items for Subject -> Unit -> Topic -> Set drilldown.
+  - *Why*: Keeps the screen compact while letting users drill down cleanly without leaving the vault view.
 
-- **Pre-Configured Test Numbers**:
-  - *Chosen Approach*: Maintain a list of test mobile numbers (e.g. `9493512768`, `9876543210`, `9999999999`).
-  - *Why*: Allows instant testing without draining Firebase SMS quotas or waiting for SMS delivery delays during app development and reviews.
+- **Decision 2: Direct Offline Persistence via `OfflineSyncManager` & Room Database**:
+  - *Chosen Approach*: Synchronize state between `OfflineSyncManager.downloadedPacks` state list, `AppDatabase.downloadedMaterialDao()`, and encrypted `SecureMcqVault`.
+  - *Why*: Ensures instant state reflection across the app when downloading subtopics or sets from any screen.
+
+- **Decision 3: Local Google Font Installation**:
+  - *Chosen Approach*: Downloaded `cinzel.ttf` via `font-util` into `res/font/` alongside existing `playfair_display.ttf`.
+  - *Why*: Complies with applet constraints (no `ui-text-google-fonts`) while delivering a true luxury serif aesthetic.
 
 ---
 
 ## 4. Technical Architecture & Data Strategy
 
-### Architecture & Call Sequence
-
 ```
-+------------------+         +----------------------------+         +---------------------+
-|   LoginScreen    | ------> |  Firebase PhoneAuthProvider| ------> | Firebase Auth SDK   |
-+------------------+         +----------------------------+         +---------------------+
-         |                                |                                   |
-         | 1. verifyPhoneNumber()         | 2. Sends SMS via carrier          |
-         | -----------------------------> | --------------------------------> |
-         |                                |                                   |
-         | 3. onCodeSent(verificationId)  |                                   |
-         | <----------------------------- |                                   |
-         |                                                                    |
-         | 4. User inputs 6-digit OTP                                         |
-         | -----------------------------------------------------------------> |
-         |                                                                    | 5. signInWithCredential()
-         | 6. User Authenticated & Profile Synced to Firestore                |
-         | <----------------------------------------------------------------- |
+┌────────────────────────────────────────────────────────────────────────┐
+│                      DownloadedMaterialsScreen                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ Vault Header (Cinzel Serif Title, Storage Stats, Font Picker)    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ Search & Filter Bar (Subject Filter, Search Query)                │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ LazyColumn Hierarchy List                                        │  │
+│  │  ├─ SubjectCard (Expandable)                                     │  │
+│  │  │   └─ UnitCard (Expandable)                                    │  │
+│  │  │       └─ Topic / SubtopicCard (With Download Icon & Badge)    │  │
+│  │  │           └─ PracticeSetCard (With Download Icon & Practice)  │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          OfflineSyncManager                            │
+│  - downloadedPacks StateList (SUBJECT, UNIT, TOPIC, SET)              │
+│  - isTopicDownloaded() / isSetDownloaded()                             │
+│  - downloadTopic() / downloadPracticeSet()                             │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Room Database & Secure Encryption                    │
+│  - DownloadedMaterialDao (DownloadedMaterialEntity)                    │
+│  - SecureMcqVault (AES-256 Encrypted Offline MCQs)                     │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
-### Key Source Updates
-
-1. **`LoginScreen.kt`**:
-   - Add state for `verificationId`, `resendingToken`, `isSendingOtp`, and `isVerifyingOtp`.
-   - Update `onContinueWithOtp` to trigger `PhoneAuthProvider.verifyPhoneNumber` for non-test numbers.
-   - Update `onVerifyOtp` to execute `Firebase.auth.signInWithCredential(PhoneAuthProvider.getCredential(verificationId, enteredOtp))`.
-   - Integrate proper error listeners (`onVerificationFailed`) and resend logic (`onResendOtp`).
-
-2. **`FirebaseSyncManager.kt`**:
-   - Ensure authenticated Firebase User session details (UID, phone number) correctly map and persist to Cloud Firestore profile records upon successful OTP login.
 
 ---
 
-## Verification Plan
+## Implementation Checklist
 
-1. **Compilation**: Run `compile_applet` to confirm zero build errors.
-2. **Test Number Login**: Test entering a pre-configured test number (`9493512768`) and verify instant OTP validation (`123456`).
-3. **Real SMS OTP Flow**: Test entering a real 10-digit number, confirm `PhoneAuthProvider` dispatch, code entry, and authentication completion.
+1. **Typography Setup**:
+   - Configure `Cinzel` serif font (`R.font.cinzel`) and `Playfair Display` (`R.font.playfair_display`) in Compose theme typography for headers and titles.
+
+2. **Subtopics & Sets Download Icons**:
+   - Ensure subtopics cards and practice sets cards in `TopicSetsScreen.kt`, `OfflineSubjectDetailScreen.kt`, and `DownloadedMaterialsScreen.kt` display prominent download icons (`Icons.Default.CloudDownload` / `Icons.Default.CheckCircle`) with click handlers calling `OfflineSyncManager`.
+
+3. **Downloaded Materials Screen Implementation**:
+   - Build `DownloadedMaterialsScreen.kt` with header stats, luxury serif styling, expandable Subject -> Unit -> Topic -> Set hierarchy, and search filtering.
+   - Implement expandable cards with smooth transitions, question count badges, size indicators, and offline practice buttons.
+   - Include empty state handling and font customization controls.
+
+4. **Verification**:
+   - Verify build compilation via `compile_applet`.

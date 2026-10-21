@@ -24,6 +24,9 @@ import com.example.ui.screens.*
 import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.SyllabusProTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import java.util.UUID
 
 sealed class AppScreen {
@@ -241,6 +244,14 @@ sealed class AppScreen {
 class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Ensure ViewTree lifecycle, saved state, and view model store owners are explicitly bound to window.decorView
+        window.decorView.let { decorView ->
+            decorView.setViewTreeLifecycleOwner(this)
+            decorView.setViewTreeSavedStateRegistryOwner(this)
+            decorView.setViewTreeViewModelStoreOwner(this)
+        }
+
         com.example.repository.AppConfigRepository.getInstance().initializeWithContext(this)
         com.example.util.AnimationConfigManager.initialize(this)
         com.example.util.BillingPaymentManager.loadMerchantConfig(this)
@@ -574,7 +585,20 @@ fun AppNavigationHost() {
                 }
 
                 is AppScreen.DownloadedMaterials -> {
-                    DownloadedMaterialsScreen(onBack = { goBack() })
+                    DownloadedMaterialsScreen(
+                        onBack = { goBack() },
+                        onStartPractice = { subId, unitId, topicId, setName ->
+                            navigateTo(
+                                AppScreen.PracticeArena(
+                                    subjectId = subId,
+                                    unitId = unitId,
+                                    topicId = topicId,
+                                    setName = setName.ifBlank { "Downloaded MCQ Set" },
+                                    sectionType = com.example.model.PracticeSectionType.OFFLINE
+                                )
+                            )
+                        }
+                    )
                 }
 
                 is AppScreen.LuxuryFontStudio -> {

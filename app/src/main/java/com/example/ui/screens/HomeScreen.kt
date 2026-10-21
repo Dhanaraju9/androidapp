@@ -206,7 +206,7 @@ fun HomeScreen(
     }
 
     val displaySubjects = remember(currentAppId, SampleData.subjectsState.toList()) {
-        SampleData.getSubjectsForApp(currentAppId)
+        SampleData.getSubjectsForApp(currentAppId).filter { it.id != "subj-current-affairs" && !it.id.contains("current-affairs") }
     }
 
     var selectedCategoryFilter by rememberSaveable { mutableStateOf("PRELIMS") }
@@ -663,6 +663,7 @@ fun HomeScreen(
                             )
                         }
 
+
                         // 5. Dynamic Filtered Subject Cards List
                         if (filteredDisplaySubjects.isEmpty()) {
                             Card(
@@ -757,7 +758,7 @@ fun HomeScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .height(254.dp)
+                                                    .height(228.dp)
                                                     .clickable { openSubjectFullScreen() }
                                             ) {
                                                 // Full-Width Scenic Background Image relevant to each subject
@@ -1031,6 +1032,22 @@ fun HomeScreen(
                                 }
                             }
                         }
+                    }
+
+                    // Monthly Current Affairs Card placed at the bottom of the Home Screen immediately after all Subject Cards
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .homeSmoothReveal(
+                                index = 10,
+                                scrollState = homeScrollState
+                            )
+                    ) {
+                        FeaturedMonthlyCurrentAffairsCard(
+                            onNavigateToCurrentAffairs = onNavigateToCurrentAffairs,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
 
@@ -3977,6 +3994,199 @@ fun ExamSyllabusAndPapersCard(
         }
     }
 }
+
+/**
+ * Featured Monthly Current Affairs Card for the Home Screen:
+ * - Replaces the static Current Affairs subject card on the Home Screen.
+ * - Displays dynamic month count and practice set count.
+ * - Clean solid peach-accented container with M3 design tokens and Telugu subtitle.
+ * - Tapping navigates directly to the Monthly Current Affairs feature.
+ */
+@Composable
+fun FeaturedMonthlyCurrentAffairsCard(
+    onNavigateToCurrentAffairs: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val monthlyList = remember { SampleData.getMonthlyCurrentAffairs() }
+    val monthCount = monthlyList.size
+    val totalSetsCount = remember(monthlyList) { monthlyList.sumOf { it.sets.size } }
+
+    val pressState = rememberCardPressAnimationState(
+        targetScale = 0.98f,
+        defaultElevation = 2.dp,
+        pressedElevation = 1.dp,
+        durationMs = 120
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("featured_monthly_current_affairs_card")
+            .graphicsLayer {
+                scaleX = pressState.scale
+                scaleY = pressState.scale
+            }
+            .clickable(
+                interactionSource = pressState.interactionSource,
+                indication = null
+            ) { onNavigateToCurrentAffairs() },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.5.dp, Color(0xFFFED7AA)),
+        elevation = CardDefaults.cardElevation(defaultElevation = pressState.elevation)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFF7ED),
+                            Color(0xFFFFFFFF)
+                        )
+                    )
+                )
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Header row: Badge + Icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFEA580C),
+                        contentColor = Color.White
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Newspaper,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "MONTHLY CURRENT AFFAIRS",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = Color(0xFFFFEDD5),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Monthly Current Affairs",
+                                tint = Color(0xFFEA580C),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Titles
+                Text(
+                    text = "Monthly Current Affairs Compilations",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+
+                Text(
+                    text = "మీ అభ్యాసాన్ని నెలావారీ శైలిలో కొనసాగించండి",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF0284C7),
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Stats and CTA Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFF1F5F9),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Text(
+                                text = "📅 $monthCount Months",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF334155),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFF1F5F9),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        ) {
+                            Text(
+                                text = "📝 $totalSetsCount Sets",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF334155),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    // Action Button
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF2563EB),
+                        contentColor = Color.White
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "Explore",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 
 

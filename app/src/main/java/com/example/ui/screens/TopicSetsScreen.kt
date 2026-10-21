@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Palette
@@ -494,12 +495,26 @@ fun TopicSetsScreen(
                                                 screenKey = "Topic Sets"
                                             )
                                     ) {
+                                        val isSetDownloaded = com.example.util.OfflineSyncManager.isSetDownloaded(subjectId, unitId, topicId, "Set $serialNumber")
                                         CompactGridSetCard(
                                             serialNumber = serialNumber,
                                             title = "Set $serialNumber",
                                             subtitle = setSubtitle,
                                             status = status,
                                             backgroundColor = bgCol,
+                                            isDownloaded = isSetDownloaded,
+                                            onDownloadClick = {
+                                                com.example.util.OfflineSyncManager.downloadPracticeSet(
+                                                    context = context,
+                                                    subjectId = subjectId,
+                                                    unitId = unitId,
+                                                    topicId = topicId,
+                                                    setName = "Set $serialNumber",
+                                                    onComplete = {
+                                                        Toast.makeText(context, "Set $serialNumber downloaded offline!", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                )
+                                            },
                                             onClick = { onSelectSet(pSet, setsList) }
                                         )
                                     }
@@ -601,12 +616,33 @@ fun TopicSetsScreen(
                                         screenKey = "Topic Sets"
                                     )
                             ) {
+                                val isSubtopicDownloaded = com.example.util.OfflineSyncManager.isTopicDownloaded(subjectId, unitId, subItem.id)
                                 CompactGridSubtopicCard(
                                     code = subItem.code,
                                     title = subItem.title,
                                     questionsCount = subItem.questions.size,
                                     status = status,
                                     backgroundColor = bgCol,
+                                    isDownloaded = isSubtopicDownloaded,
+                                    onDownloadClick = {
+                                        val (resSubject, resUnit, resTopic) = resolveHierarchyContext(
+                                            subjectId = subjectId,
+                                            unitId = unitId,
+                                            topicId = topicId,
+                                            fallbackSubject = subject,
+                                            fallbackUnit = unit,
+                                            fallbackTopic = activeTopicVal
+                                        )
+                                        com.example.util.OfflineSyncManager.downloadTopic(
+                                            context = context,
+                                            subject = resSubject,
+                                            unit = resUnit ?: com.example.model.UnitModel(id = unitId, name = "Unit"),
+                                            topic = resTopic,
+                                            onComplete = {
+                                                Toast.makeText(context, "${subItem.title} downloaded offline!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    },
                                     onClick = {
                                         onSelectSubtopic(subItem.practiceSet, subItem.title)
                                     }
@@ -1235,15 +1271,12 @@ fun CompactGridSetCard(
     subtitle: String,
     status: String,
     backgroundColor: Color = Color.Unspecified,
+    isDownloaded: Boolean = false,
+    onDownloadClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val isCompleted = status.equals("Completed", true)
     val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
-
-    // Colors according to strict requirements:
-    // - Not Started: light blue bg (#E8F4FF), royal blue border (#2563EB), dark navy text (#102A56)
-    // - In Progress: warm cream bg (#FFF1CC), rich orange border (#F59E0B), burnt-orange progress bar (#F97316)
-    // - Completed: pale mint bg (#D9FBE8), emerald-green border (#059669), dark green text (#065F46)
 
     val cardBg = when {
         isCompleted -> Color(0xFFD9FBE8)
@@ -1351,18 +1384,37 @@ fun CompactGridSetCard(
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = badgeBg
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = "• $badgeText",
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-                        color = textColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1
-                    )
+                    if (onDownloadClick != null) {
+                        IconButton(
+                            onClick = onDownloadClick,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isDownloaded) Icons.Default.CheckCircle else Icons.Default.CloudDownload,
+                                contentDescription = "Download Set",
+                                tint = if (isDownloaded) Color(0xFF059669) else Color(0xFF2563EB),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = badgeBg
+                    ) {
+                        Text(
+                            text = if (isDownloaded) "✓ Downloaded" else "• $badgeText",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = textColor,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
@@ -1444,6 +1496,8 @@ fun CompactGridSubtopicCard(
     questionsCount: Int,
     status: String,
     backgroundColor: Color = Color.Unspecified,
+    isDownloaded: Boolean = false,
+    onDownloadClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val isCompleted = status.equals("Completed", true)
@@ -1555,18 +1609,37 @@ fun CompactGridSubtopicCard(
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = badgeBg
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = "• $badgeText",
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-                        color = textColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1
-                    )
+                    if (onDownloadClick != null) {
+                        IconButton(
+                            onClick = onDownloadClick,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isDownloaded) Icons.Default.CheckCircle else Icons.Default.CloudDownload,
+                                contentDescription = "Download Subtopic",
+                                tint = if (isDownloaded) Color(0xFF059669) else Color(0xFF2563EB),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = badgeBg
+                    ) {
+                        Text(
+                            text = if (isDownloaded) "✓ Downloaded" else "• $badgeText",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = textColor,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 

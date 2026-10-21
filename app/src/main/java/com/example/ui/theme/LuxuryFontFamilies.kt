@@ -33,7 +33,12 @@ val PacificoFontFamily = FontFamily(
     Font(R.font.pacifico, FontWeight.Normal)
 )
 
+val CinzelFontFamily = FontFamily(
+    Font(R.font.cinzel, FontWeight.Normal)
+)
+
 val AvailableFontFamilies = mapOf(
+    "Cinzel" to CinzelFontFamily,
     "Playfair Display" to PlayfairDisplayFontFamily,
     "Montserrat" to MontserratFontFamily,
     "Roboto" to RobotoFontFamily,

@@ -1,18 +1,38 @@
-# Implementation Plan - Logout & Offline MCQ Subscription Access
+# Move Current Affairs Card Below Subject Cards on Home Screen
 
-## Proposed Changes
+Re-order the Home Screen layout so that the Monthly Current Affairs card is repositioned from its current top position to immediately after the last Subject Card, while preserving all existing designs, styling, dimensions, and functionality.
 
-### 1. Logout and Session Clearing
-- Update the logout handler to immediately clear user session data, auth tokens, and cached user states.
-- Redirect navigation to `LoginScreen` and clear the backstack so users cannot press back into authenticated screens.
+## User Review & Critical Decisions
 
-### 2. Offline Subscription Management & Validation
-- Ensure the subscription model supports the ₹99 offline subscription plan.
-- Implement subscription validation logic to check both active status and validity expiration date.
+> [!IMPORTANT]
+> - **Card Position**: The Current Affairs card will move from above the Live Content Dashboard / Subject Cards to directly below the final Subject Card.
+> - **Fidelity**: All existing card designs, widths, heights, colors, background images, text, spacing, and navigation click listeners will be precisely preserved without duplication.
 
-### 3. Online vs Offline MCQ Access Rules
-- **Online Access**: Allow users without a ₹99 offline subscription to practice MCQs online through Subjects -> Units -> Topics -> Sets/Subtopics.
-- **Offline Access / Downloaded Materials**: Require an active and valid ₹99 offline subscription to access downloaded MCQs offline. If offline and subscription is missing/expired, block access and display a subscription prompt dialog.
+- **Confirmed Decision**: Move Current Affairs card below Subject Cards.
+- **Open Question**: None.
 
-### 4. Verification
-- Compile app and verify navigation and subscription checks work seamlessly.
+## 1. Overview & Core Concept
+
+- **What It Does**: Re-orders components in `HomeScreen.kt` so users see the Live Content Dashboard and Subject Cards first, followed by the Current Affairs card below the Subject Cards list.
+- **Key Value**: Cleaner visual hierarchy that prioritizes core subject browsing before supplementary monthly current affairs.
+
+## 2. User Experience & Visual Design
+
+- **Current Flow**: Top bar -> Current Affairs card -> Live Content Dashboard -> Exam categories -> Subject Cards list -> Other elements.
+- **New Flow**: Top bar -> Live Content Dashboard -> Exam categories -> Subject Cards list -> **Monthly Current Affairs card** -> Other elements.
+- **Styling**: Zero visual changes to the Current Affairs card itself; only its vertical position within the `LazyColumn` or parent container in `HomeScreen.kt` is updated.
+
+## 3. Technical Architecture & Data Strategy
+
+- **Component Hierarchy**:
+  ```
+  HomeScreen.kt (LazyColumn)
+  ├── Top App Bar / Banner
+  ├── Live Content Dashboard
+  ├── Exam Categories Row
+  ├── Exam Syllabus & Papers Button
+  ├── Subject Cards (LazyVerticalGrid or Column list)
+  ├── [NEW POSITION] Monthly Current Affairs Card
+  └── Other footer elements
+  ```
+- **Files to Modify**: `app/src/main/java/com/example/app/ui/screens/HomeScreen.kt` (or corresponding home screen composable file).

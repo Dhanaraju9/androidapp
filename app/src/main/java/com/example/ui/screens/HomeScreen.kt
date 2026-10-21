@@ -582,45 +582,16 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .widthIn(max = 680.dp)
-                                    .padding(horizontal = 20.dp, vertical = 2.dp),
+                                    .padding(horizontal = 20.dp, vertical = 6.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Subtle ambient warm glow behind the center line
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.85f)
-                                        .height(3.dp)
-                                        .background(
-                                            brush = Brush.horizontalGradient(
-                                                listOf(
-                                                    Color.Transparent,
-                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.22f else 0.26f),
-                                                    Color(0xFFFDE68A).copy(alpha = if (isDarkMode) 0.30f else 0.38f),
-                                                    Color(0xFFFF9E43).copy(alpha = if (isDarkMode) 0.22f else 0.26f),
-                                                    Color.Transparent
-                                                )
-                                            ),
-                                            shape = RoundedCornerShape(2.dp)
-                                        )
-                                )
-                                // Refined, thin gradient line with warm champagne, soft orange, and restrained cream highlight - clearly visible
+                                // Single, solid, luxurious premium rose-gold colour line with no gradients or decorative effects
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(1.5.dp)
                                         .background(
-                                            brush = Brush.horizontalGradient(
-                                                listOf(
-                                                    Color.Transparent,
-                                                    Color(0xFFF7D9A4).copy(alpha = 0.45f),
-                                                    Color(0xFFFF9E43).copy(alpha = 0.95f),
-                                                    Color(0xFFFFFDF5),
-                                                    Color(0xFFF7D9A4),
-                                                    Color(0xFFFF8A24).copy(alpha = 0.95f),
-                                                    Color(0xFFF7D9A4).copy(alpha = 0.45f),
-                                                    Color.Transparent
-                                                )
-                                            ),
+                                            color = Color(0xFFC88A96),
                                             shape = RoundedCornerShape(1.dp)
                                         )
                                 )
@@ -778,110 +749,111 @@ fun HomeScreen(
                                             )
 
                                             Column(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                                                verticalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Spacer(modifier = Modifier.height(1.dp))
+                                                 modifier = Modifier
+                                                     .fillMaxSize()
+                                                     .padding(horizontal = 14.dp, vertical = 14.dp),
+                                                 verticalArrangement = Arrangement.Bottom
+                                             ) {
+                                                 // Bottom: Subject Name & Counts stacked cleanly at the bottom
+                                                 Column(
+                                                     modifier = Modifier.fillMaxWidth(),
+                                                     verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                 ) {
+                                                     Text(
+                                                         text = subject.name,
+                                                         fontFamily = CinzelFontFamily,
+                                                         fontWeight = FontWeight.Bold,
+                                                         color = Color.White,
+                                                         fontSize = 18.sp,
+                                                         lineHeight = 22.sp,
+                                                         maxLines = 2,
+                                                         overflow = TextOverflow.Ellipsis
+                                                     )
 
-                                                // Middle: Only Subject Name
-                                                Column(modifier = Modifier.fillMaxWidth()) {
-                                                    Text(
-                                                        text = subject.name,
-                                                        fontFamily = CinzelFontFamily,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color.White,
-                                                        fontSize = 19.sp,
-                                                        lineHeight = 22.sp,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                }
+                                                     // Number of Units, Topics, Sets, MCQs
+                                                     val setCount = remember(subject.id) {
+                                                         subject.units.sumOf { unit ->
+                                                             unit.topics.sumOf { topic ->
+                                                                 val setsForTopic = SampleData.getPracticeSetsForTopic(subject.id, unit, topic)
+                                                                 if (setsForTopic.isNotEmpty()) setsForTopic.size else maxOf(topic.practiceSetsCount, 2)
+                                                             }
+                                                         }
+                                                     }
+                                                     Row(
+                                                         modifier = Modifier.fillMaxWidth(),
+                                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                         verticalAlignment = Alignment.CenterVertically
+                                                     ) {
+                                                         // 1. Units
+                                                         Surface(
+                                                             shape = RoundedCornerShape(50),
+                                                             color = Color(0xFFFFFBEB).copy(alpha = 0.95f),
+                                                             border = BorderStroke(1.dp, Color(0xFFF59E0B)),
+                                                             modifier = Modifier.height(26.dp)
+                                                         ) {
+                                                             Row(
+                                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                                 verticalAlignment = Alignment.CenterVertically
+                                                             ) {
+                                                                 Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
+                                                                 Spacer(modifier = Modifier.width(3.dp))
+                                                                 Text(text = "$unitCount Units", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                                                             }
+                                                         }
 
-                                                // Bottom: Number of Units, Topics, Sets, MCQs
-                                                val setCount = remember(subject.id) {
-                                                    subject.units.sumOf { unit ->
-                                                        unit.topics.sumOf { topic ->
-                                                            val setsForTopic = SampleData.getPracticeSetsForTopic(subject.id, unit, topic)
-                                                            if (setsForTopic.isNotEmpty()) setsForTopic.size else maxOf(topic.practiceSetsCount, 2)
-                                                        }
-                                                    }
-                                                }
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    // 1. Units
-                                                    Surface(
-                                                        shape = RoundedCornerShape(50),
-                                                        color = Color(0xFFFFFBEB).copy(alpha = 0.95f),
-                                                        border = BorderStroke(1.dp, Color(0xFFF59E0B)),
-                                                        modifier = Modifier.height(26.dp)
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
-                                                            Spacer(modifier = Modifier.width(3.dp))
-                                                            Text(text = "$unitCount Units", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                                                        }
-                                                    }
+                                                         // 2. Topics
+                                                         Surface(
+                                                             shape = RoundedCornerShape(50),
+                                                             color = Color(0xFFE0F2FE).copy(alpha = 0.95f),
+                                                             border = BorderStroke(1.dp, Color(0xFF38BDF8)),
+                                                             modifier = Modifier.height(26.dp)
+                                                         ) {
+                                                             Row(
+                                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                                 verticalAlignment = Alignment.CenterVertically
+                                                             ) {
+                                                                 Icon(Icons.Default.Layers, contentDescription = null, tint = Color(0xFF0369A1), modifier = Modifier.size(11.dp))
+                                                                 Spacer(modifier = Modifier.width(3.dp))
+                                                                 Text(text = "$topicCount Topics", color = Color(0xFF0C4A6E), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                                                             }
+                                                         }
 
-                                                    // 2. Topics
-                                                    Surface(
-                                                        shape = RoundedCornerShape(50),
-                                                        color = Color(0xFFE0F2FE).copy(alpha = 0.95f),
-                                                        border = BorderStroke(1.dp, Color(0xFF38BDF8)),
-                                                        modifier = Modifier.height(26.dp)
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(Icons.Default.Layers, contentDescription = null, tint = Color(0xFF0369A1), modifier = Modifier.size(11.dp))
-                                                            Spacer(modifier = Modifier.width(3.dp))
-                                                            Text(text = "$topicCount Topics", color = Color(0xFF0C4A6E), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                                                        }
-                                                    }
+                                                         // 3. Sets
+                                                         Surface(
+                                                             shape = RoundedCornerShape(50),
+                                                             color = Color(0xFFE8F5E9).copy(alpha = 0.95f),
+                                                             border = BorderStroke(1.dp, Color(0xFF34D399)),
+                                                             modifier = Modifier.height(26.dp)
+                                                         ) {
+                                                             Row(
+                                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                                 verticalAlignment = Alignment.CenterVertically
+                                                             ) {
+                                                                 Icon(Icons.Default.Checklist, contentDescription = null, tint = Color(0xFF047857), modifier = Modifier.size(11.dp))
+                                                                 Spacer(modifier = Modifier.width(3.dp))
+                                                                 Text(text = "$setCount Sets", color = Color(0xFF064E3B), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                                                             }
+                                                         }
 
-                                                    // 3. Sets
-                                                    Surface(
-                                                        shape = RoundedCornerShape(50),
-                                                        color = Color(0xFFE8F5E9).copy(alpha = 0.95f),
-                                                        border = BorderStroke(1.dp, Color(0xFF34D399)),
-                                                        modifier = Modifier.height(26.dp)
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(Icons.Default.Checklist, contentDescription = null, tint = Color(0xFF047857), modifier = Modifier.size(11.dp))
-                                                            Spacer(modifier = Modifier.width(3.dp))
-                                                            Text(text = "$setCount Sets", color = Color(0xFF064E3B), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                                                        }
-                                                    }
-
-                                                    // 4. MCQs
-                                                    Surface(
-                                                        shape = RoundedCornerShape(50),
-                                                        color = Color(0xFFFFFDE7).copy(alpha = 0.95f),
-                                                        border = BorderStroke(1.dp, Color(0xFFFFB300)),
-                                                        modifier = Modifier.height(26.dp)
-                                                    ) {
-                                                        Row(
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                            verticalAlignment = Alignment.CenterVertically
-                                                        ) {
-                                                            Icon(Icons.Default.FactCheck, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
-                                                            Spacer(modifier = Modifier.width(3.dp))
-                                                            Text(text = "$questionCount MCQs", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                                         // 4. MCQs
+                                                         Surface(
+                                                             shape = RoundedCornerShape(50),
+                                                             color = Color(0xFFFFFDE7).copy(alpha = 0.95f),
+                                                             border = BorderStroke(1.dp, Color(0xFFFFB300)),
+                                                             modifier = Modifier.height(26.dp)
+                                                         ) {
+                                                             Row(
+                                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                                 verticalAlignment = Alignment.CenterVertically
+                                                             ) {
+                                                                 Icon(Icons.Default.FactCheck, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
+                                                                 Spacer(modifier = Modifier.width(3.dp))
+                                                                 Text(text = "$questionCount MCQs", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                             }
                                         }
                                     }
                                 }
@@ -890,21 +862,7 @@ fun HomeScreen(
                         }
                     }
 
-                    // Monthly Current Affairs Card placed at the bottom of the Home Screen immediately after all Subject Cards
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                            .homeSmoothReveal(
-                                index = 10,
-                                scrollState = homeScrollState
-                            )
-                    ) {
-                        FeaturedMonthlyCurrentAffairsCard(
-                            onNavigateToCurrentAffairs = onNavigateToCurrentAffairs,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+
 
 
 

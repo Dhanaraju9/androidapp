@@ -684,7 +684,7 @@ object SampleData {
             categories = listOf("prelims", "general"),
             icon = "BookOpen",
             imageRes = R.drawable.card_subj_history,
-            imageUrl = "https://images.unsplash.com/photo-1599837565318-67429bde7162?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Ancient, Medieval & Modern Indian Freedom Struggle",
             color = "from-amber-600 to-orange-700",
             units = listOf(
@@ -764,7 +764,7 @@ object SampleData {
             categories = listOf("prelims", "general"),
             icon = "Compass",
             imageRes = R.drawable.card_subj_geography,
-            imageUrl = "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Physical Features, Climate, River Basins & Demographics",
             color = "from-emerald-600 to-teal-800",
             units = listOf(
@@ -817,7 +817,7 @@ object SampleData {
             category = "prelims",
             categories = listOf("prelims"),
             icon = "Users",
-            imageUrl = "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1511497584788-876761197069?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Social Structure, Issues, Policies & Welfare Mechanisms",
             color = "from-purple-600 to-indigo-800",
             units = listOf(
@@ -915,7 +915,7 @@ object SampleData {
             category = "mains",
             categories = listOf("mains"),
             icon = "Shield",
-            imageUrl = "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1608958435020-e8a7109ba809?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Satavahanas, Kakatiyas, Vijayanagara & Modern AP Formation",
             color = "from-rose-600 to-pink-800",
             units = listOf(
@@ -972,7 +972,7 @@ object SampleData {
             category = "mains,general",
             categories = listOf("mains", "general"),
             icon = "BookOpen",
-            imageUrl = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Preamble, Fundamental Rights, Union-State Relations & Judiciary",
             color = "from-blue-700 to-indigo-900",
             units = listOf(
@@ -1070,7 +1070,7 @@ object SampleData {
             category = "mains,general",
             categories = listOf("mains", "general"),
             icon = "Cpu",
-            imageUrl = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Space Missions, Defence, IT, Energy & Environmental Ecology",
             color = "from-violet-700 to-purple-950",
             units = listOf(

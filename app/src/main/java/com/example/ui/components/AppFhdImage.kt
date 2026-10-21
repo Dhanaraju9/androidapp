@@ -417,6 +417,9 @@ fun SubjectFhdCardImage(
     subject: Subject,
     modifier: Modifier = Modifier
 ) {
+    val cleanUrl = remember(subject.imageUrl) {
+        subject.imageUrl?.trim()?.takeIf { it.isNotEmpty() && (it.startsWith("http://") || it.startsWith("https://")) }
+    }
     val resolvedRes = remember(subject.id, subject.imageRes, subject.name) {
         if (subject.imageRes != null && subject.imageRes != 0) {
             subject.imageRes
@@ -424,16 +427,12 @@ fun SubjectFhdCardImage(
             CardAssetRegistry.getSubjectDrawable(subject.id, subject.name)
         }
     }
-    val effectiveUrl = remember(subject.imageUrl, resolvedRes) {
-        if (resolvedRes != 0 && subject.imageUrl.contains("unsplash.com", ignoreCase = true)) {
-            ""
-        } else {
-            subject.imageUrl
-        }
-    }
+    val effectiveUrl = cleanUrl ?: ""
+    val effectiveRes = if (effectiveUrl.isEmpty()) resolvedRes else null
+
     AppFhdImage(
         imageUrl = effectiveUrl,
-        imageRes = resolvedRes,
+        imageRes = effectiveRes,
         contentDescription = subject.name,
         modifier = modifier,
         themeCategory = subject.name,

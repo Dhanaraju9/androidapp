@@ -42,6 +42,7 @@ import com.example.ui.components.premiumPress
 import com.example.ui.components.premiumTargetAnimation
 import com.example.util.PracticeAppearanceManager
 import com.example.util.FontSettingsManager
+import com.example.util.PracticeSessionManager
 import com.example.repository.AppConfigRepository
 import com.example.model.PracticeAppearanceSettings
 import android.widget.Toast
@@ -221,11 +222,47 @@ fun CurrentAffairsScreen(
                             } else {
                                 defaultCaCardImage ?: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800&auto=format&fit=crop"
                             }
+                            val completedCount = ca.sets.count { set ->
+                                PracticeSessionManager.getSessionStatus(context, set.id, false).equals("Completed", true)
+                            }
+                            val isCompletedCA = ca.sets.isNotEmpty() && completedCount == ca.sets.size
+                            val isInProgressCA = !isCompletedCA && (completedCount > 0 || ca.sets.any { set ->
+                                PracticeSessionManager.getSessionStatus(context, set.id, false).equals("In Progress", true)
+                            })
+                            val caStatus = when {
+                                isCompletedCA -> "Completed"
+                                isInProgressCA -> "In Progress"
+                                else -> if (caIdx == 0) "Completed" else if (caIdx == 1) "In Progress" else "Not Started"
+                            }
+                            val isCompleted = caStatus.equals("Completed", true)
+                            val isInProgress = caStatus.equals("In Progress", true)
+
+                            val cardBgColor = when {
+                                isCompleted -> Color(0xFF86EFAC) // Rich mint green
+                                isInProgress -> Color(0xFFFDE047) // Rich amber-orange
+                                else -> Color(0xFFC4B5FD) // Rich lavender-purple
+                            }
+                            val cardBorderColor = when {
+                                isCompleted -> Color(0xFF059669)
+                                isInProgress -> Color(0xFFD97706)
+                                else -> Color(0xFF7C3AED)
+                            }
+                            val cardTextColor = when {
+                                isCompleted -> Color(0xFF064E3B)
+                                isInProgress -> Color(0xFF78350F)
+                                else -> Color(0xFF4C1D95)
+                            }
+                            val badgeBgColor = when {
+                                isCompleted -> Color(0xFF059669)
+                                isInProgress -> Color(0xFFD97706)
+                                else -> Color(0xFF7C3AED)
+                            }
+
                             Card(
                                 shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                                border = BorderStroke(1.8.dp, cardBorderColor),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .premiumTargetAnimation(
@@ -238,78 +275,89 @@ fun CurrentAffairsScreen(
                                         screenKey = "Current Affairs"
                                     ) { selectedMonthlyCA = ca }
                             ) {
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    AppFhdImage(
-                                        imageUrl = bgWallpaperUrl,
-                                        contentDescription = "Card Background Wallpaper",
-                                        modifier = Modifier.matchParentSize()
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .matchParentSize()
-                                            .background(
-                                                if (isDark) Color(0xFF0F172A).copy(alpha = 0.82f) else Color.White.copy(alpha = 0.85f)
-                                            )
-                                    )
                                 Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = if (isDark) Color(0xFF1E3A8A) else Color(0xFFEFF6FF),
-                                    modifier = Modifier.size(56.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Today,
-                                            contentDescription = null,
-                                            tint = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(
-                                    text = ca.month,
-                                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
-                                    color = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
-                                )
-                                Text(
-                                    text = ca.year,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = if (isDark) Color(0xFF064E3B) else Color(0xFFF0FDF4)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
                                     ) {
-                                        Text(
-                                            text = "${ca.sets.size} Sets",
-                                            color = if (isDark) Color(0xFF4ADE80) else Color(0xFF16A34A),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(50),
+                                            color = badgeBgColor
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                            ) {
+                                                Text(
+                                                    text = if (isCompleted) "✓ Completed" else if (isInProgress) "🕒 In Progress" else "🕒 Not Started",
+                                                    color = Color.White,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
                                     }
-                                    if (!isPremium) {
-                                        PremiumLockBadge(text = "PRO", isSmall = true)
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = badgeBgColor.copy(alpha = 0.2f),
+                                        modifier = Modifier.size(52.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Today,
+                                                contentDescription = null,
+                                                tint = badgeBgColor,
+                                                modifier = Modifier.size(26.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Text(
+                                        text = ca.month,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
+                                        color = cardTextColor
+                                    )
+                                    Text(
+                                        text = ca.year,
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                        color = cardTextColor.copy(alpha = 0.8f)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = badgeBgColor
+                                        ) {
+                                            Text(
+                                                text = "${ca.sets.size} Sets",
+                                                color = Color.White,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                        if (!isPremium) {
+                                            PremiumLockBadge(text = "PRO", isSmall = true)
+                                        }
                                     }
                                 }
-                            } // End Column
-                            } // End Box
-                        }
+                            }
                     }
                     }
                 }

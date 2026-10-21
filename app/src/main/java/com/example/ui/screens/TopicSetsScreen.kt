@@ -1279,27 +1279,27 @@ fun CompactGridSetCard(
     val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
     val cardBg = when {
-        isCompleted -> Color(0xFFD9FBE8)
-        isInProgress -> Color(0xFFFFF1CC)
-        else -> Color(0xFFE8F4FF)
+        isCompleted -> Color(0xFF6EE7B7) // Rich mint green
+        isInProgress -> Color(0xFFFDBA74) // Rich amber-orange
+        else -> Color(0xFFC4B5FD) // Rich lavender-purple
     }
 
     val borderColor = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF59E0B)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     val textColor = when {
-        isCompleted -> Color(0xFF065F46)
-        isInProgress -> Color(0xFF78350F)
-        else -> Color(0xFF102A56)
+        isCompleted -> Color(0xFF064E3B)
+        isInProgress -> Color(0xFF7C2D12)
+        else -> Color(0xFF4C1D95)
     }
 
     val badgeBg = when {
-        isCompleted -> Color(0xFFA7F3D0)
-        isInProgress -> Color(0xFFFDE68A)
-        else -> Color(0xFFD0E4FF)
+        isCompleted -> Color(0xFF34D399)
+        isInProgress -> Color(0xFFFB923C)
+        else -> Color(0xFFA78BFA)
     }
 
     val badgeText = when {
@@ -1322,14 +1322,14 @@ fun CompactGridSetCard(
 
     val progressBarColor = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF97316)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     val progressTrackColor = when {
-        isCompleted -> Color(0xFFA7F3D0)
-        isInProgress -> Color(0xFFFDE68A)
-        else -> Color(0xFFD0E4FF)
+        isCompleted -> Color(0xFF34D399).copy(alpha = 0.4f)
+        isInProgress -> Color(0xFFFB923C).copy(alpha = 0.4f)
+        else -> Color(0xFFA78BFA).copy(alpha = 0.4f)
     }
 
     val actionButtonText = when {
@@ -1340,8 +1340,8 @@ fun CompactGridSetCard(
 
     val actionButtonBg = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF97316)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     Card(
@@ -1504,27 +1504,27 @@ fun CompactGridSubtopicCard(
     val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
     val cardBg = when {
-        isCompleted -> Color(0xFFD9FBE8)
-        isInProgress -> Color(0xFFFFF1CC)
-        else -> Color(0xFFE8F4FF)
+        isCompleted -> Color(0xFF6EE7B7) // Rich mint green
+        isInProgress -> Color(0xFFFDBA74) // Rich amber-orange
+        else -> Color(0xFFC4B5FD) // Rich lavender-purple
     }
 
     val borderColor = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF59E0B)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     val textColor = when {
-        isCompleted -> Color(0xFF065F46)
-        isInProgress -> Color(0xFF78350F)
-        else -> Color(0xFF102A56)
+        isCompleted -> Color(0xFF064E3B)
+        isInProgress -> Color(0xFF7C2D12)
+        else -> Color(0xFF4C1D95)
     }
 
     val badgeBg = when {
-        isCompleted -> Color(0xFFA7F3D0)
-        isInProgress -> Color(0xFFFDE68A)
-        else -> Color(0xFFD0E4FF)
+        isCompleted -> Color(0xFF34D399)
+        isInProgress -> Color(0xFFFB923C)
+        else -> Color(0xFFA78BFA)
     }
 
     val badgeText = when {
@@ -1547,14 +1547,14 @@ fun CompactGridSubtopicCard(
 
     val progressBarColor = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF97316)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     val progressTrackColor = when {
-        isCompleted -> Color(0xFFA7F3D0)
-        isInProgress -> Color(0xFFFDE68A)
-        else -> Color(0xFFD0E4FF)
+        isCompleted -> Color(0xFF34D399).copy(alpha = 0.4f)
+        isInProgress -> Color(0xFFFB923C).copy(alpha = 0.4f)
+        else -> Color(0xFFA78BFA).copy(alpha = 0.4f)
     }
 
     val actionButtonText = when {
@@ -1565,8 +1565,8 @@ fun CompactGridSubtopicCard(
 
     val actionButtonBg = when {
         isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFF97316)
-        else -> Color(0xFF2563EB)
+        isInProgress -> Color(0xFFEA580C)
+        else -> Color(0xFF7C3AED)
     }
 
     Card(

@@ -1312,15 +1312,98 @@ fun RazorpayGatewayTabContent() {
                     shape = RoundedCornerShape(10.dp)
                 )
 
-                OutlinedTextField(
-                    value = razorpayKeyId,
-                    onValueChange = { razorpayKeyId = it },
-                    label = { Text("Razorpay Key ID (rzp_live_... / rzp_test_...)") },
-                    leadingIcon = { Icon(Icons.Default.VpnKey, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                )
+                // Locked & Verified Razorpay Live Key (Configured directly in App BuildConfig)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF8FAFC),
+                    border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Lock,
+                                    contentDescription = "Secured Key",
+                                    tint = Color(0xFF16A34A),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Razorpay Live Key ID",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF1E293B)
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFFDCFCE7)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF16A34A))
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = "LIVE ACTIVE",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.5.sp,
+                                        color = Color(0xFF15803D)
+                                    )
+                                }
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = com.example.util.BillingPaymentManager.getMaskedKeyId(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Text(
+                                    text = "Production",
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "🔒 నేరుగా App BuildConfig & Environment లో లైవ్ కీ అమర్చబడింది. పేమెంట్ భద్రత కోసం అడ్మిన్ ప్యానెల్‌లో మాన్యువల్ ఎడిటింగ్ లాక్ చేయబడింది.",
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            color = Color(0xFF475569)
+                        )
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1335,15 +1418,24 @@ fun RazorpayGatewayTabContent() {
                             color = Color(0xFF0F172A)
                         )
                         Text(
-                            text = if (isLiveMode) "Collecting real payments via Razorpay" else "In Test Mode sandbox",
+                            text = "Real Live Transactions with Direct Razorpay Checkout",
                             fontSize = 11.5.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF16A34A),
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
-                    Switch(
-                        checked = isLiveMode,
-                        onCheckedChange = { isLiveMode = it }
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFDCFCE7)
+                    ) {
+                        Text(
+                            text = "LIVE ON",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Color(0xFF15803D),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
                 }
 
                 if (showSavedMessage) {
@@ -1374,8 +1466,8 @@ fun RazorpayGatewayTabContent() {
                             name = merchantName,
                             mid = merchantId,
                             accId = accountId,
-                            keyId = razorpayKeyId,
-                            live = isLiveMode,
+                            keyId = com.example.util.BillingPaymentManager.configuredLiveKeyId,
+                            live = true,
                             context = context
                         )
                         showSavedMessage = true

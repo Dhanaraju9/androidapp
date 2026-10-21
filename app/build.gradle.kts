@@ -20,10 +20,20 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        val razorpayKeyId = (project.findProperty("RAZORPAY_KEY_ID") as? String)
+            ?: System.getenv("RAZORPAY_KEY_ID")
+            ?: "rzp_live_T89U1OXHFIQbHa"
+
+        val razorpayKeySecret = (project.findProperty("RAZORPAY_KEY_SECRET") as? String)
+            ?: System.getenv("RAZORPAY_KEY_SECRET")
+            ?: "rzp_sec_live_T89U1OXHFIQbHa"
+
         buildConfigField("String", "APP_ID", "\"com.example.syllabus\"")
         buildConfigField("String", "TENANT_ID", "\"tenant_default\"")
         buildConfigField("int", "APP_VERSION_CODE", "1")
         buildConfigField("String", "APP_VERSION_NAME", "\"1.0\"")
+        buildConfigField("String", "RAZORPAY_KEY_ID", "\"$razorpayKeyId\"")
+        buildConfigField("String", "RAZORPAY_KEY_SECRET", "\"$razorpayKeySecret\"")
     }
 
     signingConfigs {
@@ -57,6 +67,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
 

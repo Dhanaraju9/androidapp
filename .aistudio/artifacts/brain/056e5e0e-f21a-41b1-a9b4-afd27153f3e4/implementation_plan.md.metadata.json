@@ -1,6 +1,6 @@
 {
-  "summary":  "Implementation plan for building the Downloaded Materials screen with expandable Subject-Unit-Topic-Set hierarchy, offline MCQs, Cinzel/Playfair serif typography, and subtopic/set card download icons.",
-  "updatedAt":  "2026-10-21T06:24:36.033746765Z",
+  "summary":  "Implementation plan for Logout session clearing, ₹99 offline subscription validation, and offline/online MCQ access rules",
+  "updatedAt":  "2026-10-21T10:33:00.433091740Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

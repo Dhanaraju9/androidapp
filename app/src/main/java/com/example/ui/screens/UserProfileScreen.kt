@@ -347,7 +347,7 @@ fun UserProfileScreen(
                                     ) {
                                         ProfileDetailChip(
                                             icon = Icons.Default.Phone,
-                                            text = userProfile.phone.ifBlank { "+91 9876543210" },
+                                            text = if (userProfile.phone.isNotBlank()) "+91 ${userProfile.phone}" else "Phone not linked",
                                             burgundyTextPrimary = burgundyTextPrimary
                                         )
                                         ProfileDetailChip(

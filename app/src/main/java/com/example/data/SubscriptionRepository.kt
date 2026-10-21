@@ -11,6 +11,28 @@ import kotlinx.coroutines.flow.update
 object SubscriptionRepository {
     private val _plans = MutableStateFlow<List<SubscriptionPlan>>(listOf(
         SubscriptionPlan(
+            id = "offline_99",
+            name = "₹99 Offline Pass",
+            subtitle = "Download & Practice Offline",
+            price = 99,
+            originalPrice = 199,
+            effectiveMonthly = "₹99 / pass",
+            discountText = "50% OFF",
+            iconEmoji = "📥",
+            features = listOf(
+                "Offline MCQ Practice without Internet connection",
+                "Access downloaded materials via Sets & Subtopics",
+                "Validity aligns with your active plan duration",
+                "Online practice remains 100% free and active",
+                "Upon expiry: Offline access pauses until renewal"
+            ),
+            displayOrder = 0,
+            buttonColorHex = "#2563EB",
+            cardBgColorHex = "#EFF6FF",
+            borderColorHex = "#2563EB",
+            targetAppIds = listOf("ALL")
+        ),
+        SubscriptionPlan(
             id = "1_month",
             name = "1 Month",
             subtitle = "Starter Pass",

@@ -45,9 +45,9 @@ class SubscriptionPaymentVerificationService private constructor(
     private val mutex = Mutex()
     private val processedWebhookEvents = Collections.synchronizedSet(mutableSetOf<String>())
 
-    // Configurable credentials (in production, populated via secure backend environment)
+    // Configurable credentials (in production, populated via secure build/backend environment)
     var activeConfig: AlternativeBillingConfig = AlternativeBillingConfig.DEFAULT
-    private var serverRazorpaySecret: String = "rzp_sec_live_T89U1OXHFIQbHa"
+    private var serverRazorpaySecret: String = com.example.BuildConfig.RAZORPAY_KEY_SECRET
     private var webhookSecret: String = "whsec_appsc_prep_2026"
 
     companion object {

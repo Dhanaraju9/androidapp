@@ -840,7 +840,45 @@ fun SubscriptionScreen(
                                 }
                             }
 
-                                Spacer(modifier = Modifier.height(18.dp))
+                            if (plan.id == "offline_99") {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFFDBEAFE),
+                                    border = BorderStroke(1.dp, Color(0xFF93C5FD))
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Info,
+                                                contentDescription = null,
+                                                tint = Color(0xFF1D4ED8),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Why is this pass needed?",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF1E3A8A)
+                                            )
+                                        }
+                                        Text(
+                                            text = "Required exclusively for accessing downloaded MCQs offline via Sets, Subtopics, and Downloaded Materials without internet connection. Validity matches your active subscription duration. Online practice remains completely free and available to all users. Upon expiry, offline access pauses until renewal.",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF1E40AF),
+                                            lineHeight = 15.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(18.dp))
 
                                 // Choose Plan Button
                                 Button(

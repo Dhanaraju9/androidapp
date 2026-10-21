@@ -50,6 +50,82 @@ fun DownloadedMaterialsScreen(
 ) {
     val context = LocalContext.current
 
+    // First-time Offline Mode Onboarding Tutorial Dialog state
+    var showOfflineOnboarding by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("offline_onboarding_prefs", android.content.Context.MODE_PRIVATE)
+        val seen = prefs.getBoolean("has_seen_offline_onboarding", false)
+        if (!seen) {
+            showOfflineOnboarding = true
+        }
+    }
+
+    if (showOfflineOnboarding) {
+        AlertDialog(
+            onDismissRequest = {},
+            containerColor = Color(0xFFEFF6FF),
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "📥", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Offline Mode & ₹99 Pass",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E3A8A)
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Welcome to your Offline MCQ Vault! Here you can access downloaded study materials and practice without an internet connection.",
+                        fontSize = 13.sp,
+                        color = Color(0xFF1E40AF),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, Color(0xFF93C5FD))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "✨ Why the ₹99 Offline Pass?",
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1D4ED8),
+                                fontSize = 12.5.sp
+                            )
+                            Text(
+                                text = "• Unlocks seamless offline practice through Sets, Subtopics, and Downloaded Materials.\n• Validity aligns with your active plan duration.\n• Online practice remains 100% free for everyone.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF1E293B),
+                                lineHeight = 17.sp
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val prefs = context.getSharedPreferences("offline_onboarding_prefs", android.content.Context.MODE_PRIVATE)
+                        prefs.edit().putBoolean("has_seen_offline_onboarding", true).apply()
+                        showOfflineOnboarding = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Got It • Explore Vault", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
     // Search and Filter State
     var searchQuery by remember { mutableStateOf("") }
 

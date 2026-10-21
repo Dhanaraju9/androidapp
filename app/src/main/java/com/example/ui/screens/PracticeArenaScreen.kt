@@ -251,6 +251,11 @@ fun PracticeArenaScreen(
     var isSubmitting by remember { mutableStateOf(false) }
     var correctAnswerTrigger by remember { mutableStateOf(0) }
 
+    // Immediately reset and clear burst animation effect whenever current question changes (Next / Previous / Palette)
+    LaunchedEffect(currentIndex) {
+        correctAnswerTrigger = 0
+    }
+
     fun shuffleQuestions() {
         if (activeQuestions.size > 1) {
             // Thoroughly re-randomize both question sequence and option order with maximum entropy

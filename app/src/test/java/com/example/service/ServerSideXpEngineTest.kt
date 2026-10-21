@@ -43,7 +43,7 @@ class FakeXPTransactionDao : XPTransactionDao {
 }
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36])
+@Config(sdk = [34])
 class ServerSideXpEngineTest {
 
     private lateinit var fakeDao: FakeXPTransactionDao

@@ -114,8 +114,28 @@ fun CorrectAnswerBurstEffect(
         BurstEffectType.fromDisplayName(effectName)
     }
 
+    // Auto-dismiss timer: Automatically reset and clear particles after 1.5 seconds
+    LaunchedEffect(trigger, effectName) {
+        if (trigger > 0) {
+            kotlinx.coroutines.delay(1500L)
+            particles.clear()
+            screenFlashAlpha = 0f
+            bigCheckProgress = 0f
+            isRunning = false
+            onFinished()
+        }
+    }
+
     // Drive physics and smooth frame loop
     LaunchedEffect(trigger, effectName) {
+        if (trigger <= 0) {
+            particles.clear()
+            screenFlashAlpha = 0f
+            bigCheckProgress = 0f
+            isRunning = false
+            return@LaunchedEffect
+        }
+
         particles.clear()
         screenFlashAlpha = 0f
         bigCheckProgress = 0f

@@ -9,7 +9,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36], application = AppApplication::class)
+@Config(sdk = [34], application = AppApplication::class)
 class MainActivityLaunchTest {
 
     @Test

@@ -20,13 +20,23 @@ import org.json.JSONObject
 object BillingPaymentManager {
     private const val TAG = "BillingPaymentManager"
 
-    // Connected Merchant Credentials
+    // Connected Merchant Credentials - Injected securely via BuildConfig
     var merchantName: String = "SOBHA DHANARAJU"
     var merchantId: String = "T89U1OXHFIQbHa"
     var accountId: String = "acc_T89U1OXHFIQbHa"
-    var razorpayKeyId: String = "rzp_live_T89U1OXHFIQbHa"
+    val configuredLiveKeyId: String get() = com.example.BuildConfig.RAZORPAY_KEY_ID
+    var razorpayKeyId: String = com.example.BuildConfig.RAZORPAY_KEY_ID
     var isLiveMode: Boolean = true
     var currency: String = "INR"
+
+    fun getMaskedKeyId(): String {
+        val key = razorpayKeyId.ifBlank { configuredLiveKeyId }
+        return if (key.length > 8) {
+            "${key.take(8)}••••••${key.takeLast(4)}"
+        } else {
+            "rzp_live_••••"
+        }
+    }
 
     // Active PaymentResultListener for screens observing callbacks
     var activePaymentResultListener: com.razorpay.PaymentResultListener? = null
@@ -46,40 +56,43 @@ object BillingPaymentManager {
 
     /**
      * Load saved merchant settings from SharedPreferences.
+     * Always ensures the build-configured live key ID is preserved.
      */
     fun loadMerchantConfig(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         merchantName = prefs.getString("merchant_name", merchantName) ?: merchantName
         merchantId = prefs.getString("merchant_id", merchantId) ?: merchantId
         accountId = prefs.getString("account_id", accountId) ?: accountId
-        razorpayKeyId = prefs.getString("razorpay_key_id", razorpayKeyId) ?: razorpayKeyId
-        isLiveMode = prefs.getBoolean("is_live_mode", isLiveMode)
+        // Always enforce BuildConfig live key ID to prevent tampering or corruption from local storage
+        razorpayKeyId = configuredLiveKeyId
+        isLiveMode = true
     }
 
     /**
      * Update merchant settings dynamically from Admin settings and persist to SharedPreferences.
+     * Note: Razorpay Live Key ID is locked to BuildConfig and cannot be overwritten via UI.
      */
     fun updateMerchantConfig(
         name: String = merchantName,
         mid: String = merchantId,
         accId: String = accountId,
-        keyId: String = razorpayKeyId,
-        live: Boolean = isLiveMode,
+        keyId: String = configuredLiveKeyId,
+        live: Boolean = true,
         context: Context? = null
     ) {
         merchantName = name.trim()
         merchantId = mid.trim()
         accountId = accId.trim()
-        razorpayKeyId = keyId.trim()
-        isLiveMode = live
+        razorpayKeyId = configuredLiveKeyId
+        isLiveMode = true
 
         val ctx = context ?: pendingContext
         ctx?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)?.edit()?.apply {
             putString("merchant_name", merchantName)
             putString("merchant_id", merchantId)
             putString("account_id", accountId)
-            putString("razorpay_key_id", razorpayKeyId)
-            putBoolean("is_live_mode", isLiveMode)
+            putString("razorpay_key_id", configuredLiveKeyId)
+            putBoolean("is_live_mode", true)
             apply()
         }
     }

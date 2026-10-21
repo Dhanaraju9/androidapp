@@ -135,11 +135,23 @@ fun LeftNavigationDrawerContent(
 
                 topCards.forEach { item ->
                     if (item.id == "my_profile") {
+                        val isSubActive = userProfile.isLoggedIn && (userProfile.isProSubscribed || userProfile.expiresAt > System.currentTimeMillis())
+                        val resolvedItem = if (isSubActive) {
+                            item.copy(
+                                badgeText = "PRO ⭐",
+                                badgeBgColorHex = 0xFFF59E0B,
+                                badgeTextColorHex = 0xFFFFFFFF
+                            )
+                        } else {
+                            item
+                        }
                         ExactDrawerCardItem(
-                            item = item,
+                            item = resolvedItem,
                             isDarkMode = isDarkMode,
                             customTitle = if (userProfile.isLoggedIn) userProfile.name else item.title,
-                            customSubtitle = if (userProfile.isLoggedIn) userProfile.email else item.subtitle,
+                            customSubtitle = if (userProfile.isLoggedIn) {
+                                if (isSubActive) "PRO Member • ${userProfile.email}" else userProfile.email
+                            } else item.subtitle,
                             onClick = {
                                 onCloseDrawer()
                                 onNavigateToProfile()

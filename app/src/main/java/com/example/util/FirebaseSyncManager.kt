@@ -83,8 +83,29 @@ object FirebaseSyncManager {
         }
     }
 
+    init {
+        try {
+            // Configure Firebase Auth settings for silent background verification
+            auth.setLanguageCode("en")
+        } catch (e: Exception) {
+            Log.w(TAG, "FirebaseAuth settings initialization: ${e.message}")
+        }
+    }
+
     /**
-     * Triggers Phone SMS OTP sending via Firebase Authentication.
+     * Enables or disables app verification for developer testing or emulator environments.
+     */
+    fun setAppVerificationDisabledForTesting(disabled: Boolean) {
+        try {
+            auth.firebaseAuthSettings.setAppVerificationDisabledForTesting(disabled)
+            Log.d(TAG, "FirebaseAuth app verification disabled for testing: $disabled")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not set app verification setting: ${e.message}")
+        }
+    }
+
+    /**
+     * Triggers Phone SMS OTP sending via Firebase Authentication with silent background verification.
      */
     fun sendSmsOtp(
         phoneNumber: String,

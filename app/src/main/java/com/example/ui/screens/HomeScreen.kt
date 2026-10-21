@@ -46,8 +46,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.repository.UserProgressRepository
 import com.example.viewmodel.PracticeStateViewModel
-import com.example.ui.components.ReportIssueDialog
-import com.example.ui.theme.SyllabusProTheme
+import com.example.ui.theme.CinzelFontFamily
+import com.example.ui.theme.PlayfairDisplayFontFamily
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -750,278 +750,134 @@ fun HomeScreen(
                                         border = null,
                                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                                     ) {
-                                        Column(
+                                        Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(Brush.linearGradient(colors = richGradient.colors))
+                                                .height(210.dp)
+                                                .clickable { openSubjectFullScreen() }
                                         ) {
+                                            // Full-Width Scenic Background Image clearly visible with minimal scrim
+                                            SubjectFhdCardImage(
+                                                subject = subject,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+
+                                            // Very light bottom gradient scrim for readability while keeping image fully clear
                                             Box(
                                                 modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(228.dp)
-                                                    .clickable { openSubjectFullScreen() }
-                                            ) {
-                                                // Full-Width Scenic Background Image relevant to each subject
-                                                SubjectFhdCardImage(
-                                                    subject = subject,
-                                                    modifier = Modifier.fillMaxSize()
-                                                )
-
-                                                // Subtle, lightweight readability scrim that keeps the scenic image bright and clearly visible across the entire card
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .background(
-                                                            Brush.horizontalGradient(
-                                                                colors = listOf(
-                                                                    Color(0x520F172A),
-                                                                    Color(0x240F172A),
-                                                                    Color.Transparent
-                                                                )
-                                                            )
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color.Transparent,
+                                                                Color(0x750F172A)
+                                                            ),
+                                                            startY = 80f
                                                         )
-                                                )
+                                                    )
+                                            )
 
-                                                Column(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(horizontal = 14.dp, vertical = 11.dp),
-                                                    verticalArrangement = Arrangement.SpaceBetween
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                                                verticalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Spacer(modifier = Modifier.height(1.dp))
+
+                                                // Middle: Only Subject Name
+                                                Column(modifier = Modifier.fillMaxWidth()) {
+                                                    Text(
+                                                        text = subject.name,
+                                                        fontFamily = CinzelFontFamily,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White,
+                                                        fontSize = 19.sp,
+                                                        lineHeight = 22.sp,
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+
+                                                // Bottom: Number of Units, Topics, Sets, MCQs
+                                                val setCount = remember(subject.id) {
+                                                    subject.units.sumOf { unit ->
+                                                        unit.topics.sumOf { topic ->
+                                                            val setsForTopic = SampleData.getPracticeSetsForTopic(subject.id, unit, topic)
+                                                            if (setsForTopic.isNotEmpty()) setsForTopic.size else maxOf(topic.practiceSetsCount, 2)
+                                                        }
+                                                    }
+                                                }
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    // Top Row: Clean Category Pill + Expand/Collapse circular button
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                    // 1. Units
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color(0xFFFFFBEB).copy(alpha = 0.95f),
+                                                        border = BorderStroke(1.dp, Color(0xFFF59E0B)),
+                                                        modifier = Modifier.height(26.dp)
                                                     ) {
-                                                        Surface(
-                                                            shape = RoundedCornerShape(50),
-                                                            color = Color.Transparent,
-                                                            border = BorderStroke(1.dp, Color(0xFFFDE68A).copy(alpha = 0.85f))
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
                                                         ) {
-                                                            Row(
-                                                                modifier = Modifier
-                                                                    .background(
-                                                                        Brush.horizontalGradient(
-                                                                            colors = listOf(
-                                                                                Color(0xFFFEF3C7).copy(alpha = 0.94f),
-                                                                                Color(0xFFFDE68A).copy(alpha = 0.94f)
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                    .padding(horizontal = 10.dp, vertical = 3.5.dp),
-                                                                verticalAlignment = Alignment.CenterVertically
-                                                            ) {
-                                                                Text(
-                                                                    text = "★ ",
-                                                                    color = Color(0xFFB45309),
-                                                                    fontSize = 10.5.sp,
-                                                                    fontWeight = FontWeight.Black
-                                                                )
-                                                                Text(
-                                                                    text = "PREMIUM • ${subject.displayCategoryLabel}",
-                                                                    color = Color(0xFF78350F),
-                                                                    fontSize = 10.sp,
-                                                                    fontWeight = FontWeight.Black,
-                                                                    letterSpacing = 0.4.sp
-                                                                )
-                                                            }
-                                                        }
-
-                                                        Surface(
-                                                            shape = CircleShape,
-                                                            color = Color.White.copy(alpha = 0.28f),
-                                                            border = BorderStroke(
-                                                                1.dp,
-                                                                Color.White.copy(alpha = 0.65f)
-                                                            ),
-                                                            modifier = Modifier
-                                                                .size(30.dp)
-                                                                .clip(CircleShape)
-                                                                .testTag("subject_expand_btn_${subject.id}")
-                                                                .clickable { openSubjectFullScreen() }
-                                                        ) {
-                                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                                Icon(
-                                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                                                    contentDescription = "Open Units",
-                                                                    tint = Color.White,
-                                                                    modifier = Modifier.size(16.dp)
-                                                                )
-                                                            }
+                                                            Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(text = "$unitCount Units", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
                                                         }
                                                     }
 
-                                                    // Middle Row: Compact Icon Badge + Readable Subject Title & Subtitle
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth(0.88f),
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                    // 2. Topics
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color(0xFFE0F2FE).copy(alpha = 0.95f),
+                                                        border = BorderStroke(1.dp, Color(0xFF38BDF8)),
+                                                        modifier = Modifier.height(26.dp)
                                                     ) {
-                                                        Surface(
-                                                            shape = RoundedCornerShape(12.dp),
-                                                            color = Color.White.copy(alpha = 0.22f),
-                                                            border = BorderStroke(1.2.dp, Color(0xFFFDE68A).copy(alpha = 0.9f)),
-                                                            modifier = Modifier.size(44.dp)
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
                                                         ) {
-                                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.MenuBook,
-                                                                    contentDescription = null,
-                                                                    tint = Color(0xFFFFFBEB),
-                                                                    modifier = Modifier.size(23.dp)
-                                                                )
-                                                            }
-                                                        }
-                                                        Spacer(modifier = Modifier.width(10.dp))
-                                                        Column(modifier = Modifier.weight(1f)) {
-                                                            Text(
-                                                                text = subject.name,
-                                                                color = Color.White,
-                                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                                    fontWeight = FontWeight.ExtraBold,
-                                                                    shadow = androidx.compose.ui.graphics.Shadow(
-                                                                        color = Color(0x99000000),
-                                                                        offset = Offset(0f, 2f),
-                                                                        blurRadius = 6f
-                                                                    )
-                                                                ),
-                                                                fontSize = 17.sp,
-                                                                lineHeight = 20.sp,
-                                                                maxLines = 2,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
+                                                            Icon(Icons.Default.Layers, contentDescription = null, tint = Color(0xFF0369A1), modifier = Modifier.size(11.dp))
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(text = "$topicCount Topics", color = Color(0xFF0C4A6E), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
                                                         }
                                                     }
 
-                                                    // Bottom Compact Bright High-Luminance Statistics Badges:
-                                                    // [Book: 2 Units] [Stacked Layers: 4 Topics] [Document/Checklist: 116 MCQs]
-                                                    val useLavenderMcqBadge = subIndex % 2 == 1
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                    // 3. Sets
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color(0xFFE8F5E9).copy(alpha = 0.95f),
+                                                        border = BorderStroke(1.dp, Color(0xFF34D399)),
+                                                        modifier = Modifier.height(26.dp)
                                                     ) {
-                                                        // Badge 1: Light Gold ("2 Units" with Book icon)
-                                                        Surface(
-                                                            shape = RoundedCornerShape(50),
-                                                            color = Color.Transparent,
-                                                            border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.7f)),
-                                                            shadowElevation = 1.dp,
-                                                            modifier = Modifier.height(26.dp)
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
                                                         ) {
-                                                            Row(
-                                                                modifier = Modifier
-                                                                    .background(
-                                                                        Brush.horizontalGradient(
-                                                                            colors = listOf(
-                                                                                Color(0xFFFFFBEB),
-                                                                                Color(0xFFFDE68A)
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.MenuBook,
-                                                                    contentDescription = null,
-                                                                    tint = Color(0xFFB45309),
-                                                                    modifier = Modifier.size(12.dp)
-                                                                )
-                                                                Spacer(modifier = Modifier.width(4.dp))
-                                                                Text(
-                                                                    text = "$unitCount Units",
-                                                                    color = Color(0xFF78350F),
-                                                                    fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.ExtraBold,
-                                                                    maxLines = 1
-                                                                )
-                                                            }
+                                                            Icon(Icons.Default.Checklist, contentDescription = null, tint = Color(0xFF047857), modifier = Modifier.size(11.dp))
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(text = "$setCount Sets", color = Color(0xFF064E3B), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
                                                         }
+                                                    }
 
-                                                        // Badge 2: Vivid Sky Blue ("4 Topics" with Stacked Layers icon)
-                                                        Surface(
-                                                            shape = RoundedCornerShape(50),
-                                                            color = Color.Transparent,
-                                                            border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.75f)),
-                                                            shadowElevation = 1.dp,
-                                                            modifier = Modifier.height(26.dp)
+                                                    // 4. MCQs
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color(0xFFFFFDE7).copy(alpha = 0.95f),
+                                                        border = BorderStroke(1.dp, Color(0xFFFFB300)),
+                                                        modifier = Modifier.height(26.dp)
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
                                                         ) {
-                                                            Row(
-                                                                modifier = Modifier
-                                                                    .background(
-                                                                        Brush.horizontalGradient(
-                                                                            colors = listOf(
-                                                                                Color(0xFFE0F2FE),
-                                                                                Color(0xFF7DD3FC)
-                                                                            )
-                                                                        )
-                                                                    )
-                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.Layers,
-                                                                    contentDescription = null,
-                                                                    tint = Color(0xFF0369A1),
-                                                                    modifier = Modifier.size(12.dp)
-                                                                )
-                                                                Spacer(modifier = Modifier.width(4.dp))
-                                                                Text(
-                                                                    text = "$topicCount Topics",
-                                                                    color = Color(0xFF0C4A6E),
-                                                                    fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.ExtraBold,
-                                                                    maxLines = 1
-                                                                )
-                                                            }
-                                                        }
-
-                                                        // Badge 3: Bright Mint Green / Luminous Lavender ("116 MCQs" with Document/Checklist icon)
-                                                        Surface(
-                                                            shape = RoundedCornerShape(50),
-                                                            color = Color.Transparent,
-                                                            border = BorderStroke(
-                                                                1.dp,
-                                                                if (useLavenderMcqBadge) Color(0xFFC084FC).copy(alpha = 0.75f)
-                                                                else Color(0xFF34D399).copy(alpha = 0.75f)
-                                                            ),
-                                                            shadowElevation = 1.dp,
-                                                            modifier = Modifier.height(26.dp)
-                                                        ) {
-                                                            Row(
-                                                                modifier = Modifier
-                                                                    .background(
-                                                                        Brush.horizontalGradient(
-                                                                            colors = if (useLavenderMcqBadge) {
-                                                                                listOf(Color(0xFFF3E8FF), Color(0xFFD8B4FE))
-                                                                            } else {
-                                                                                listOf(Color(0xFFD1FAE5), Color(0xFF6EE7B7))
-                                                                            }
-                                                                        )
-                                                                    )
-                                                                    .padding(horizontal = 9.dp, vertical = 3.dp),
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.FactCheck,
-                                                                    contentDescription = null,
-                                                                    tint = if (useLavenderMcqBadge) Color(0xFF6B21A8) else Color(0xFF047857),
-                                                                    modifier = Modifier.size(12.dp)
-                                                                )
-                                                                Spacer(modifier = Modifier.width(4.dp))
-                                                                Text(
-                                                                    text = "$questionCount MCQs",
-                                                                    color = if (useLavenderMcqBadge) Color(0xFF4C1D95) else Color(0xFF064E3B),
-                                                                    fontSize = 11.sp,
-                                                                    fontWeight = FontWeight.ExtraBold,
-                                                                    maxLines = 1
-                                                                )
-                                                            }
+                                                            Icon(Icons.Default.FactCheck, contentDescription = null, tint = Color(0xFFB45309), modifier = Modifier.size(11.dp))
+                                                            Spacer(modifier = Modifier.width(3.dp))
+                                                            Text(text = "$questionCount MCQs", color = Color(0xFF78350F), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
                                                         }
                                                     }
                                                 }
@@ -2413,11 +2269,11 @@ fun HomeLiveContentDashboard(
 
     val liveColor = Color(0xFF10B981)
     val liveDotInnerColor = Color(0xFF34D399)
-    // Live Content Dashboard: plain warm cream matching the uploaded reference.
-    val containerBgStart = Color(0xFFFFF0D9)
-    val containerBgEnd = Color(0xFFFFF0D9)
-    val containerBorder = Color(0xFFE5B943)
-    val liveBankBtnColor = Color(0xFF16A34A)
+    // Live Content Dashboard: plain rose color scheme.
+    val containerBgStart = Color(0xFFFFF1F2)
+    val containerBgEnd = Color(0xFFFFE4E6)
+    val containerBorder = Color(0xFFFB7185)
+    val liveBankBtnColor = Color(0xFFE11D48)
 
     val beaconInfiniteTransition = rememberInfiniteTransition(label = "beaconPulse")
     val beaconPulseScale by beaconInfiniteTransition.animateFloat(

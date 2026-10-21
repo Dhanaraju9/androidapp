@@ -735,7 +735,10 @@ private fun DedicatedFaqView(
             SupportFaq("df_5", "What secure payment gateways are supported?", "We support UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit cards, Net Banking via Razorpay, and Google Play Billing.", order = 5),
             SupportFaq("df_6", "Payment was debited but subscription is not unlocked.", "Tap the WhatsApp Support card (+91 94935 12768) or email Sobhadhanaraju1@gmail.com with your UPI Reference / Transaction ID for priority manual activation.", order = 6),
             SupportFaq("df_7", "How do I report an error in an MCQ or Mock Test?", "Inside any practice or mock test screen, tap the Flag icon on the question card to submit a report to our academic verification team or message us on WhatsApp.", order = 7),
-            SupportFaq("df_8", "Can I pause an active mock test and resume later?", "Yes! Practice and mock sessions auto-save locally so you can resume right where you left off.", order = 8)
+            SupportFaq("df_8", "Can I pause an active mock test and resume later?", "Yes! Practice and mock sessions auto-save locally so you can resume right where you left off.", order = 8),
+            SupportFaq("df_9", "What is the ₹99 Offline Subscription Plan and how does it work?", "The ₹99 Offline Pass allows you to download and practice MCQs offline without an internet connection. Once active, you can access downloaded content through Sets, Subtopics, and Downloaded Materials anytime.", order = 9),
+            SupportFaq("df_10", "What is the validity period of the ₹99 Offline Pass?", "The validity period of your ₹99 Offline Pass automatically aligns with your existing active subscription plan duration.", order = 10),
+            SupportFaq("df_11", "What happens when the ₹99 Offline Pass expires?", "Upon expiry of your offline pass, offline access to downloaded materials is paused until renewal. However, you will still be able to practice MCQs online anytime for free.", order = 11)
         )
     }
 

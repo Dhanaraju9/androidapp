@@ -111,7 +111,7 @@ data class CentralizedTenantConfig(
     val maintenanceMode: Boolean = false,
     val maintenanceMessage: String = "",
     val apiBaseUrl: String = "https://api.aspirantportal.com",
-    val razorpayKeyId: String = "", // Client-safe public key only
+    val razorpayKeyId: String = com.example.BuildConfig.RAZORPAY_KEY_ID, // Client-safe public key only
     val branding: TenantBranding,
     val featureFlags: TenantFeatureFlags = TenantFeatureFlags(),
     val themeProperties: TenantThemeProperties = TenantThemeProperties(),

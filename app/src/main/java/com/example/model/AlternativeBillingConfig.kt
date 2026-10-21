@@ -38,7 +38,7 @@ data class AlternativeBillingConfig(
     val merchantName: String = "SOBHA DHANARAJU",
     val merchantId: String = "T89U1OXHFIQbHa",
     val accountId: String = "acc_T89U1OXHFIQbHa",
-    val razorpayKeyId: String = "rzp_live_T89U1OXHFIQbHa",
+    val razorpayKeyId: String = com.example.BuildConfig.RAZORPAY_KEY_ID,
     val currency: String = "INR",
     val termsUrl: String = "https://appscprep.com/terms",
     val privacyUrl: String = "https://appscprep.com/privacy",

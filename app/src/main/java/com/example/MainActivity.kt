@@ -338,6 +338,26 @@ fun AppNavigationHost() {
         }
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val userProfile by SampleData.userProfileState
+    LaunchedEffect(userProfile.isLoggedIn) {
+        if (!userProfile.isLoggedIn && currentScreen !is AppScreen.Login && currentScreen !is AppScreen.Splash) {
+            screenHistory = emptyList()
+            currentScreen = AppScreen.Login
+        }
+    }
+
+    val checkOfflineAccessAndProceed: (() -> Unit) -> Unit = { onProceed ->
+        val profile = SampleData.userProfileState.value
+        val hasActiveOfflineSub = profile.isLoggedIn && (profile.isProSubscribed || profile.expiresAt > System.currentTimeMillis())
+        if (hasActiveOfflineSub) {
+            onProceed()
+        } else {
+            android.widget.Toast.makeText(context, "Active ₹99 Offline Subscription required to access downloaded MCQs offline.", android.widget.Toast.LENGTH_LONG).show()
+            navigateTo(AppScreen.Subscription)
+        }
+    }
+
     BackHandler(enabled = currentScreen != AppScreen.Home && currentScreen != AppScreen.Splash) {
         goBack()
     }
@@ -588,15 +608,17 @@ fun AppNavigationHost() {
                     DownloadedMaterialsScreen(
                         onBack = { goBack() },
                         onStartPractice = { subId, unitId, topicId, setName ->
-                            navigateTo(
-                                AppScreen.PracticeArena(
-                                    subjectId = subId,
-                                    unitId = unitId,
-                                    topicId = topicId,
-                                    setName = setName.ifBlank { "Downloaded MCQ Set" },
-                                    sectionType = com.example.model.PracticeSectionType.OFFLINE
+                            checkOfflineAccessAndProceed {
+                                navigateTo(
+                                    AppScreen.PracticeArena(
+                                        subjectId = subId,
+                                        unitId = unitId,
+                                        topicId = topicId,
+                                        setName = setName.ifBlank { "Downloaded MCQ Set" },
+                                        sectionType = com.example.model.PracticeSectionType.OFFLINE
+                                    )
                                 )
-                            )
+                            }
                         }
                     )
                 }
@@ -607,6 +629,28 @@ fun AppNavigationHost() {
 
 
                 is AppScreen.PracticeArena -> {
+                    val resolvedSectionType = screen.sectionType ?: when {
+                        com.example.util.OfflineSyncManager.isOfflineModeSimulated.value -> PracticeSectionType.OFFLINE
+                        screen.subjectId == "subj-current-affairs" -> PracticeSectionType.CURRENT_AFFAIRS
+                        screen.subtopicId.isNotBlank() || screen.subtopicTitle.isNotBlank() -> PracticeSectionType.SUBTOPICS
+                        else -> PracticeSectionType.SETS
+                    }
+
+                    if (resolvedSectionType == PracticeSectionType.OFFLINE) {
+                        val profile = SampleData.userProfileState.value
+                        val hasActiveOfflineSub = profile.isLoggedIn && (profile.isProSubscribed || profile.expiresAt > System.currentTimeMillis())
+                        if (!hasActiveOfflineSub) {
+                            LaunchedEffect(Unit) {
+                                android.widget.Toast.makeText(context, "Active ₹99 Offline Subscription required to access downloaded MCQs offline.", android.widget.Toast.LENGTH_LONG).show()
+                                navigateTo(AppScreen.Subscription)
+                            }
+                            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                androidx.compose.material3.CircularProgressIndicator()
+                            }
+                            return@SaveableStateProvider
+                        }
+                    }
+
                     val questions = remember(
                         screen.subjectId,
                         screen.unitId,
@@ -758,15 +802,17 @@ fun AppNavigationHost() {
                         onBack = { goBack() },
                         onNavigateToHome = { navigateToHome() },
                         onStartPractice = { subId, unitId, topicId, setName ->
-                            navigateTo(
-                                AppScreen.PracticeArena(
-                                    subjectId = subId,
-                                    unitId = unitId,
-                                    topicId = topicId,
-                                    setName = setName.ifBlank { "Offline Practice Set" },
-                                    sectionType = PracticeSectionType.OFFLINE
+                            checkOfflineAccessAndProceed {
+                                navigateTo(
+                                    AppScreen.PracticeArena(
+                                        subjectId = subId,
+                                        unitId = unitId,
+                                        topicId = topicId,
+                                        setName = setName.ifBlank { "Offline Practice Set" },
+                                        sectionType = PracticeSectionType.OFFLINE
+                                    )
                                 )
-                            )
+                            }
                         }
                     )
                 }

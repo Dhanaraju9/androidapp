@@ -2377,7 +2377,7 @@ object SampleData {
     var userProfileState = mutableStateOf(UserProfileModel(
         name = "Aspirant",
         email = "candidate@prep.portal",
-        phone = "9876543210",
+        phone = "",
         district = "Visakhapatnam",
         targetExam = "Prep Portal",
         targetAppId = "andhra-pradesh-ap-tet-en",
@@ -3714,6 +3714,24 @@ object SampleData {
             id = "faq_latest_syllabus",
             question = "Are the questions based on the latest syllabus?",
             answer = "Yes! Our content team updates the question bank regularly based on the official notifications issued by the respective exam boards.",
+            mappedAppIds = emptyList()
+        ),
+        SupportFaq(
+            id = "faq_offline_99_plan",
+            question = "What is the ₹99 Offline Subscription Plan and how does it work?",
+            answer = "The ₹99 Offline Pass allows you to download and practice MCQs offline without an internet connection. Once active, you can access downloaded content through Sets, Subtopics, and Downloaded Materials anytime.",
+            mappedAppIds = emptyList()
+        ),
+        SupportFaq(
+            id = "faq_offline_99_validity",
+            question = "What is the validity period of the ₹99 Offline Pass?",
+            answer = "The validity period of your ₹99 Offline Pass automatically aligns with your existing active subscription plan duration.",
+            mappedAppIds = emptyList()
+        ),
+        SupportFaq(
+            id = "faq_offline_99_expiry",
+            question = "What happens when the ₹99 Offline Pass expires?",
+            answer = "Upon expiry of your offline pass, offline access to downloaded materials is paused until renewal. However, you will still be able to practice MCQs online anytime for free.",
             mappedAppIds = emptyList()
         )
     )

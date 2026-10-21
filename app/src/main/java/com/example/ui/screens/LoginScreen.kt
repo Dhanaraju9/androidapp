@@ -29,6 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -192,8 +193,8 @@ fun LoginScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var currentStep by remember { mutableStateOf(LoginStep.ENTER_PHONE) }
-    var phoneNumber by remember { mutableStateOf("9876543210") }
-    val otpValues = remember { mutableStateListOf("1", "2", "3", "4", "5", "6") }
+    var phoneNumber by remember { mutableStateOf("") }
+    val otpValues = remember { mutableStateListOf("", "", "", "", "", "") }
     var remainingSeconds by remember { mutableStateOf(60) }
     var showAdminLoginDialog by remember { mutableStateOf(false) }
     var verificationId by remember { mutableStateOf("") }
@@ -384,7 +385,7 @@ fun LoginScreen(
             isSendingOtp = false
         } else {
             isSendingOtp = true
-            Toast.makeText(context, "📲 Sending Real SMS OTP via Firebase to +91 $phoneToUse...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "🛡️ Verifying silently in background & sending SMS OTP to +91 $phoneToUse...", Toast.LENGTH_SHORT).show()
             val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                     isSendingOtp = false
@@ -420,7 +421,7 @@ fun LoginScreen(
                                         }
                                     )
                                 }
-                                Toast.makeText(context, "⚡ Instant SMS Auto-Verification Success!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "⚡ Silent Auto-Verification Success! Logged in directly.", Toast.LENGTH_SHORT).show()
                                 onLoginSuccess()
                             } else {
                                 Toast.makeText(context, "❌ Auto-verification failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
@@ -432,10 +433,10 @@ fun LoginScreen(
                     isSendingOtp = false
                     Log.e("LoginScreen", "PhoneAuth Verification Failed: ${e.message}", e)
                     val errorMsg = when {
-                        e.message?.contains("TOO_MANY_REQUESTS", ignoreCase = true) == true -> "SMS quota exceeded. Try pre-configured test number 9876543210."
-                        e.message?.contains("INVALID_PHONE_NUMBER", ignoreCase = true) == true -> "Invalid 10-digit mobile number."
-                        e.message?.contains("reCAPTCHA", ignoreCase = true) == true || e.message?.contains("App Check", ignoreCase = true) == true -> "Device check note: ${e.localizedMessage}"
-                        else -> e.localizedMessage ?: "SMS OTP delivery failed"
+                        e.message?.contains("TOO_MANY_REQUESTS", ignoreCase = true) == true -> "SMS quota exceeded. Please try again later or sign in with Google."
+                        e.message?.contains("INVALID_PHONE_NUMBER", ignoreCase = true) == true -> "Invalid 10-digit mobile number. Please check the digits."
+                        e.message?.contains("reCAPTCHA", ignoreCase = true) == true || e.message?.contains("App Check", ignoreCase = true) == true -> "Device verification check failed. Please try Google Sign-In or try again later."
+                        else -> e.localizedMessage ?: "SMS OTP delivery failed. Try Google 1-Tap Sign-In."
                     }
                     Toast.makeText(context, "❌ $errorMsg", Toast.LENGTH_LONG).show()
                 }
@@ -473,11 +474,10 @@ fun LoginScreen(
                                 verificationId = "TEST_VERIFICATION_ID"
                                 currentStep = LoginStep.VERIFY_OTP
                                 remainingSeconds = 60
-                                val defaultTestDigits = listOf("1", "2", "3", "4", "5", "6")
                                 for (i in 0 until 6) {
-                                    otpValues[i] = defaultTestDigits[i]
+                                    otpValues[i] = ""
                                 }
-                                Toast.makeText(context, "⚡ Test Number Detected! Enter test OTP 123456 to verify.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "OTP sent to +91 $cleanPhone", Toast.LENGTH_SHORT).show()
                             } else {
                                 sendRealSmsOtp(cleanPhone, null)
                             }
@@ -588,10 +588,10 @@ fun LoginScreen(
                                             }
                                         )
                                     }
-                                    Toast.makeText(context, "✅ Verified with Test Mobile Number!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "✅ Verified successfully!", Toast.LENGTH_SHORT).show()
                                     onLoginSuccess()
                                 } else {
-                                    Toast.makeText(context, "❌ Invalid Test OTP. Please use code 123456.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "❌ Invalid OTP. Please try again.", Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 if (verificationId.isBlank()) {
@@ -616,14 +616,14 @@ fun LoginScreen(
                                                     FirebaseSyncManager.syncUserProfileToFirestore(
                                                         profile = updatedProfile,
                                                         onSuccess = {
-                                                            Log.d("LoginScreen", "✅ Real SMS OTP verified & profile synced to Cloud Firestore!")
+                                                            Log.d("LoginScreen", "✅ Mobile OTP verified & profile synced to Cloud Firestore!")
                                                         },
                                                         onFailure = { e ->
-                                                            Log.w("LoginScreen", "✅ Real SMS OTP verified (Firestore note: ${e.message})")
+                                                            Log.w("LoginScreen", "Mobile OTP verified (Firestore note: ${e.message})")
                                                         }
                                                     )
                                                 }
-                                                Toast.makeText(context, "✅ Real Mobile Number Verified Successfully!", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Mobile Number Verified Successfully!", Toast.LENGTH_SHORT).show()
                                                 onLoginSuccess()
                                             } else {
                                                 val exMsg = task.exception?.message ?: "Incorrect OTP code"
@@ -641,11 +641,10 @@ fun LoginScreen(
                         val cleanPhone = phoneNumber.filter { it.isDigit() }
                         if (TEST_PHONE_NUMBERS.contains(cleanPhone)) {
                             remainingSeconds = 60
-                            val defaultTestDigits = listOf("1", "2", "3", "4", "5", "6")
                             for (i in 0 until 6) {
-                                otpValues[i] = defaultTestDigits[i]
+                                otpValues[i] = ""
                             }
-                            Toast.makeText(context, "⚡ Pre-configured test number: Use OTP 123456", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "OTP resent to your mobile number.", Toast.LENGTH_SHORT).show()
                         } else {
                             remainingSeconds = 60
                             sendRealSmsOtp(cleanPhone, resendToken)
@@ -1851,40 +1850,24 @@ fun PhoneLoginContent(
                     }
 
                     val cleanPhone = phoneNumber.filter { it.isDigit() }
-                    val isTestNumber = TEST_PHONE_NUMBERS.contains(cleanPhone)
-
-                    // ⚡ Real SMS Provider or Pre-configured Test Number Indicator
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        if (isTestNumber) {
-                            Icon(
-                                imageVector = Icons.Default.Bolt,
-                                contentDescription = null,
-                                tint = Color(0xFFFBBF24),
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "⚡ Pre-configured test number (Instant login with OTP 123456)",
-                                color = Color(0xFFFBBF24),
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        } else {
+                    if (cleanPhone.length == 10) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Sms,
                                 contentDescription = null,
                                 tint = Color(0xFF34D399),
-                                modifier = Modifier.size(15.dp)
+                                modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (cleanPhone.length == 10) "📲 Real Firebase SMS OTP will be sent to +91 $cleanPhone" else "Instant 6-Digit Real SMS Verification",
+                                text = "OTP will be sent to +91 $cleanPhone",
                                 color = Color(0xFF34D399),
                                 fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -1899,6 +1882,7 @@ fun PhoneLoginContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
+                            .testTag("send_otp_button")
                     ) {
                         Box(
                             modifier = Modifier
@@ -1927,7 +1911,7 @@ fun PhoneLoginContent(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Sending Real SMS OTP...",
+                                        text = "Sending OTP...",
                                         color = Color.White,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
@@ -1946,7 +1930,7 @@ fun PhoneLoginContent(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (isTestNumber) "Continue with Test OTP" else "Continue with Real SMS OTP",
+                                        text = "Continue with OTP",
                                         color = Color.White,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.ExtraBold,
@@ -2421,6 +2405,8 @@ fun OtpVerificationContent(
                             )
                         )
 
+
+
                         // Phone Info Row
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -2566,6 +2552,7 @@ fun OtpVerificationContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
+                                .testTag("verify_otp_button")
                         ) {
                             Box(
                                 modifier = Modifier

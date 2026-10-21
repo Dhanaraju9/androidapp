@@ -214,6 +214,7 @@ fun OfflineSubjectDetailScreen(
                     isDownloaded = isSubjectDownloaded,
                     onBack = onBack,
                     onNavigateToHome = onNavigateToHome,
+                    onStartPractice = { onStartPractice(subject.id, "", "", "") },
                     onDownloadEntireSubject = {
                         OfflineSyncManager.downloadSubject(
                             context = context,
@@ -421,6 +422,7 @@ private fun SubjectHeroHeader(
     isDownloaded: Boolean,
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit = {},
+    onStartPractice: () -> Unit = {},
     onDownloadEntireSubject: () -> Unit,
     onRemoveEntireSubject: () -> Unit
 ) {
@@ -530,11 +532,11 @@ private fun SubjectHeroHeader(
             ) {
                 if (isDownloaded) {
                     Button(
-                        onClick = {},
-                        enabled = false,
+                        onClick = onStartPractice,
+                        enabled = true,
                         colors = ButtonDefaults.buttonColors(
-                            disabledContainerColor = Color(0xFF10B981),
-                            disabledContentColor = Color.White
+                            containerColor = Color(0xFF10B981),
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
@@ -548,7 +550,7 @@ private fun SubjectHeroHeader(
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
-                            Text("Entire Subject Downloaded", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                            Text("Practice Subject MCQs", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 

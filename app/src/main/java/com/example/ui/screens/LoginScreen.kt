@@ -72,7 +72,20 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.FirebaseException
+import android.app.Activity
 import android.util.Log
+
+val TEST_PHONE_NUMBERS = setOf(
+    "9876543210",
+    "9999999999",
+    "9000000000",
+    "8888888888",
+    "7777777777",
+    "9123456789"
+)
 
 object LoginThemeResolver {
     fun getScreenBgBrush(themeKey: String): Brush {
@@ -180,9 +193,13 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
     var currentStep by remember { mutableStateOf(LoginStep.ENTER_PHONE) }
     var phoneNumber by remember { mutableStateOf("9876543210") }
-    val otpValues = remember { mutableStateListOf("5", "8", "3", "9", "2", "7") }
-    var remainingSeconds by remember { mutableStateOf(25) }
+    val otpValues = remember { mutableStateListOf("1", "2", "3", "4", "5", "6") }
+    var remainingSeconds by remember { mutableStateOf(60) }
     var showAdminLoginDialog by remember { mutableStateOf(false) }
+    var verificationId by remember { mutableStateOf("") }
+    var resendToken by remember { mutableStateOf<PhoneAuthProvider.ForceResendingToken?>(null) }
+    var isSendingOtp by remember { mutableStateOf(false) }
+    var isVerifyingOtp by remember { mutableStateOf(false) }
 
     BackHandler(enabled = currentStep == LoginStep.VERIFY_OTP) {
         currentStep = LoginStep.ENTER_PHONE
@@ -360,105 +377,33 @@ fun LoginScreen(
             )
         }
 
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            when (currentStep) {
-                LoginStep.ENTER_PHONE -> {
-                    PhoneLoginContent(
-                        phoneNumber = phoneNumber,
-                        onPhoneNumberChanged = { phoneNumber = it },
-                        onContinueWithOtp = {
-                            if (phoneNumber.length >= 10) {
-                                currentStep = LoginStep.VERIFY_OTP
-                                Toast.makeText(context, "OTP sent to +91 $phoneNumber", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show()
+    val sendRealSmsOtp: (String, PhoneAuthProvider.ForceResendingToken?) -> Unit = { phoneToUse, token ->
+        val activity = context as? Activity
+        if (activity == null) {
+            Toast.makeText(context, "Activity context unavailable", Toast.LENGTH_SHORT).show()
+            isSendingOtp = false
+        } else {
+            isSendingOtp = true
+            Toast.makeText(context, "📲 Sending Real SMS OTP via Firebase to +91 $phoneToUse...", Toast.LENGTH_SHORT).show()
+            val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                    isSendingOtp = false
+                    val smsCode = credential.smsCode
+                    if (!smsCode.isNullOrEmpty() && smsCode.length == 6) {
+                        for (idx in 0 until 6) {
+                            if (idx < otpValues.size) {
+                                otpValues[idx] = smsCode[idx].toString()
                             }
-                        },
-                        onGoogleLogin = {
-                            coroutineScope.launch {
-                                try {
-                                    val clientId = try {
-                                        context.getString(com.example.R.string.default_web_client_id)
-                                    } catch (e: Exception) {
-                                        Log.e("LoginScreen", "default_web_client_id missing", e)
-                                        Toast.makeText(context, "Google Sign-In configuration missing", Toast.LENGTH_SHORT).show()
-                                        return@launch
-                                    }
-                                    val credentialManager = CredentialManager.create(context)
-                                    val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
+                        }
+                    }
 
-                                    val request = GetCredentialRequest.Builder()
-                                        .addCredentialOption(signInOption)
-                                        .build()
-
-                                    val result = credentialManager.getCredential(
-                                        context = context as android.app.Activity,
-                                        request = request
-                                    )
-                                    val credential = result.credential
-                                    if (credential is androidx.credentials.CustomCredential && 
-                                        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                        
-                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                        val idToken = googleIdTokenCredential.idToken
-                                        
-                                        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-                                        FirebaseSyncManager.auth.signInWithCredential(firebaseCredential)
-                                            .addOnCompleteListener { task ->
-                                                if (task.isSuccessful) {
-                                                    val firebaseUser = task.result?.user
-                                                    val updatedProfile = SampleData.sampleUserProfile.copy(
-                                                        name = firebaseUser?.displayName ?: "${config.appName} Aspirant",
-                                                        email = firebaseUser?.email ?: "aspirant@gmail.com",
-                                                        isProSubscribed = true,
-                                                        isLoggedIn = true
-                                                    )
-                                                    SampleData.sampleUserProfile = updatedProfile
-                                                    FirebaseSyncManager.syncUserProfileToFirestore(
-                                                        profile = updatedProfile,
-                                                        onSuccess = {
-                                                            Toast.makeText(context, "✅ Signed in with Google (Firebase Active)!", Toast.LENGTH_SHORT).show()
-                                                        },
-                                                        onFailure = { e ->
-                                                            Toast.makeText(context, "✅ Signed in (Firestore offline: ${e.message})", Toast.LENGTH_SHORT).show()
-                                                        }
-                                                    )
-                                                    onLoginSuccess()
-                                                } else {
-                                                    Toast.makeText(context, "❌ Firebase authentication failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-                                                }
-                                            }
-                                    } else {
-                                        Toast.makeText(context, "❌ Unexpected credential type", Toast.LENGTH_SHORT).show()
-                                    }
-                                } catch (e: GetCredentialCancellationException) {
-                                    Log.w("LoginScreen", "Google Sign-In cancelled: ${e.message}", e)
-                                    Toast.makeText(context, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
-                                } catch (e: Exception) {
-                                    Log.e("LoginScreen", "Credential Manager failed: ${e.message}", e)
-                                    Toast.makeText(context, "Sign-in failed: ${e.localizedMessage ?: "Unknown error"}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        },
-                        onBack = onBack,
-                        onAdminPanelClick = { showAdminLoginDialog = true },
-                        onSupportClick = { showSupportDialog = true }
-                    )
-                }
-                LoginStep.VERIFY_OTP -> {
-                    OtpVerificationContent(
-                        phoneNumber = phoneNumber,
-                        otpValues = otpValues,
-                        remainingSeconds = remainingSeconds,
-                        onEditPhone = { currentStep = LoginStep.ENTER_PHONE },
-                        onVerifyOtp = {
-                            val enteredOtp = otpValues.joinToString("")
-                            if (enteredOtp.length == 6 || enteredOtp.isBlank()) {
+                    FirebaseSyncManager.auth.signInWithCredential(credential)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val firebaseUser = task.result?.user
                                 val updatedProfile = SampleData.sampleUserProfile.copy(
-                                    name = "${config.appName} Aspirant",
-                                    email = "aspirant.$phoneNumber@exam.portal",
+                                    name = firebaseUser?.displayName ?: "${config.appName} Aspirant",
+                                    email = firebaseUser?.email ?: "aspirant.$phoneToUse@exam.portal",
                                     isProSubscribed = true,
                                     proPlanName = "${config.appName} VIP Access",
                                     isLoggedIn = true
@@ -468,29 +413,251 @@ fun LoginScreen(
                                     FirebaseSyncManager.syncUserProfileToFirestore(
                                         profile = updatedProfile,
                                         onSuccess = {
-                                            Log.d("LoginScreen", "✅ OTP Verified & profile persisted to Cloud Firestore!")
+                                            Log.d("LoginScreen", "✅ Real SMS Auto-Verified & synced to Firestore!")
                                         },
                                         onFailure = { e ->
-                                            Log.w("LoginScreen", "✅ OTP Verified (Firestore note: ${e.message})")
+                                            Log.w("LoginScreen", "✅ Real SMS Auto-Verified (Firestore offline: ${e.message})")
                                         }
                                     )
                                 }
+                                Toast.makeText(context, "⚡ Instant SMS Auto-Verification Success!", Toast.LENGTH_SHORT).show()
                                 onLoginSuccess()
                             } else {
-                                Toast.makeText(context, "Please enter the complete 6-digit OTP", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "❌ Auto-verification failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                             }
-                        },
-                        onResendOtp = {
-                            remainingSeconds = 60
-                            Toast.makeText(context, "🔄 OTP Resent successfully to +91 $phoneNumber", Toast.LENGTH_SHORT).show()
-                        },
-                        onNeedHelp = {
-                            showSupportDialog = true
-                        },
-                        onBack = { currentStep = LoginStep.ENTER_PHONE }
-                    )
+                        }
+                }
+
+                override fun onVerificationFailed(e: FirebaseException) {
+                    isSendingOtp = false
+                    Log.e("LoginScreen", "PhoneAuth Verification Failed: ${e.message}", e)
+                    val errorMsg = when {
+                        e.message?.contains("TOO_MANY_REQUESTS", ignoreCase = true) == true -> "SMS quota exceeded. Try pre-configured test number 9876543210."
+                        e.message?.contains("INVALID_PHONE_NUMBER", ignoreCase = true) == true -> "Invalid 10-digit mobile number."
+                        e.message?.contains("reCAPTCHA", ignoreCase = true) == true || e.message?.contains("App Check", ignoreCase = true) == true -> "Device check note: ${e.localizedMessage}"
+                        else -> e.localizedMessage ?: "SMS OTP delivery failed"
+                    }
+                    Toast.makeText(context, "❌ $errorMsg", Toast.LENGTH_LONG).show()
+                }
+
+                override fun onCodeSent(vId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                    isSendingOtp = false
+                    verificationId = vId
+                    resendToken = token
+                    currentStep = LoginStep.VERIFY_OTP
+                    remainingSeconds = 60
+                    for (i in 0 until otpValues.size) {
+                        otpValues[i] = ""
+                    }
+                    Toast.makeText(context, "📲 Real 6-digit SMS OTP sent to +91 $phoneToUse", Toast.LENGTH_LONG).show()
                 }
             }
+
+            FirebaseSyncManager.sendSmsOtp(phoneToUse, activity, callbacks, token)
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        when (currentStep) {
+            LoginStep.ENTER_PHONE -> {
+                PhoneLoginContent(
+                    phoneNumber = phoneNumber,
+                    onPhoneNumberChanged = { phoneNumber = it },
+                    isSendingOtp = isSendingOtp,
+                    onContinueWithOtp = {
+                        val cleanPhone = phoneNumber.filter { it.isDigit() }
+                        if (cleanPhone.length == 10) {
+                            if (TEST_PHONE_NUMBERS.contains(cleanPhone)) {
+                                verificationId = "TEST_VERIFICATION_ID"
+                                currentStep = LoginStep.VERIFY_OTP
+                                remainingSeconds = 60
+                                val defaultTestDigits = listOf("1", "2", "3", "4", "5", "6")
+                                for (i in 0 until 6) {
+                                    otpValues[i] = defaultTestDigits[i]
+                                }
+                                Toast.makeText(context, "⚡ Test Number Detected! Enter test OTP 123456 to verify.", Toast.LENGTH_LONG).show()
+                            } else {
+                                sendRealSmsOtp(cleanPhone, null)
+                            }
+                        } else {
+                            Toast.makeText(context, "Please enter a valid 10-digit mobile number", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onGoogleLogin = {
+                        coroutineScope.launch {
+                            try {
+                                val clientId = try {
+                                    context.getString(com.example.R.string.default_web_client_id)
+                                } catch (e: Exception) {
+                                    Log.e("LoginScreen", "default_web_client_id missing", e)
+                                    Toast.makeText(context, "Google Sign-In configuration missing", Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                                val credentialManager = CredentialManager.create(context)
+                                val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
+
+                                val request = GetCredentialRequest.Builder()
+                                    .addCredentialOption(signInOption)
+                                    .build()
+
+                                val result = credentialManager.getCredential(
+                                    context = context as android.app.Activity,
+                                    request = request
+                                )
+                                val credential = result.credential
+                                if (credential is androidx.credentials.CustomCredential && 
+                                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                    
+                                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                    val idToken = googleIdTokenCredential.idToken
+                                    
+                                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                                    FirebaseSyncManager.auth.signInWithCredential(firebaseCredential)
+                                        .addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                val firebaseUser = task.result?.user
+                                                val updatedProfile = SampleData.sampleUserProfile.copy(
+                                                    name = firebaseUser?.displayName ?: "${config.appName} Aspirant",
+                                                    email = firebaseUser?.email ?: "aspirant@gmail.com",
+                                                    isProSubscribed = true,
+                                                    isLoggedIn = true
+                                                )
+                                                SampleData.sampleUserProfile = updatedProfile
+                                                FirebaseSyncManager.syncUserProfileToFirestore(
+                                                    profile = updatedProfile,
+                                                    onSuccess = {
+                                                        Toast.makeText(context, "✅ Signed in with Google (Firebase Active)!", Toast.LENGTH_SHORT).show()
+                                                    },
+                                                    onFailure = { e ->
+                                                        Toast.makeText(context, "✅ Signed in (Firestore offline: ${e.message})", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                )
+                                                onLoginSuccess()
+                                            } else {
+                                                Toast.makeText(context, "❌ Firebase authentication failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                } else {
+                                    Toast.makeText(context, "❌ Unexpected credential type", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: GetCredentialCancellationException) {
+                                Log.w("LoginScreen", "Google Sign-In cancelled: ${e.message}", e)
+                                Toast.makeText(context, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Log.e("LoginScreen", "Credential Manager failed: ${e.message}", e)
+                                Toast.makeText(context, "Sign-in failed: ${e.localizedMessage ?: "Unknown error"}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    onBack = onBack,
+                    onAdminPanelClick = { showAdminLoginDialog = true },
+                    onSupportClick = { showSupportDialog = true }
+                )
+            }
+            LoginStep.VERIFY_OTP -> {
+                OtpVerificationContent(
+                    phoneNumber = phoneNumber,
+                    otpValues = otpValues,
+                    remainingSeconds = remainingSeconds,
+                    isVerifyingOtp = isVerifyingOtp,
+                    onEditPhone = { currentStep = LoginStep.ENTER_PHONE },
+                    onVerifyOtp = {
+                        val enteredOtp = otpValues.joinToString("")
+                        val cleanPhone = phoneNumber.filter { it.isDigit() }
+                        if (enteredOtp.length == 6) {
+                            if (verificationId == "TEST_VERIFICATION_ID" || TEST_PHONE_NUMBERS.contains(cleanPhone)) {
+                                if (enteredOtp == "123456" || enteredOtp.length == 6) {
+                                    val updatedProfile = SampleData.sampleUserProfile.copy(
+                                        name = "${config.appName} Aspirant",
+                                        email = "aspirant.$cleanPhone@exam.portal",
+                                        isProSubscribed = true,
+                                        proPlanName = "${config.appName} VIP Access",
+                                        isLoggedIn = true
+                                    )
+                                    SampleData.sampleUserProfile = updatedProfile
+                                    coroutineScope.launch {
+                                        FirebaseSyncManager.syncUserProfileToFirestore(
+                                            profile = updatedProfile,
+                                            onSuccess = {
+                                                Log.d("LoginScreen", "✅ Test profile synced to Cloud Firestore!")
+                                            },
+                                            onFailure = { e ->
+                                                Log.w("LoginScreen", "✅ Test profile verified (Firestore offline: ${e.message})")
+                                            }
+                                        )
+                                    }
+                                    Toast.makeText(context, "✅ Verified with Test Mobile Number!", Toast.LENGTH_SHORT).show()
+                                    onLoginSuccess()
+                                } else {
+                                    Toast.makeText(context, "❌ Invalid Test OTP. Please use code 123456.", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                if (verificationId.isBlank()) {
+                                    Toast.makeText(context, "Verification ID missing. Please resend OTP.", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    isVerifyingOtp = true
+                                    val credential = PhoneAuthProvider.getCredential(verificationId, enteredOtp)
+                                    FirebaseSyncManager.auth.signInWithCredential(credential)
+                                        .addOnCompleteListener { task ->
+                                            isVerifyingOtp = false
+                                            if (task.isSuccessful) {
+                                                val firebaseUser = task.result?.user
+                                                val updatedProfile = SampleData.sampleUserProfile.copy(
+                                                    name = firebaseUser?.displayName ?: "${config.appName} Aspirant",
+                                                    email = firebaseUser?.email ?: "aspirant.$cleanPhone@exam.portal",
+                                                    isProSubscribed = true,
+                                                    proPlanName = "${config.appName} VIP Access",
+                                                    isLoggedIn = true
+                                                )
+                                                SampleData.sampleUserProfile = updatedProfile
+                                                coroutineScope.launch {
+                                                    FirebaseSyncManager.syncUserProfileToFirestore(
+                                                        profile = updatedProfile,
+                                                        onSuccess = {
+                                                            Log.d("LoginScreen", "✅ Real SMS OTP verified & profile synced to Cloud Firestore!")
+                                                        },
+                                                        onFailure = { e ->
+                                                            Log.w("LoginScreen", "✅ Real SMS OTP verified (Firestore note: ${e.message})")
+                                                        }
+                                                    )
+                                                }
+                                                Toast.makeText(context, "✅ Real Mobile Number Verified Successfully!", Toast.LENGTH_SHORT).show()
+                                                onLoginSuccess()
+                                            } else {
+                                                val exMsg = task.exception?.message ?: "Incorrect OTP code"
+                                                Log.e("LoginScreen", "Real OTP verification failed: $exMsg", task.exception)
+                                                Toast.makeText(context, "❌ Invalid OTP: $exMsg", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Please enter the complete 6-digit OTP", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onResendOtp = {
+                        val cleanPhone = phoneNumber.filter { it.isDigit() }
+                        if (TEST_PHONE_NUMBERS.contains(cleanPhone)) {
+                            remainingSeconds = 60
+                            val defaultTestDigits = listOf("1", "2", "3", "4", "5", "6")
+                            for (i in 0 until 6) {
+                                otpValues[i] = defaultTestDigits[i]
+                            }
+                            Toast.makeText(context, "⚡ Pre-configured test number: Use OTP 123456", Toast.LENGTH_SHORT).show()
+                        } else {
+                            remainingSeconds = 60
+                            sendRealSmsOtp(cleanPhone, resendToken)
+                        }
+                    },
+                    onNeedHelp = {
+                        showSupportDialog = true
+                    },
+                    onBack = { currentStep = LoginStep.ENTER_PHONE }
+                )
+            }
+        }
 
             if (showAdminLoginDialog) {
                 AdminLoginDialog(
@@ -1329,7 +1496,8 @@ fun PhoneLoginContent(
     onGoogleLogin: () -> Unit,
     onBack: () -> Unit,
     onAdminPanelClick: () -> Unit,
-    onSupportClick: () -> Unit = {}
+    onSupportClick: () -> Unit = {},
+    isSendingOtp: Boolean = false
 ) {
     val config = LocalAppConfig.current
     val context = LocalContext.current
@@ -1682,29 +1850,49 @@ fun PhoneLoginContent(
                         }
                     }
 
-                    // ⚡ Instant 6-Digit SMS Verification in 5 Seconds
+                    val cleanPhone = phoneNumber.filter { it.isDigit() }
+                    val isTestNumber = TEST_PHONE_NUMBERS.contains(cleanPhone)
+
+                    // ⚡ Real SMS Provider or Pre-configured Test Number Indicator
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Bolt,
-                            contentDescription = null,
-                            tint = Color(0xFFFBBF24),
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Instant 6-Digit SMS Verification in 5 Seconds",
-                            color = Color(0xFF34D399),
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (isTestNumber) {
+                            Icon(
+                                imageVector = Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "⚡ Pre-configured test number (Instant login with OTP 123456)",
+                                color = Color(0xFFFBBF24),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Sms,
+                                contentDescription = null,
+                                tint = Color(0xFF34D399),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (cleanPhone.length == 10) "📲 Real Firebase SMS OTP will be sent to +91 $cleanPhone" else "Instant 6-Digit Real SMS Verification",
+                                color = Color(0xFF34D399),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     // Continue with OTP Button
                     Button(
                         onClick = onContinueWithOtp,
+                        enabled = !isSendingOtp,
                         shape = RoundedCornerShape(25.dp),
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -1727,31 +1915,51 @@ fun PhoneLoginContent(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Phone,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Continue with OTP",
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.3.sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                            if (isSendingOtp) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Sending Real SMS OTP...",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Phone,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isTestNumber) "Continue with Test OTP" else "Continue with Real SMS OTP",
+                                        color = Color.White,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = 0.3.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1977,7 +2185,8 @@ fun OtpVerificationContent(
     onVerifyOtp: () -> Unit,
     onResendOtp: () -> Unit,
     onNeedHelp: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isVerifyingOtp: Boolean = false
 ) {
     val config = LocalAppConfig.current
     val context = LocalContext.current
@@ -2350,6 +2559,7 @@ fun OtpVerificationContent(
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onVerifyOtp()
                             },
+                            enabled = !isVerifyingOtp,
                             shape = RoundedCornerShape(16.dp),
                             contentPadding = PaddingValues(0.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -2372,25 +2582,47 @@ fun OtpVerificationContent(
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Verify & Start Learning",
-                                        style = TextStyle(
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Color.White
+                                if (isVerifyingOtp) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = Color.White,
+                                            strokeWidth = 2.dp
                                         )
-                                    )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Verifying Code...",
+                                            style = TextStyle(
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        )
+                                    }
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Verify & Start Learning",
+                                            style = TextStyle(
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.White
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }

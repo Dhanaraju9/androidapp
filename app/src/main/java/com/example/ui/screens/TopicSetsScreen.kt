@@ -1234,71 +1234,101 @@ fun CompactGridSetCard(
     title: String,
     subtitle: String,
     status: String,
-    backgroundColor: Color,
+    backgroundColor: Color = Color.Unspecified,
     onClick: () -> Unit
 ) {
-    val completed = status.equals("Completed", true)
-    val inProgress = status.equals("Attempting", true) ||
-            status.equals("In Progress", true)
+    val isCompleted = status.equals("Completed", true)
+    val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
-    val green = Color(0xFF15803D)
-    val orange = Color(0xFFB45309)
-    val slate = Color(0xFF475569)
+    // Colors according to strict requirements:
+    // - Not Started: light blue bg (#E8F4FF), royal blue border (#2563EB), dark navy text (#102A56)
+    // - In Progress: warm cream bg (#FFF1CC), rich orange border (#F59E0B), burnt-orange progress bar (#F97316)
+    // - Completed: pale mint bg (#D9FBE8), emerald-green border (#059669), dark green text (#065F46)
 
-    // Preserve the color assigned by the parent screen.
-    val cardBg = backgroundColor
-
-    val accent = when {
-        completed -> green
-        inProgress -> orange
-        else -> slate
+    val cardBg = when {
+        isCompleted -> Color(0xFFD9FBE8)
+        isInProgress -> Color(0xFFFFF1CC)
+        else -> Color(0xFFE8F4FF)
     }
 
     val borderColor = when {
-        completed -> Color(0xFFB8E3C8)
-        inProgress -> Color(0xFFF59E0B)
-        else -> Color(0xFF94A3B8)
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF59E0B)
+        else -> Color(0xFF2563EB)
     }
 
-    val progress = when {
-        completed -> 1f
-        inProgress -> 0.5f
-        else -> 0f
+    val textColor = when {
+        isCompleted -> Color(0xFF065F46)
+        isInProgress -> Color(0xFF78350F)
+        else -> Color(0xFF102A56)
     }
 
-    val action = when {
-        completed -> "Review"
-        inProgress -> "Continue"
-        else -> "Start"
+    val badgeBg = when {
+        isCompleted -> Color(0xFFA7F3D0)
+        isInProgress -> Color(0xFFFDE68A)
+        else -> Color(0xFFD0E4FF)
     }
 
     val badgeText = when {
-        completed -> "✓ Completed"
-        inProgress -> "◐ In Progress"
-        else -> "○ Not Started"
+        isCompleted -> "Completed"
+        isInProgress -> "In Progress"
+        else -> "Not Started"
+    }
+
+    val progress = when {
+        isCompleted -> 1f
+        isInProgress -> 0.5f
+        else -> 0f
+    }
+
+    val progressPercentText = when {
+        isCompleted -> "100%"
+        isInProgress -> "50%"
+        else -> "0%"
+    }
+
+    val progressBarColor = when {
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF97316)
+        else -> Color(0xFF2563EB)
+    }
+
+    val progressTrackColor = when {
+        isCompleted -> Color(0xFFA7F3D0)
+        isInProgress -> Color(0xFFFDE68A)
+        else -> Color(0xFFD0E4FF)
+    }
+
+    val actionButtonText = when {
+        isCompleted -> "Review"
+        isInProgress -> "Continue"
+        else -> "Start"
+    }
+
+    val actionButtonBg = when {
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF97316)
+        else -> Color(0xFF2563EB)
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(195.dp)
             .premiumPress(
                 target = com.example.model.AnimatableTarget.SETS_CARDS,
                 screenKey = "Topic Sets",
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        border = BorderStroke(
-            width = 1.8.dp,
-            color = borderColor
-        ),
+        border = BorderStroke(width = 1.8.dp, color = borderColor),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(13.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
@@ -1308,14 +1338,14 @@ fun CompactGridSetCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = accent.copy(alpha = 0.13f),
+                    color = actionButtonBg.copy(alpha = 0.15f),
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = serialNumber,
-                            color = accent,
-                            fontWeight = FontWeight.Bold,
+                            color = textColor,
+                            fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp
                         )
                     }
@@ -1323,36 +1353,23 @@ fun CompactGridSetCard(
 
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = when {
-                        completed -> Color(0xFF15803D)
-                        inProgress -> Color(0xFFFFE3A3)
-                        else -> Color(0xFFE2E8F0)
-                    }
+                    color = badgeBg
                 ) {
                     Text(
-                        text = badgeText,
-                        modifier = Modifier.padding(
-                            horizontal = 8.dp,
-                            vertical = 5.dp
-                        ),
-                        color = when {
-                            completed -> Color.White
-                            inProgress -> Color(0xFF854D0E)
-                            else -> slate
-                        },
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "• $badgeText",
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                        color = textColor,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )
                 }
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = title,
-                    color = Color(0xFF172033),
+                    color = textColor,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -1361,32 +1378,31 @@ fun CompactGridSetCard(
 
                 Text(
                     text = subtitle,
-                    color = Color(0xFF334155),
-                    fontSize = 10.sp,
+                    color = textColor.copy(alpha = 0.85f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Progress",
-                        color = Color(0xFF64748B),
-                        fontSize = 11.sp
+                        color = textColor.copy(alpha = 0.8f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = when {
-                            completed -> "Completed"
-                            inProgress -> "In progress"
-                            else -> "0%"
-                        },
-                        color = Color(0xFF334155),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        text = progressPercentText,
+                        color = textColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
 
@@ -1396,16 +1412,8 @@ fun CompactGridSetCard(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(50)),
-                    color = when {
-                        completed -> Color(0xFF16A34A)
-                        inProgress -> Color(0xFFD97706)
-                        else -> Color(0xFFE2E8F0)
-                    },
-                    trackColor = when {
-                        completed -> Color(0xFFC8E8D3)
-                        inProgress -> Color(0xFFF5D99A)
-                        else -> Color(0xFFE2E8F0)
-                    }
+                    color = progressBarColor,
+                    trackColor = progressTrackColor
                 )
             }
 
@@ -1413,20 +1421,15 @@ fun CompactGridSetCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(38.dp),
-                shape = RoundedCornerShape(13.dp),
-                color = when {
-                    inProgress -> Color(0xFFB45309)
-                    else -> Color.Transparent
-                },
-                border = if (inProgress) null
-                    else BorderStroke(1.5.dp, accent)
+                shape = RoundedCornerShape(12.dp),
+                color = actionButtonBg
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = action,
-                        color = if (inProgress) Color.White else accent,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        text = actionButtonText,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
@@ -1440,68 +1443,96 @@ fun CompactGridSubtopicCard(
     title: String,
     questionsCount: Int,
     status: String,
-    backgroundColor: Color,
+    backgroundColor: Color = Color.Unspecified,
     onClick: () -> Unit
 ) {
-    val completed = status.equals("Completed", true)
-    val inProgress = status.equals("Attempting", true) ||
-            status.equals("In Progress", true)
+    val isCompleted = status.equals("Completed", true)
+    val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
-    val green = Color(0xFF15803D)
-    val orange = Color(0xFFB45309)
-    val slate = Color(0xFF475569)
-
-    // Preserve the color assigned by the parent screen.
-    val cardBg = backgroundColor
-
-    val accent = when {
-        completed -> green
-        inProgress -> orange
-        else -> slate
+    val cardBg = when {
+        isCompleted -> Color(0xFFD9FBE8)
+        isInProgress -> Color(0xFFFFF1CC)
+        else -> Color(0xFFE8F4FF)
     }
 
     val borderColor = when {
-        completed -> Color(0xFFB8E3C8)
-        inProgress -> Color(0xFFF59E0B)
-        else -> Color(0xFF94A3B8)
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF59E0B)
+        else -> Color(0xFF2563EB)
     }
 
-    val progress = when {
-        completed -> 1f
-        inProgress -> 0.5f
-        else -> 0f
+    val textColor = when {
+        isCompleted -> Color(0xFF065F46)
+        isInProgress -> Color(0xFF78350F)
+        else -> Color(0xFF102A56)
     }
 
-    val action = when {
-        completed -> "Review"
-        inProgress -> "Continue"
-        else -> "Start"
+    val badgeBg = when {
+        isCompleted -> Color(0xFFA7F3D0)
+        isInProgress -> Color(0xFFFDE68A)
+        else -> Color(0xFFD0E4FF)
     }
 
     val badgeText = when {
-        completed -> "✓ Completed"
-        inProgress -> "◐ In Progress"
-        else -> "○ Not Started"
+        isCompleted -> "Completed"
+        isInProgress -> "In Progress"
+        else -> "Not Started"
+    }
+
+    val progress = when {
+        isCompleted -> 1f
+        isInProgress -> 0.5f
+        else -> 0f
+    }
+
+    val progressPercentText = when {
+        isCompleted -> "100%"
+        isInProgress -> "50%"
+        else -> "0%"
+    }
+
+    val progressBarColor = when {
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF97316)
+        else -> Color(0xFF2563EB)
+    }
+
+    val progressTrackColor = when {
+        isCompleted -> Color(0xFFA7F3D0)
+        isInProgress -> Color(0xFFFDE68A)
+        else -> Color(0xFFD0E4FF)
+    }
+
+    val actionButtonText = when {
+        isCompleted -> "Review"
+        isInProgress -> "Continue"
+        else -> "Start"
+    }
+
+    val actionButtonBg = when {
+        isCompleted -> Color(0xFF059669)
+        isInProgress -> Color(0xFFF97316)
+        else -> Color(0xFF2563EB)
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(195.dp)
             .premiumPress(
                 target = com.example.model.AnimatableTarget.SUBTOPIC_CARDS,
                 screenKey = "Topic Sets",
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        border = BorderStroke(1.8.dp, borderColor),
+        border = BorderStroke(width = 1.8.dp, color = borderColor),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(13.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
@@ -1511,14 +1542,14 @@ fun CompactGridSubtopicCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = accent.copy(alpha = 0.13f),
+                    color = actionButtonBg.copy(alpha = 0.15f),
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = code,
-                            color = accent,
-                            fontWeight = FontWeight.Bold,
+                            color = textColor,
+                            fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp
                         )
                     }
@@ -1526,36 +1557,23 @@ fun CompactGridSubtopicCard(
 
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = when {
-                        completed -> green
-                        inProgress -> Color(0xFFFFE3A3)
-                        else -> Color(0xFFE2E8F0)
-                    }
+                    color = badgeBg
                 ) {
                     Text(
-                        text = badgeText,
-                        modifier = Modifier.padding(
-                            horizontal = 7.dp,
-                            vertical = 5.dp
-                        ),
-                        color = when {
-                            completed -> Color.White
-                            inProgress -> Color(0xFF854D0E)
-                            else -> slate
-                        },
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "• $badgeText",
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                        color = textColor,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1
                     )
                 }
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = title,
-                    color = Color(0xFF172033),
+                    color = textColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
@@ -1564,23 +1582,33 @@ fun CompactGridSubtopicCard(
 
                 Text(
                     text = "$questionsCount Questions",
-                    color = Color(0xFF334155),
-                    fontSize = 10.sp,
+                    color = textColor.copy(alpha = 0.85f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(
-                    text = when {
-                        completed -> "Completed"
-                        inProgress -> "In progress"
-                        else -> "Progress"
-                    },
-                    color = Color(0xFF334155),
-                    fontSize = 11.sp
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Progress",
+                        color = textColor.copy(alpha = 0.8f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = progressPercentText,
+                        color = textColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
 
                 LinearProgressIndicator(
                     progress = { progress },
@@ -1588,16 +1616,8 @@ fun CompactGridSubtopicCard(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(50)),
-                    color = when {
-                        completed -> Color(0xFF16A34A)
-                        inProgress -> Color(0xFFD97706)
-                        else -> Color(0xFFE2E8F0)
-                    },
-                    trackColor = when {
-                        completed -> Color(0xFFC8E8D3)
-                        inProgress -> Color(0xFFF5D99A)
-                        else -> Color(0xFFE2E8F0)
-                    }
+                    color = progressBarColor,
+                    trackColor = progressTrackColor
                 )
             }
 
@@ -1605,17 +1625,15 @@ fun CompactGridSubtopicCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(38.dp),
-                shape = RoundedCornerShape(13.dp),
-                color = if (inProgress) orange else Color.Transparent,
-                border = if (inProgress) null
-                    else BorderStroke(1.5.dp, accent)
+                shape = RoundedCornerShape(12.dp),
+                color = actionButtonBg
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = action,
-                        color = if (inProgress) Color.White else accent,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        text = actionButtonText,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }

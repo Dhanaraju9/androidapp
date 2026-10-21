@@ -89,16 +89,21 @@ object FirebaseSyncManager {
     fun sendSmsOtp(
         phoneNumber: String,
         activity: android.app.Activity,
-        callbacks: PhoneAuthProvider.OnVerificationStateChangedCallbacks
+        callbacks: PhoneAuthProvider.OnVerificationStateChangedCallbacks,
+        resendToken: PhoneAuthProvider.ForceResendingToken? = null
     ) {
         val formattedNumber = if (phoneNumber.startsWith("+")) phoneNumber else "+91$phoneNumber"
-        val options = PhoneAuthOptions.newBuilder(auth)
+        val builder = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(formattedNumber)
             .setTimeout(60L, TimeUnit.SECONDS)
             .setActivity(activity)
             .setCallbacks(callbacks)
-            .build()
-        PhoneAuthProvider.verifyPhoneNumber(options)
+
+        if (resendToken != null) {
+            builder.setForceResendingToken(resendToken)
+        }
+
+        PhoneAuthProvider.verifyPhoneNumber(builder.build())
     }
 
     /**

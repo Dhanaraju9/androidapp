@@ -1,6 +1,6 @@
 {
-  "summary":  "Plan to upgrade Subject Cards on the Home Screen:\n1. Increase card dimensions by 20%.\n2. Align image presentation style with Unit Cards.\n3. Restrict content to Prelims/Mains/General and remove descriptive subtitles.\n4. Keep all existing functionality, navigation, and data counts intact.\n5. Skip Current Affairs cards.",
-  "updatedAt":  "2026-10-20T18:57:35.712324640Z",
+  "summary":  "Implementation plan for real SMS OTP authentication via Firebase Phone Auth",
+  "updatedAt":  "2026-10-21T05:41:40.588440844Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

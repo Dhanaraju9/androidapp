@@ -34,10 +34,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.SampleData
@@ -676,70 +680,131 @@ private fun ExactDrawerSectionHeader(
 }
 
 // =========================================================================
-// COMPONENT: EXACT DRAWER FOOTER CARD
+// COMPONENT: EXACT DRAWER FOOTER CARD (MOTIVATIONAL QUOTATION SECTION)
 // =========================================================================
 @Composable
 private fun ExactDrawerFooterCard(
     isDarkMode: Boolean = false
 ) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (isDarkMode) Color(0xFF0F172A) else Color(0xFFE0F2FE),
-        border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF1E293B) else Color(0xFFBAE6FD)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Map outline icon
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF0284C7).copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Map,
-                        contentDescription = "AP Map",
-                        tint = Color(0xFF0284C7),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+    val wordColors = if (isDarkMode) {
+        listOf(
+            Color(0xFF10B981), // Emerald Green
+            Color(0xFF3B82F6), // Royal Blue
+            Color(0xFFF43F5E), // Ruby Red
+            Color(0xFFF97316), // Vibrant Orange
+            Color(0xFFA855F7), // Rich Violet
+            Color(0xFF14B8A6)  // Deep Teal
+        )
+    } else {
+        listOf(
+            Color(0xFF047857), // Emerald Green
+            Color(0xFF1D4ED8), // Royal Blue
+            Color(0xFFBE123C), // Ruby Red
+            Color(0xFFEA580C), // Vibrant Orange
+            Color(0xFF6D28D9), // Rich Violet
+            Color(0xFF0F766E)  // Deep Teal
+        )
+    }
 
-                Column {
-                    val regionText = com.example.data.SampleData.getActiveApp().region.ifBlank { "Excellence" }
-                    Text(
-                        text = "Together for a Better $regionText",
-                        color = if (isDarkMode) Color.White else Color(0xFF0C192E),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold
+    val quoteWords = listOf("“Dream", "Big.", "Study", "Hard.", "Achieve", "Greatness.”")
+
+    val styledQuote = remember(isDarkMode) {
+        buildAnnotatedString {
+            quoteWords.forEachIndexed { index, word ->
+                withStyle(
+                    style = SpanStyle(
+                        color = wordColors[index % wordColors.size],
+                        fontWeight = FontWeight.Black
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Box(modifier = Modifier.size(12.dp, 2.dp).background(Color(0xFFF97316)))
-                        Box(modifier = Modifier.size(12.dp, 2.dp).background(Color(0xFF22C55E)))
-                        Box(modifier = Modifier.size(12.dp, 2.dp).background(Color(0xFF0284C7)))
-                    }
+                ) {
+                    append(word)
+                }
+                if (index < quoteWords.lastIndex) {
+                    append(if (index == 3) "\n" else " ")
                 }
             }
+        }
+    }
 
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFFFF),
+        border = BorderStroke(
+            width = 1.5.dp,
+            color = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
+        shadowElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Top subtle decorative divider pills
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[0])
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = 24.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[1])
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[2])
+                )
+            }
+
+            // Large, high-contrast, multi-colored motivational quote
             Text(
-                text = "Learn Practice Succeed ✨",
-                color = Color(0xFF0284C7),
-                fontSize = 9.5.sp,
-                fontWeight = FontWeight.Bold,
-                fontStyle = FontStyle.Italic
+                text = styledQuote,
+                fontSize = 18.sp,
+                lineHeight = 25.sp,
+                letterSpacing = 0.3.sp,
+                textAlign = TextAlign.Center,
+                softWrap = true,
+                modifier = Modifier.fillMaxWidth()
             )
+
+            // Bottom subtle decorative divider pills
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[3])
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = 24.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[4])
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(wordColors[5])
+                )
+            }
         }
     }
 }

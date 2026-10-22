@@ -1,6 +1,7 @@
 package com.example.ui.screens
 import com.example.ui.theme.LocalAppConfig
 import com.example.ui.theme.LocalWindowSizeClass
+import com.example.ui.theme.AppLuminousBackground
 import com.example.ui.components.MathAndHighlightText
 import com.example.ui.components.premiumAnswerFeedback
 import com.example.ui.components.premiumTargetAnimation
@@ -413,17 +414,17 @@ fun PracticeArenaScreen(
     val isTabletLayout = windowSizeClass == WindowWidthSizeClass.Expanded || 
                          windowSizeClass == WindowWidthSizeClass.Medium
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = if (isDarkMode) Color(0xFF0F172A) else Color(pa.screenBgColor),
-        topBar = {
-            // Floating Card Header with 2 clean rows
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(if (isDarkMode) Color(0xFF0F172A) else Color(pa.screenBgColor))
-                    .statusBarsPadding()
-            ) {
+    AppLuminousBackground(screenName = "Practice Arena Screen") {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                // Floating Card Header with 2 clean rows
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                ) {
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1308,6 +1309,7 @@ fun PracticeArenaScreen(
             }
         )
     }
+    }
 }
 
 @Composable
@@ -1333,9 +1335,17 @@ fun QuestionDetailPanel(
     val pa = appSettings.practiceAppearance
     val isSets = currentQuestion.setName.isNotBlank()
     
+    val containerBg = if (isDarkMode) {
+        Color(0xFF1E293B)
+    } else if (isMockTest) {
+        Color.White
+    } else {
+        Color(pa.screenBgColor)
+    }
+
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF1E293B) else Color.White),
+        colors = CardDefaults.cardColors(containerColor = containerBg),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),

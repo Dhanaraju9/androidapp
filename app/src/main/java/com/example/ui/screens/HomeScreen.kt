@@ -209,7 +209,7 @@ fun HomeScreen(
         SampleData.getSubjectsForApp(currentAppId).filter { it.id != "subj-current-affairs" && !it.id.contains("current-affairs") }
     }
 
-    var selectedCategoryFilter by rememberSaveable { mutableStateOf("PRELIMS") }
+    var selectedCategoryFilter by rememberSaveable { mutableStateOf("ALL") }
 
     val filteredDisplaySubjects = remember(displaySubjects, selectedCategoryFilter) {
         displaySubjects.filter { it.matchesCategoryFilter(selectedCategoryFilter) }
@@ -606,6 +606,7 @@ fun HomeScreen(
                                     selectedCategoryFilter = newCategory
                                 }
                             },
+                            allCount = dynamicCategoryCounts.allCount,
                             prelimsCount = dynamicCategoryCounts.prelimsCount,
                             mainsCount = dynamicCategoryCounts.mainsCount,
                             generalCount = dynamicCategoryCounts.generalCount,
@@ -1888,7 +1889,7 @@ fun HomeUnitPreviewCard(
                                 border = BorderStroke(1.dp, if (isTopicLocked) Color(0xFFFFD700).copy(alpha = 0.35f) else topicGradient.borderColor.copy(alpha = 0.5f)),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(72.dp)
+                                    .height(138.dp)
                                     .testTag("topic_card_${topic.id}")
                                     .clip(RoundedCornerShape(10.dp))
                                     .clickable {
@@ -1920,7 +1921,7 @@ fun HomeUnitPreviewCard(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                                            .padding(horizontal = 12.dp, vertical = 10.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -1947,7 +1948,7 @@ fun HomeUnitPreviewCard(
                                                     color = Color.White,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    maxLines = 1,
+                                                    maxLines = 2,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                                 Text(
@@ -3281,13 +3282,23 @@ private data class ReferenceCategoryCardItem(
 fun HomeSubjectCategoryFilterBar(
     selectedCategory: String,
     onSelectCategory: (String) -> Unit,
+    allCount: Int,
     prelimsCount: Int,
     mainsCount: Int,
     generalCount: Int,
     modifier: Modifier = Modifier
 ) {
-    val items = remember(prelimsCount, mainsCount, generalCount) {
+    val items = remember(allCount, prelimsCount, mainsCount, generalCount) {
         listOf(
+            ReferenceCategoryCardItem(
+                key = "ALL",
+                label = "All",
+                count = allCount,
+                icon = Icons.Default.Apps,
+                cardColor = Color(0xFFFF7A00),
+                badgeBgColor = Color(0xFFFFEDE0),
+                badgeTextColor = Color(0xFFD9480F)
+            ),
             ReferenceCategoryCardItem(
                 key = "PRELIMS",
                 label = "Prelims",
@@ -3327,10 +3338,10 @@ fun HomeSubjectCategoryFilterBar(
                 .fillMaxWidth()
                 .widthIn(max = 680.dp)
         ) {
-            val minCardWidth = 115.dp
+            val minCardWidth = 90.dp
             val spacing = 8.dp
             val horizontalPad = 28.dp
-            val totalNeededWidth = (minCardWidth * 3) + (spacing * 2) + horizontalPad
+            val totalNeededWidth = (minCardWidth * 4) + (spacing * 3) + horizontalPad
             val canFitInRow = maxWidth >= totalNeededWidth
 
             if (canFitInRow) {

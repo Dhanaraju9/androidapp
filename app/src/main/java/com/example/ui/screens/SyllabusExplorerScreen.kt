@@ -697,7 +697,7 @@ fun UnitTopicsScreen(
                                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(96.dp)
+                                    .height(182.dp)
                                     .testTag("topic_card_${topic.id}")
                                     .cascadeDropItem(
                                         visible = true,
@@ -750,7 +750,7 @@ fun UnitTopicsScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
                                         verticalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         // Top Row: Topic Badge + Sets/MCQs or Pro Lock
@@ -816,14 +816,14 @@ fun UnitTopicsScreen(
                                                     .weight(1f)
                                                     .padding(end = 8.dp)
                                             ) {
-                                                Text(
+                                                 Text(
                                                     text = topic.name,
                                                     style = MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.Bold,
                                                         fontSize = 14.sp
                                                     ),
                                                     color = Color.White,
-                                                    maxLines = 1,
+                                                    maxLines = 2,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
                                                 if (!topic.subtitle.isNullOrBlank()) {
@@ -831,7 +831,7 @@ fun UnitTopicsScreen(
                                                         text = topic.subtitle,
                                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
                                                         color = Color(0xFFFDE68A).copy(alpha = 0.9f),
-                                                        maxLines = 1,
+                                                        maxLines = 2,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                 }

@@ -817,7 +817,8 @@ object SampleData {
             category = "prelims",
             categories = listOf("prelims"),
             icon = "Users",
-            imageUrl = "https://images.unsplash.com/photo-1511497584788-876761197069?w=800&auto=format&fit=crop&q=80",
+            imageRes = R.drawable.card_subj_society,
+            imageUrl = "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800&auto=format&fit=crop&q=80",
             heroQuote = "Social Structure, Issues, Policies & Welfare Mechanisms",
             color = "from-purple-600 to-indigo-800",
             units = listOf(

@@ -62,6 +62,14 @@ private val colorExplanationText = Color(0xFF633F2D)
 private val colorPremium = Color(0xFFD4AF37)
 private val colorSecondaryText = Color(0xFF64748B)
 
+private fun parseHexColor(hex: String, defaultColor: Color): Color {
+    return try {
+        Color(android.graphics.Color.parseColor(if (hex.startsWith("#")) hex else "#$hex"))
+    } catch (e: Exception) {
+        defaultColor
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen(
@@ -1016,21 +1024,25 @@ fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit, color: Col
 @Composable
 fun StatCard(modifier: Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, iconTint: Color, iconBg: Color, title: String, value: String, subtitle: String, bg: Color, border: Color) {
     Surface(
-        modifier = modifier.height(100.dp),
+        modifier = modifier.wrapContentHeight(),
         shape = RoundedCornerShape(12.dp),
         color = bg,
         border = BorderStroke(1.dp, border)
     ) {
-        Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Surface(shape = CircleShape, color = iconBg, modifier = Modifier.size(28.dp)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
+            Surface(shape = CircleShape, color = iconBg, modifier = Modifier.size(26.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(16.dp))
+                    Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(title, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = iconTint, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(value, fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color(0xFF49333F))
-            Text(subtitle, fontSize = 9.sp, color = Color(0xFF786575), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(title, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = iconTint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Black, color = Color(0xFF49333F), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, fontSize = 8.sp, color = Color(0xFF786575), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -1044,9 +1056,6 @@ fun QuestionSolutionCard(
     onToggleBookmark: (Question) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val appConfig = LocalAppConfig.current
-    val pa = appConfig.advancedFontSettings.practiceAppearance
-    val isDark = isSystemInDarkTheme()
     val isCorrect = selectedOption != null && selectedOption.equals(question.correctOption, ignoreCase = true)
     val isSkipped = selectedOption == null
 
@@ -1055,8 +1064,8 @@ fun QuestionSolutionCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
-        color = if (isDark) Color(0xFF1E293B) else Color(pa.questionBgColor),
-        border = BorderStroke(2.dp, Brush.horizontalGradient(listOf(Color(pa.questionBorderColor), Color(0xFFD4AF37), Color(pa.questionBorderColor)))), // Premium Rose-Gold & Champagne Gradient Border
+        color = Color(0xFF0C7545), // Rich Jade Green container from reference image
+        border = BorderStroke(2.dp, Color(0xFFFCEA74)), // Sunshine Yellow border from reference image
         shadowElevation = 3.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -1073,14 +1082,14 @@ fun QuestionSolutionCard(
                     // Question Number Badge
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFFFF1E8), // Soft blush cream
-                        border = BorderStroke(1.5.dp, Color(0xFFB8527A)) // Richer Rose Gold border
+                        color = Color.White,
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
                         Text(
                             text = "Q${index.toString().padStart(2, '0')}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color(0xFF49333F), // Deep plum-brown
+                            color = Color(0xFF0F172A),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
                     }
@@ -1089,16 +1098,16 @@ fun QuestionSolutionCard(
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = when {
-                            isSkipped -> Color(0xFFFFF1E8)
-                            isCorrect -> Color(0xFFEAF8F1) // Very light green bg
-                            else -> Color(0xFFFDECEF) // Very light blush-red bg
+                            isSkipped -> Color(0xFFF8FAFC)
+                            isCorrect -> Color(0xFFDCFCE7)
+                            else -> Color(0xFFFEE2E2)
                         },
                         border = BorderStroke(
                             1.5.dp,
                             when {
-                                isSkipped -> Color(0xFFE0ADBD)
-                                isCorrect -> Color(0xFF1B6B48) // Bold emerald green
-                                else -> Color(0xFFA83244) // Bold ruby red
+                                isSkipped -> Color(0xFFCBD5E1)
+                                isCorrect -> Color(0xFF16A34A)
+                                else -> Color(0xFFDC2626)
                             }
                         )
                     ) {
@@ -1114,9 +1123,9 @@ fun QuestionSolutionCard(
                                 },
                                 contentDescription = null,
                                 tint = when {
-                                    isSkipped -> Color(0xFF786575)
-                                    isCorrect -> Color(0xFF1B6B48)
-                                    else -> Color(0xFFA83244)
+                                    isSkipped -> Color(0xFF334155)
+                                    isCorrect -> Color(0xFF166534)
+                                    else -> Color(0xFF991B1B)
                                 },
                                 modifier = Modifier.size(15.dp)
                             )
@@ -1130,9 +1139,9 @@ fun QuestionSolutionCard(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = when {
-                                    isSkipped -> Color(0xFF786575)
-                                    isCorrect -> Color(0xFF1B6B48)
-                                    else -> Color(0xFFA83244)
+                                    isSkipped -> Color(0xFF334155)
+                                    isCorrect -> Color(0xFF166534)
+                                    else -> Color(0xFF991B1B)
                                 }
                             )
                         }
@@ -1154,7 +1163,7 @@ fun QuestionSolutionCard(
                         Icon(
                             imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
                             contentDescription = "Bookmark Question",
-                            tint = if (isBookmarked) Color(0xFFB8527A) else Color(0xFF786575),
+                            tint = if (isBookmarked) Color(0xFFFCEA74) else Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -1165,7 +1174,7 @@ fun QuestionSolutionCard(
                     Text(
                         text = labelText,
                         fontSize = 12.sp,
-                        color = Color(0xFF786575), // Muted mauve
+                        color = Color.White.copy(alpha = 0.95f),
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1178,8 +1187,8 @@ fun QuestionSolutionCard(
             // Prominent Question Text Box
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFFFF1E8), // Soft blush cream background for question text
-                border = BorderStroke(1.5.dp, Color(0xFFE5A9B8)), // Crisp Rose Gold accent border
+                color = Color(0xFFFEF7D7), // Pale Sunshine Yellow from reference image
+                border = BorderStroke(1.5.dp, Color(0xFFFCEA74)), // Sunshine Yellow accent border
                 modifier = Modifier.fillMaxWidth()
             ) {
                 MathAndHighlightText(
@@ -1188,7 +1197,7 @@ fun QuestionSolutionCard(
                     location = HighlightLocation.OTHER,
                     highlightConfig = LocalAppConfig.current.questionHighlightConfig,
                     fontSize = 18.sp, // Prominent 17-19sp spec
-                    color = Color(0xFF49333F), // Deep plum-brown
+                    color = Color(0xFF07141D), // Dark slate/navy text for high contrast readability
                     modifier = Modifier.padding(14.dp)
                 )
             }
@@ -1203,26 +1212,15 @@ fun QuestionSolutionCard(
                     val isThisCorrect = key.equals(question.correctOption, ignoreCase = true)
                     val isThisSelected = key.equals(selectedOption, ignoreCase = true)
 
-                    // Actually, the user gave specific colors, I should use those and not calculate them.
-                    // Screen background: #FAF7F2
-                    // Question card: #FFFFFF
-                    // Answer option background: #F0F4FA
-                    // Option text: #334155
-                    // Explanation background: #FFF3E8
-                    // Explanation text: #633F2D
-                    // Premium borders and highlights: #D4AF37
-                    // Secondary text: #64748B
-
-                    // Let's use the requested colors.
                     val bgColor = when {
-                        isThisCorrect -> Color(0xFFD1FAE5) // Kept the original correct color
-                        isThisSelected && !isThisCorrect -> Color(0xFFFEE2E2) // Kept the original wrong color
-                        else -> colorOptionBackground
+                        isThisCorrect -> Color(0xFFFDEA75) // Sunshine Yellow highlight from reference image
+                        isThisSelected && !isThisCorrect -> Color(0xFFFEE2E2) // Wrong answer color
+                        else -> Color.White // Clean white options cards from reference image
                     }
                     val borderColor = when {
-                        isThisCorrect -> Color(0xFF059669)
-                        isThisSelected && !isThisCorrect -> Color(0xFFDC2626)
-                        else -> Color(0xFFCBD5E1)
+                        isThisCorrect -> Color(0xFF0C7545) // Rich Jade Green border for correct answer
+                        isThisSelected && !isThisCorrect -> Color(0xFFDC2626) // Ruby red border for wrong answer
+                        else -> Color(0xFFE2E8F0) // Clean subtle border for neutral options
                     }
 
                     Surface(
@@ -1239,9 +1237,9 @@ fun QuestionSolutionCard(
                             Surface(
                                 shape = CircleShape,
                                 color = when {
-                                    isThisCorrect -> Color(0xFF059669)
-                                    isThisSelected && !isThisCorrect -> Color(0xFFDC2626)
-                                    else -> Color(0xFFCBD5E1)
+                                    isThisCorrect -> Color(0xFF0C7545) // Jade Green badge for correct answer
+                                    isThisSelected && !isThisCorrect -> Color(0xFFDC2626) // Red badge for wrong answer
+                                    else -> Color(0xFFDCE5ED) // Soft blue-gray badge from reference image
                                 },
                                 modifier = Modifier.size(28.dp)
                             ) {
@@ -1250,7 +1248,11 @@ fun QuestionSolutionCard(
                                         text = key.uppercase(),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isThisCorrect || isThisSelected) Color.White else colorOptionText
+                                        color = when {
+                                            isThisCorrect -> Color.White
+                                            isThisSelected && !isThisCorrect -> Color.White
+                                            else -> Color(0xFF1E293B)
+                                        }
                                     )
                                 }
                             }
@@ -1262,27 +1264,27 @@ fun QuestionSolutionCard(
                                     location = HighlightLocation.OTHER,
                                     highlightConfig = LocalAppConfig.current.questionHighlightConfig,
                                     fontSize = 16.sp, // 15-17sp spec
-                                    color = colorOptionText, // Deep plum-brown
+                                    color = Color(0xFF07141D),
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
                             if (isThisCorrect) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Surface(shape = CircleShape, color = Color(0xFF1B6B48), modifier = Modifier.size(18.dp)) {
+                                    Surface(shape = CircleShape, color = Color(0xFF0C7545), modifier = Modifier.size(18.dp)) {
                                         Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.padding(2.dp))
                                     }
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text("Correct Answer", fontSize = 9.sp, color = Color(0xFF1B6B48), fontWeight = FontWeight.Bold)
+                                    Text("Correct Answer", fontSize = 9.sp, color = Color(0xFF0C7545), fontWeight = FontWeight.Bold)
                                 }
                             } else if (isThisSelected) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Surface(shape = CircleShape, color = Color(0xFFA83244), modifier = Modifier.size(18.dp)) {
+                                    Surface(shape = CircleShape, color = Color(0xFFDC2626), modifier = Modifier.size(18.dp)) {
                                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.padding(2.dp))
                                     }
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text("Your Answer", fontSize = 9.sp, color = Color(0xFFA83244), fontWeight = FontWeight.Bold)
+                                    Text("Your Answer", fontSize = 9.sp, color = Color(0xFFDC2626), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -1299,8 +1301,8 @@ fun QuestionSolutionCard(
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = colorExplanationBackground,
-                    border = BorderStroke(2.dp, colorPremium),
+                    color = Color(0xFFD8FDCC), // Soft light mint / pale Jade Green from reference image
+                    border = BorderStroke(2.dp, Color(0xFF025935)), // Deep Jade Green border from reference image
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -1309,7 +1311,7 @@ fun QuestionSolutionCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(shape = CircleShape, color = colorPremium, modifier = Modifier.size(26.dp)) {
+                                Surface(shape = CircleShape, color = Color(0xFF0E623D), modifier = Modifier.size(26.dp)) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                                     }
@@ -1319,7 +1321,7 @@ fun QuestionSolutionCard(
                                     text = "Explanation",
                                     fontSize = 17.sp, // Distinct heading weight & color
                                     fontWeight = FontWeight.Bold,
-                                    color = colorExplanationText
+                                    color = Color(0xFF025935) // Deep Jade Green heading text from reference image
                                 )
                             }
                         }
@@ -1330,7 +1332,7 @@ fun QuestionSolutionCard(
                             location = HighlightLocation.OTHER,
                             highlightConfig = LocalAppConfig.current.questionHighlightConfig,
                             fontSize = 15.5.sp, // 15-16sp spec with comfortable line spacing
-                            color = colorExplanationText,
+                            color = Color(0xFF064E3B), // Deep Jade text for crystal clarity and reference image fidelity
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

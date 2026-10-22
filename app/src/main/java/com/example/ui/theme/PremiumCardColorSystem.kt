@@ -47,6 +47,16 @@ fun hslToColor(hue: Float, saturation: Float, lightness: Float, alpha: Float = 1
 
 object PremiumCardColorSystem {
 
+    // Reference image rich vibrant solid colors
+    val vibrantReferenceColors = listOf(
+        Color(0xFFEA580C), // Rich Orange
+        Color(0xFF2563EB), // Royal Blue
+        Color(0xFFE11D48), // Ruby Red
+        Color(0xFF0D9488), // Teal Green
+        Color(0xFF059669), // Emerald Green
+        Color(0xFF7C3AED)  // Violet
+    )
+
     // 24 Handcrafted, distinctive, high-vibrancy palettes tailored for Education/Exam apps
     private val curatedSetsLight = listOf(
         // 0: Sapphire Blue

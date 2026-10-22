@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Syllabus Pro"
+rootProject.name = "APPSC GROUP 2"
 include(":app")

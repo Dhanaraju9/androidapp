@@ -237,20 +237,21 @@ fun CurrentAffairsScreen(
                             val isCompleted = caStatus.equals("Completed", true)
                             val isInProgress = caStatus.equals("In Progress", true)
 
+                            val vibrantBg = PremiumCardColorSystem.vibrantReferenceColors[caIdx % PremiumCardColorSystem.vibrantReferenceColors.size]
                             val cardBgColor = when {
                                 isCompleted -> Color(0xFF86EFAC) // Rich mint green
                                 isInProgress -> Color(0xFFFDE047) // Rich amber-orange
-                                else -> Color(0xFFC4B5FD) // Rich lavender-purple
+                                else -> vibrantBg
                             }
                             val cardBorderColor = when {
                                 isCompleted -> Color(0xFF059669)
                                 isInProgress -> Color(0xFFD97706)
-                                else -> Color(0xFF7C3AED)
+                                else -> Color.White.copy(alpha = 0.5f)
                             }
                             val cardTextColor = when {
                                 isCompleted -> Color(0xFF064E3B)
                                 isInProgress -> Color(0xFF78350F)
-                                else -> Color(0xFF4C1D95)
+                                else -> Color.White
                             }
                             val badgeBgColor = when {
                                 isCompleted -> Color(0xFF059669)

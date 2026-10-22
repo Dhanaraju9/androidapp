@@ -321,7 +321,7 @@ fun TopicSetsScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(116.dp)
+                                .height(148.dp)
                                 .background(Brush.linearGradient(colors = topicHeaderGradient.colors))
                         ) {
                             TopicFhdCardImage(
@@ -344,7 +344,7 @@ fun TopicSetsScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
@@ -1264,6 +1264,71 @@ fun TopicSideBySideTabsBar(
     }
 }
 
+private object PremiumStartButtonPalette {
+    val DeepEmeraldGreen = Color(0xFF005B35)
+    val DarkNavyBlue = Color(0xFF082B70)
+    val RichBurgundy = Color(0xFF800020)
+    val DeepTeal = Color(0xFF005F60)
+    val DarkChocolateBrown = Color(0xFF4A2608)
+    val MidnightPurple = Color(0xFF3B087A)
+    val DeepForestGreen = Color(0xFF07552E)
+    val RoyalBlue = Color(0xFF172FA8)
+    val DeepPlum = Color(0xFF650044)
+    val DeepMaroon = Color(0xFF720018)
+
+    fun getContrastingColor(cardBg: Color, index: Int): Color {
+        val r = cardBg.red
+        val g = cardBg.green
+        val b = cardBg.blue
+
+        return when {
+            // Mint / Completed Green or Emerald or Teal
+            g > r && g >= b -> when (index % 3) {
+                0 -> RichBurgundy
+                1 -> DeepMaroon
+                else -> DeepPlum
+            }
+            // Blue dominant (e.g. Royal Blue)
+            b > r && b > g -> when (index % 3) {
+                0 -> DeepMaroon
+                1 -> DarkChocolateBrown
+                else -> RichBurgundy
+            }
+            // Violet / Purple dominant
+            r > 0.4f && b > 0.6f -> when (index % 3) {
+                0 -> DeepEmeraldGreen
+                1 -> DeepForestGreen
+                else -> DarkChocolateBrown
+            }
+            // Orange / Amber dominant (e.g. In Progress or Orange card)
+            r > 0.8f && g > 0.3f && b < 0.5f -> when (index % 3) {
+                0 -> DarkNavyBlue
+                1 -> MidnightPurple
+                else -> RoyalBlue
+            }
+            // Ruby Red dominant
+            r > 0.7f && g < 0.35f -> when (index % 3) {
+                0 -> DeepEmeraldGreen
+                1 -> DeepTeal
+                else -> DarkNavyBlue
+            }
+            // Fallback cycling through the 10 premium solid colors
+            else -> when (index % 10) {
+                0 -> DeepEmeraldGreen
+                1 -> DarkNavyBlue
+                2 -> RichBurgundy
+                3 -> DeepTeal
+                4 -> DarkChocolateBrown
+                5 -> MidnightPurple
+                6 -> DeepForestGreen
+                7 -> RoyalBlue
+                8 -> DeepPlum
+                else -> DeepMaroon
+            }
+        }
+    }
+}
+
 @Composable
 fun CompactGridSetCard(
     serialNumber: String,
@@ -1278,22 +1343,25 @@ fun CompactGridSetCard(
     val isCompleted = status.equals("Completed", true)
     val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
+    val setNumInt = serialNumber.toIntOrNull() ?: 1
+    val vibrantBg = PremiumCardColorSystem.vibrantReferenceColors[(setNumInt - 1) % PremiumCardColorSystem.vibrantReferenceColors.size]
+
     val cardBg = when {
         isCompleted -> Color(0xFF6EE7B7) // Rich mint green
         isInProgress -> Color(0xFFFDBA74) // Rich amber-orange
-        else -> Color(0xFFC4B5FD) // Rich lavender-purple
+        else -> vibrantBg
     }
 
     val borderColor = when {
         isCompleted -> Color(0xFF059669)
         isInProgress -> Color(0xFFEA580C)
-        else -> Color(0xFF7C3AED)
+        else -> Color.White.copy(alpha = 0.5f)
     }
 
     val textColor = when {
         isCompleted -> Color(0xFF064E3B)
         isInProgress -> Color(0xFF7C2D12)
-        else -> Color(0xFF4C1D95)
+        else -> Color.White
     }
 
     val badgeBg = when {
@@ -1338,11 +1406,7 @@ fun CompactGridSetCard(
         else -> "Start"
     }
 
-    val actionButtonBg = when {
-        isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFEA580C)
-        else -> Color(0xFF7C3AED)
-    }
+    val actionButtonBg = PremiumStartButtonPalette.getContrastingColor(cardBg, setNumInt)
 
     Card(
         modifier = Modifier
@@ -1371,7 +1435,11 @@ fun CompactGridSetCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = actionButtonBg.copy(alpha = 0.15f),
+                    color = when {
+                        isCompleted -> Color(0xFF059669).copy(alpha = 0.15f)
+                        isInProgress -> Color(0xFFEA580C).copy(alpha = 0.15f)
+                        else -> Color(0xFF7C3AED).copy(alpha = 0.15f)
+                    },
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -1503,22 +1571,25 @@ fun CompactGridSubtopicCard(
     val isCompleted = status.equals("Completed", true)
     val isInProgress = !isCompleted && (status.equals("Attempting", true) || status.equals("In Progress", true))
 
+    val codeInt = code.toIntOrNull() ?: 1
+    val vibrantBg = PremiumCardColorSystem.vibrantReferenceColors[(codeInt - 1) % PremiumCardColorSystem.vibrantReferenceColors.size]
+
     val cardBg = when {
         isCompleted -> Color(0xFF6EE7B7) // Rich mint green
         isInProgress -> Color(0xFFFDBA74) // Rich amber-orange
-        else -> Color(0xFFC4B5FD) // Rich lavender-purple
+        else -> vibrantBg
     }
 
     val borderColor = when {
         isCompleted -> Color(0xFF059669)
         isInProgress -> Color(0xFFEA580C)
-        else -> Color(0xFF7C3AED)
+        else -> Color.White.copy(alpha = 0.5f)
     }
 
     val textColor = when {
         isCompleted -> Color(0xFF064E3B)
         isInProgress -> Color(0xFF7C2D12)
-        else -> Color(0xFF4C1D95)
+        else -> Color.White
     }
 
     val badgeBg = when {
@@ -1563,11 +1634,7 @@ fun CompactGridSubtopicCard(
         else -> "Start"
     }
 
-    val actionButtonBg = when {
-        isCompleted -> Color(0xFF059669)
-        isInProgress -> Color(0xFFEA580C)
-        else -> Color(0xFF7C3AED)
-    }
+    val actionButtonBg = PremiumStartButtonPalette.getContrastingColor(cardBg, codeInt)
 
     Card(
         modifier = Modifier
@@ -1596,7 +1663,11 @@ fun CompactGridSubtopicCard(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = actionButtonBg.copy(alpha = 0.15f),
+                    color = when {
+                        isCompleted -> Color(0xFF059669).copy(alpha = 0.15f)
+                        isInProgress -> Color(0xFFEA580C).copy(alpha = 0.15f)
+                        else -> Color(0xFF7C3AED).copy(alpha = 0.15f)
+                    },
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {

@@ -95,6 +95,7 @@ fun parseSection(section: String?): LegalDocType? {
         s.contains("disclaimer") -> LegalDocType.DISCLAIMER
         s.contains("copyright") -> LegalDocType.COPYRIGHT_POLICY
         s.contains("report") -> LegalDocType.REPORTING_POLICY
+        s.contains("shipping") || s.contains("delivery") -> LegalDocType.SHIPPING_DELIVERY
         else -> LegalDocType.values().find { it.id.equals(s, ignoreCase = true) || it.name.equals(s, ignoreCase = true) }
     }
 }
@@ -151,6 +152,7 @@ fun getIconForType(type: LegalDocType): ImageVector {
         LegalDocType.FAQ -> Icons.Default.Quiz
         LegalDocType.HELP_CENTER -> Icons.Default.Help
         LegalDocType.ABOUT_US -> Icons.Default.Business
+        LegalDocType.SHIPPING_DELIVERY -> Icons.Default.LocalShipping
     }
 }
 
@@ -241,6 +243,7 @@ fun LegalSupportCenterScreen(
         LegalDocType.DISCLAIMER -> "Disclaimer"
         LegalDocType.COPYRIGHT_POLICY -> "Copyright Policy"
         LegalDocType.REPORTING_POLICY -> "Question Reporting Policy"
+        LegalDocType.SHIPPING_DELIVERY -> "Shipping & Digital Delivery Policy"
         null -> "${config.appName.ifBlank { "Official" }} Help & Support"
     }
 
@@ -502,6 +505,12 @@ private fun DedicatedLegalDocumentView(
                 DocSection("t_12", "12. Governing Jurisdiction & Regulations", "These terms are interpreted and governed under state and federal educational guidelines and laws of the country."),
                 DocSection("t_13", "13. Scheduled Amendments & Variations", "We periodically update and vary terms to support new exam features. Continuous usage of the app implies agreement to updated terms.")
             )
+            LegalDocType.SHIPPING_DELIVERY -> listOf(
+                DocSection("ship_1", "1. 100% Digital Educational Service", "APPSC Group 2 Exam Prep Pro (operated by SOBHA DHANARAJU, MID: T89U1OXHFIQbHa) provides exclusively digital study material, topic-wise MCQs, and online mock tests inside the mobile application. No physical books or tangible items are shipped."),
+                DocSection("ship_2", "2. Instant In-App Fulfilment (0–5 Minutes)", "Upon payment verification via Razorpay (UPI, Cards, NetBanking, Wallets) or Google Play Billing, your premium subscription pass is unlocked instantaneously on your account."),
+                DocSection("ship_3", "3. Shipping & Handling Charges (₹0 Nil)", "Because all preparation sets and mock exams are delivered digitally over the internet inside the Android app, shipping and handling charges are ₹0 across all subscription plans."),
+                DocSection("ship_4", "4. Delayed Activation Support", "If your payment is debited and your pass is not unlocked within 15 minutes due to a banking network interruption, please email sobhadhanaraju0@gmail.com with your Razorpay Payment ID for priority activation within 2 hours.")
+            )
             else -> emptyList()
         }
     }
@@ -598,6 +607,7 @@ private fun DedicatedLegalDocumentView(
                             LegalDocType.REFUND_CANCELLATION -> "Digital packages (Mock Tests & Current Affairs) are activated instantly and are non-refundable. Exception reviews are strictly processed for double transactions within 24 hours."
                             LegalDocType.PRIVACY_POLICY -> "Your data security is our top priority. We encrypt progress reports, study preferences, and contact metrics. We never sell your personal information to third-party brokers."
                             LegalDocType.TERMS_CONDITIONS -> "Your access to Infinity mocks and notes constitutes a binding agreement. redistribution or bulk scraping of our exam databases is strictly illegal."
+                            LegalDocType.SHIPPING_DELIVERY -> "100% digital educational subscription operated by SOBHA DHANARAJU. Instant 0–5 minute in-app activation upon Razorpay payment confirmation with ₹0 physical shipping."
                             else -> "Our policies are designed to maintain academic integrity, transparent billing, and user security. If you have inquiries, write to support."
                         },
                         fontSize = 12.sp,
@@ -2554,6 +2564,15 @@ private fun LegalSupportHubView(
             )
 
             LegalMenuCard(
+                title = "Shipping & Digital Delivery Policy",
+                subtitle = "100% digital instant in-app activation & ₹0 shipping",
+                icon = Icons.Default.LocalShipping,
+                accentColor = Color(0xFF0D9488),
+                badgeText = "DELIVERY",
+                onClick = { onSelectItem(LegalDocType.SHIPPING_DELIVERY) }
+            )
+
+            LegalMenuCard(
                 title = "About $appTitle",
                 subtitle = "Our exam vision, core features, and version",
                 icon = Icons.Default.Business,
@@ -2562,6 +2581,9 @@ private fun LegalSupportHubView(
                 onClick = { onSelectItem(LegalDocType.ABOUT_US) }
             )
         }
+
+        // Razorpay Website & KYC Policy Verification Hub
+        com.example.ui.components.RazorpayComplianceHubCard()
 
         // Danger Deletion
         Text(

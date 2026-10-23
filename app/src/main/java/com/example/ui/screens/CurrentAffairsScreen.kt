@@ -232,7 +232,7 @@ fun CurrentAffairsScreen(
                             val caStatus = when {
                                 isCompletedCA -> "Completed"
                                 isInProgressCA -> "In Progress"
-                                else -> if (caIdx == 0) "Completed" else if (caIdx == 1) "In Progress" else "Not Started"
+                                else -> "Not Started"
                             }
                             val isCompleted = caStatus.equals("Completed", true)
                             val isInProgress = caStatus.equals("In Progress", true)
@@ -424,7 +424,7 @@ fun CurrentAffairsScreen(
                                             "subj-current-affairs",
                                             selectedMonthlyCA!!.id,
                                             set.id,
-                                            "TOPIC"
+                                            set.title
                                         )
                                     }
                                 }

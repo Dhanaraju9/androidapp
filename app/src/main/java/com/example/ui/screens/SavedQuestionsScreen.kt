@@ -8,7 +8,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,15 +27,45 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.Question
-import com.example.ui.theme.*
+
+/**
+ * Dedicated Luxury Palette for Bookmarked Questions:
+ * Soft Champagne Pearl canvas with pure white cards, refined warm gold borders,
+ * Imperial Emerald & Royal Amber jewel accents.
+ * Strictly NO dark mode surfaces and NO cold grey tones.
+ */
+private object LuxuryTheme {
+    val ScreenBg = Color(0xFFFAF7F2)          // Soft Champagne Pearl base
+    val CardBg = Color(0xFFFFFFFF)            // Pure Crisp White
+    val CardBorder = Color(0xFFE8D8B8)        // Refined Warm Gold border
+    val CardBorderSubtle = Color(0xFFF2E6D4)  // Delicate Champagne divider
+    val HighlightGold = Color(0xFFD4AF37)     // Metallic Warm Gold accent
+
+    val TextPrimary = Color(0xFF2A1E17)       // Deep Warm Espresso Ink
+    val TextSecondary = Color(0xFF7A6A5D)     // Warm Muted Bronze / Taupe
+    val TextTertiary = Color(0xFF9E8B7C)      // Soft Warm Sand
+
+    val AccentEmerald = Color(0xFF047857)     // Imperial Emerald Green
+    val AccentEmeraldLight = Color(0xFFECFDF5)// Soft Mint Alabaster
+    val AccentEmeraldBorder = Color(0xFFA7F3D0)// Emerald Mint Outline
+    val AccentEmeraldDark = Color(0xFF064E3B) // Deep Forest Green
+
+    val AccentAmber = Color(0xFFD97706)       // Royal Amber
+    val AccentAmberLight = Color(0xFFFFFBEB)  // Soft Warm Buttercream
+    val AccentAmberBorder = Color(0xFFFDE68A) // Amber Gold Outline
+    val AccentAmberDark = Color(0xFFB45309)   // Deep Golden Bronze
+
+    val DeleteRed = Color(0xFFDC2626)         // Crimson Rose for Delete
+    val DeleteRedLight = Color(0xFFFEF2F2)
+}
 
 data class SubjectPalette(
     val gradientStart: Color,
@@ -48,122 +77,89 @@ data class SubjectPalette(
     val cardBgColor: Color
 )
 
-fun getSubjectPalette(subjectId: String, isDark: Boolean): SubjectPalette {
+fun getSubjectPalette(subjectId: String): SubjectPalette {
     return when (subjectId.lowercase()) {
         "subj-history", "history", "subj-ap-history", "ap-history", "subj-indian-history" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF7C2D12) else Color(0xFFFFEDE5),
-            gradientEnd = if (isDark) Color(0xFF451A03) else Color(0xFFFFD1BF),
-            accentColor = Color(0xFFEA580C),
-            textColor = if (isDark) Color(0xFFFFEBE3) else Color(0xFF7C2D12),
+            gradientStart = Color(0xFFFFF7ED),
+            gradientEnd = Color(0xFFFFEDD5),
+            accentColor = Color(0xFFC2410C),
+            textColor = Color(0xFF9A3412),
             icon = Icons.Default.History,
-            iconBgColor = if (isDark) Color(0xFF9A3412) else Color(0xFFFFDDD2),
-            cardBgColor = if (isDark) Color(0xFF2C1B15) else Color(0xFFFFF7F5)
+            iconBgColor = Color(0xFFFFEDD5),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-polity", "polity", "subj-constitution", "constitution" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF1E3A8A) else Color(0xFFEFF6FF),
-            gradientEnd = if (isDark) Color(0xFF172554) else Color(0xFFDBEAFE),
-            accentColor = Color(0xFF2563EB),
-            textColor = if (isDark) Color(0xFFEFF6FF) else Color(0xFF1E40AF),
+            gradientStart = Color(0xFFF0F7FF),
+            gradientEnd = Color(0xFFE0EFFF),
+            accentColor = Color(0xFF1D4ED8),
+            textColor = Color(0xFF1E40AF),
             icon = Icons.Default.Gavel,
-            iconBgColor = if (isDark) Color(0xFF1D4ED8) else Color(0xFFBFDBFE),
-            cardBgColor = if (isDark) Color(0xFF111E3A) else Color(0xFFF8FAFC)
+            iconBgColor = Color(0xFFDBEAFE),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-geography", "geography" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF065F46) else Color(0xFFE6F4EA),
-            gradientEnd = if (isDark) Color(0xFF022C22) else Color(0xFFC2E7D9),
-            accentColor = Color(0xFF059669),
-            textColor = if (isDark) Color(0xFFE6F4EA) else Color(0xFF065F46),
+            gradientStart = Color(0xFFF0FDF4),
+            gradientEnd = Color(0xFFDCFCE7),
+            accentColor = Color(0xFF047857),
+            textColor = Color(0xFF065F46),
             icon = Icons.Default.Public,
-            iconBgColor = if (isDark) Color(0xFF047857) else Color(0xFFA3E2C9),
-            cardBgColor = if (isDark) Color(0xFF0B251E) else Color(0xFFF4FAF7)
+            iconBgColor = Color(0xFFD1FAE5),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-economy", "economy" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF4C1D95) else Color(0xFFF5F3FF),
-            gradientEnd = if (isDark) Color(0xFF2E1065) else Color(0xFFEDE9FE),
+            gradientStart = Color(0xFFFAF5FF),
+            gradientEnd = Color(0xFFF3E8FF),
             accentColor = Color(0xFF7C3AED),
-            textColor = if (isDark) Color(0xFFF5F3FF) else Color(0xFF5B21B6),
+            textColor = Color(0xFF5B21B6),
             icon = Icons.Default.TrendingUp,
-            iconBgColor = if (isDark) Color(0xFF6D28D9) else Color(0xFFDDD6FE),
-            cardBgColor = if (isDark) Color(0xFF1F1235) else Color(0xFFFAF9FF)
+            iconBgColor = Color(0xFFEDE9FE),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-science", "science", "subj-science-tech", "science-tech" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF111827) else Color(0xFFF3F4F6),
-            gradientEnd = if (isDark) Color(0xFF030712) else Color(0xFFE5E7EB),
-            accentColor = Color(0xFF4B5563),
-            textColor = if (isDark) Color(0xFFF9FAFB) else Color(0xFF1F2937),
+            gradientStart = Color(0xFFF0FDFA),
+            gradientEnd = Color(0xFFCCFBF1),
+            accentColor = Color(0xFF0F766E),
+            textColor = Color(0xFF115E59),
             icon = Icons.Default.Science,
-            iconBgColor = if (isDark) Color(0xFF374151) else Color(0xFFD1D5DB),
-            cardBgColor = if (isDark) Color(0xFF1A1D24) else Color(0xFFF9FAFB)
+            iconBgColor = Color(0xFF99F6E4),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-mental-ability", "mental-ability" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF78350F) else Color(0xFFFEF3C7),
-            gradientEnd = if (isDark) Color(0xFF451A03) else Color(0xFFFDE68A),
+            gradientStart = Color(0xFFFFFBEB),
+            gradientEnd = Color(0xFFFEF3C7),
             accentColor = Color(0xFFD97706),
-            textColor = if (isDark) Color(0xFFFEF3C7) else Color(0xFF78350F),
+            textColor = Color(0xFF92400E),
             icon = Icons.Default.Psychology,
-            iconBgColor = if (isDark) Color(0xFFB45309) else Color(0xFFFCD34D),
-            cardBgColor = if (isDark) Color(0xFF281E15) else Color(0xFFFFFDF5)
+            iconBgColor = Color(0xFFFDE68A),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-current-affairs", "current-affairs" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF831843) else Color(0xFFFDF2F8),
-            gradientEnd = if (isDark) Color(0xFF500724) else Color(0xFFFCE7F3),
-            accentColor = Color(0xFFDB2777),
-            textColor = if (isDark) Color(0xFFFDF2F8) else Color(0xFF9D174D),
+            gradientStart = Color(0xFFFFF1F2),
+            gradientEnd = Color(0xFFFFE4E6),
+            accentColor = Color(0xFFBE123C),
+            textColor = Color(0xFF9F1239),
             icon = Icons.Default.Newspaper,
-            iconBgColor = if (isDark) Color(0xFFC2185B) else Color(0xFFFFEBEE),
-            cardBgColor = if (isDark) Color(0xFF2B121C) else Color(0xFFFFF5F8)
+            iconBgColor = Color(0xFFFECDD3),
+            cardBgColor = LuxuryTheme.CardBg
         )
         "subj-society", "society" -> SubjectPalette(
-            gradientStart = if (isDark) Color(0xFF14532D) else Color(0xFFF0FDF4),
-            gradientEnd = if (isDark) Color(0xFF064E3B) else Color(0xFFDCFCE7),
-            accentColor = Color(0xFF16A34A),
-            textColor = if (isDark) Color(0xFFF0FDF4) else Color(0xFF14532D),
+            gradientStart = Color(0xFFF0FDF4),
+            gradientEnd = Color(0xFFDCFCE7),
+            accentColor = Color(0xFF15803D),
+            textColor = Color(0xFF166534),
             icon = Icons.Default.People,
-            iconBgColor = if (isDark) Color(0xFF15803D) else Color(0xFFBBF7D0),
-            cardBgColor = if (isDark) Color(0xFF122417) else Color(0xFFF6FCF8)
+            iconBgColor = Color(0xFFBBF7D0),
+            cardBgColor = LuxuryTheme.CardBg
         )
-        else -> {
-            val hash = subjectId.hashCode()
-            val themeIndex = kotlin.math.abs(hash) % 4
-            when (themeIndex) {
-                0 -> SubjectPalette(
-                    gradientStart = if (isDark) Color(0xFF1E1B4B) else Color(0xFFEEF2FF),
-                    gradientEnd = if (isDark) Color(0xFF311042) else Color(0xFFE0E7FF),
-                    accentColor = Color(0xFF4F46E5),
-                    textColor = if (isDark) Color(0xFFEEF2FF) else Color(0xFF3730A3),
-                    icon = Icons.Default.MenuBook,
-                    iconBgColor = if (isDark) Color(0xFF4338CA) else Color(0xFFC7D2FE),
-                    cardBgColor = if (isDark) Color(0xFF19182C) else Color(0xFFF9FAFF)
-                )
-                1 -> SubjectPalette(
-                    gradientStart = if (isDark) Color(0xFF0F172A) else Color(0xFFECFEFF),
-                    gradientEnd = if (isDark) Color(0xFF0F2C59) else Color(0xFFCFFAFE),
-                    accentColor = Color(0xFF06B6D4),
-                    textColor = if (isDark) Color(0xFFECFEFF) else Color(0xFF0E7490),
-                    icon = Icons.Default.MenuBook,
-                    iconBgColor = if (isDark) Color(0xFF0891B2) else Color(0xFFA5F3FC),
-                    cardBgColor = if (isDark) Color(0xFF131B2B) else Color(0xFFF0FDFF)
-                )
-                2 -> SubjectPalette(
-                    gradientStart = if (isDark) Color(0xFF581C87) else Color(0xFFFAF5FF),
-                    gradientEnd = if (isDark) Color(0xFF3B0764) else Color(0xFFF3E8FF),
-                    accentColor = Color(0xFF8B5CF6),
-                    textColor = if (isDark) Color(0xFFFAF5FF) else Color(0xFF6B21A8),
-                    icon = Icons.Default.MenuBook,
-                    iconBgColor = if (isDark) Color(0xFF7C3AED) else Color(0xFFE9D5FF),
-                    cardBgColor = if (isDark) Color(0xFF221535) else Color(0xFFFCF9FF)
-                )
-                else -> SubjectPalette(
-                    gradientStart = if (isDark) Color(0xFF3F1B0B) else Color(0xFFFEF3C7),
-                    gradientEnd = if (isDark) Color(0xFF421504) else Color(0xFFFFE4E6),
-                    accentColor = Color(0xFFD97706),
-                    textColor = if (isDark) Color(0xFFFFE4E6) else Color(0xFF9E2A2B),
-                    icon = Icons.Default.MenuBook,
-                    iconBgColor = if (isDark) Color(0xFFB45309) else Color(0xFFFCD34D),
-                    cardBgColor = if (isDark) Color(0xFF251611) else Color(0xFFFFF9F9)
-                )
-            }
-        }
+        else -> SubjectPalette(
+            gradientStart = Color(0xFFFFFBEB),
+            gradientEnd = Color(0xFFFEF3C7),
+            accentColor = Color(0xFFB45309),
+            textColor = Color(0xFF78350F),
+            icon = Icons.Default.MenuBook,
+            iconBgColor = Color(0xFFFDE68A),
+            cardBgColor = LuxuryTheme.CardBg
+        )
     }
 }
 
@@ -190,12 +186,11 @@ fun SavedQuestionsScreen(
     onBack: () -> Unit,
     onNavigateToHome: () -> Unit = {},
     onRemoveBookmark: (String) -> Unit,
-    onPracticeSaved: (List<Question>, String) -> Unit,
+    onPracticeSaved: (List<Question>, String, Int) -> Unit,
     onNavigateToExplore: () -> Unit
 ) {
     BackHandler { onBack() }
     val context = LocalContext.current
-    val isDark = isSystemInDarkTheme()
     var searchQuery by remember { mutableStateOf("") }
     var selectedSubjectId by remember { mutableStateOf("all") }
     var selectedTopicName by remember { mutableStateOf("all") }
@@ -252,13 +247,13 @@ fun SavedQuestionsScreen(
                 Text(
                     text = "Remove Bookmark?",
                     fontWeight = FontWeight.Black,
-                    color = if (isDark) Color.White else Color(0xFF0F172A)
+                    color = LuxuryTheme.TextPrimary
                 )
             },
             text = {
                 Text(
-                    text = "Remove this high-quality MCQ from your revision bank?",
-                    color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
+                    text = "Remove this high-yield MCQ from your revision bank?",
+                    color = LuxuryTheme.TextSecondary,
                     fontSize = 14.sp
                 )
             },
@@ -267,57 +262,62 @@ fun SavedQuestionsScreen(
                     onClick = {
                         onRemoveBookmark(target.id)
                         questionToDelete = null
-                        Toast.makeText(context, "Bookmark removed instantly", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Bookmark removed", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    colors = ButtonDefaults.buttonColors(containerColor = LuxuryTheme.DeleteRed)
                 ) {
                     Text("Remove", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { questionToDelete = null }) {
-                    Text("Cancel", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
+                    Text("Cancel", color = LuxuryTheme.TextSecondary, fontWeight = FontWeight.Bold)
                 }
             },
-            containerColor = if (isDark) Color(0xFF1E293B) else Color.White
+            containerColor = LuxuryTheme.CardBg,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
-    val appConfig = LocalAppConfig.current
-    val pa = appConfig.advancedFontSettings.practiceAppearance
-
-    // Using the requested default colors or custom saved settings
-    val screenBg = if (isDark) Color(0xFF1E293B) else Color(pa.screenBgColor) // #FFF7ED
-    val questionCardBg = if (isDark) Color(0xFF334155) else Color(pa.questionBgColor) // #FDE68A
-    val optionsCardBg = if (isDark) Color(0xFF1E293B) else Color(pa.optionBgColor) // #FFFFFF
-    val explanationCardBg = if (isDark) Color(0xFF064E3B) else Color(pa.explanationBgColor) // #86EFAC
-
-    AppLuminousBackground(screenName = "Saved Questions") {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LuxuryTheme.ScreenBg)
+    ) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Bookmark,
-                                    contentDescription = null,
-                                    tint = Color(0xFFF59E0B),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = LuxuryTheme.AccentAmberLight,
+                                    border = BorderStroke(1.dp, LuxuryTheme.AccentAmberBorder),
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            tint = LuxuryTheme.AccentAmber,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Premium Revision Hub",
-                                    color = if (isDark) Color.White else Color(0xFF0F172A),
+                                    color = LuxuryTheme.TextPrimary,
                                     fontWeight = FontWeight.Black,
                                     fontSize = 18.sp,
-                                    letterSpacing = (-0.5).sp
+                                    letterSpacing = (-0.3).sp
                                 )
                             }
                             Text(
                                 text = "${savedQuestions.size} Bookmarked Questions • 100% Offline Ready",
-                                color = Color(0xFF3B82F6),
-                                fontSize = 11.sp,
+                                color = LuxuryTheme.AccentEmerald,
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -328,53 +328,59 @@ fun SavedQuestionsScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = if (isDark) Color.White else Color(0xFF0F172A)
+                                    tint = LuxuryTheme.TextPrimary
                                 )
                             }
                             IconButton(onClick = onNavigateToHome) {
                                 Icon(
                                     imageVector = Icons.Default.Home,
                                     contentDescription = "Home",
-                                    tint = Color(0xFF2563EB)
+                                    tint = LuxuryTheme.AccentEmerald
                                 )
                             }
                         }
                     },
                     actions = {
-                        FilledTonalButton(
+                        Surface(
                             onClick = {
                                 viewMode = if (viewMode == "hierarchy") "flat" else "hierarchy"
                             },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (viewMode == "hierarchy") Color(0xFF2563EB) else Color(0xFFEFF6FF),
-                                contentColor = if (viewMode == "hierarchy") Color.White else Color(0xFF2563EB)
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            modifier = Modifier.padding(end = 8.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (viewMode == "hierarchy") LuxuryTheme.AccentEmerald else LuxuryTheme.CardBg,
+                            border = BorderStroke(1.dp, if (viewMode == "hierarchy") LuxuryTheme.AccentEmerald else LuxuryTheme.CardBorder),
+                            shadowElevation = 1.dp,
+                            modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            Icon(
-                                imageVector = if (viewMode == "hierarchy") Icons.Default.AccountTree else Icons.Default.List,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (viewMode == "hierarchy") "Hierarchy" else "Flat List",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (viewMode == "hierarchy") Icons.Default.AccountTree else Icons.Default.List,
+                                    contentDescription = null,
+                                    tint = if (viewMode == "hierarchy") Color.White else LuxuryTheme.AccentEmerald,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = if (viewMode == "hierarchy") "Hierarchy" else "Flat List",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (viewMode == "hierarchy") Color.White else LuxuryTheme.AccentEmerald
+                                )
+                            }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = LuxuryTheme.ScreenBg)
                 )
             },
             bottomBar = {
                 if (filteredQuestions.isNotEmpty()) {
                     Surface(
-                        color = if (isDark) Color(0xFF1E293B) else Color.White,
-                        tonalElevation = 8.dp,
-                        border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)),
+                        color = LuxuryTheme.CardBg,
+                        tonalElevation = 6.dp,
+                        shadowElevation = 8.dp,
+                        border = BorderStroke(1.dp, LuxuryTheme.CardBorder),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -389,103 +395,278 @@ fun SavedQuestionsScreen(
                                 Text(
                                     text = "${filteredQuestions.size} Questions Selected",
                                     fontWeight = FontWeight.Black,
-                                    fontSize = 13.sp,
-                                    color = if (isDark) Color.White else Color(0xFF0F172A)
+                                    fontSize = 13.5.sp,
+                                    color = LuxuryTheme.TextPrimary
                                 )
                                 Text(
-                                    text = "Ready for target practice",
+                                    text = "Ready for focused revision",
                                     fontSize = 11.sp,
-                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                    color = LuxuryTheme.TextSecondary
                                 )
                             }
 
                             Button(
                                 onClick = {
-                                    onPracticeSaved(filteredQuestions, "Custom Revision Practice")
+                                    onPracticeSaved(filteredQuestions, "Bookmarked Questions Practice", 0)
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                colors = ButtonDefaults.buttonColors(containerColor = LuxuryTheme.AccentEmerald),
                                 shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 9.dp),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                             ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = LuxuryTheme.AccentAmberLight,
+                                    modifier = Modifier.size(18.dp)
+                                )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Practice Selected", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text("Practice Selected", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                             }
                         }
                     }
                 }
             },
-            containerColor = screenBg
+            containerColor = LuxuryTheme.ScreenBg
         ) { padding ->
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(screenBg) // Ensure the whole screen background is updated
-                    .padding(horizontal = 16.dp)
+                    .background(LuxuryTheme.ScreenBg)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(bottom = 28.dp)
             ) {
-                // PREMIUM HEADER BANNER
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = if (isDark) {
-                                        listOf(Color(0xFF1E3A8A), Color(0xFF581C87))
-                                    } else {
-                                        listOf(Color(0xFFEFF6FF), Color(0xFFF5F3FF))
-                                    }
-                                )
-                            )
-                            .padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                item(key = "header_controls") {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // LUXURIOUS HEADER BANNER
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = LuxuryTheme.CardBg),
+                            border = BorderStroke(1.2.dp, LuxuryTheme.CardBorder),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp, bottom = 14.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(Color(0xFFFFFDF9), Color(0xFFFBF4E8))
+                                        )
+                                    )
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "🎯 MCQ REVISION HUB",
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 15.sp,
+                                                color = LuxuryTheme.TextPrimary,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = "Tap any question to launch full-screen practice with complete explanations.",
+                                            fontSize = 11.5.sp,
+                                            color = LuxuryTheme.TextSecondary,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = LuxuryTheme.AccentEmeraldLight,
+                                        border = BorderStroke(1.dp, LuxuryTheme.AccentEmeraldBorder),
+                                        modifier = Modifier.padding(start = 12.dp)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "${savedQuestions.size}",
+                                                fontSize = 19.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = LuxuryTheme.AccentEmeraldDark
+                                            )
+                                            Text(
+                                                text = "SAVED",
+                                                fontSize = 8.5.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = LuxuryTheme.AccentEmerald
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // SEARCH BAR
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = {
                                 Text(
-                                    text = "🎯 MCQ REVISION HUB",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 16.sp,
-                                    color = if (isDark) Color.White else Color(0xFF1E3A8A)
+                                    "Search among bookmarked questions...",
+                                    fontSize = 13.sp,
+                                    color = LuxuryTheme.TextTertiary
                                 )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Handpicked questions categorized automatically for focused preparation.",
-                                    fontSize = 11.sp,
-                                    color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
-                                    lineHeight = 16.sp
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = LuxuryTheme.AccentAmber,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(20.dp)) {
+                                        Icon(
+                                            Icons.Default.Clear,
+                                            contentDescription = "Clear",
+                                            tint = LuxuryTheme.TextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 14.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = LuxuryTheme.CardBg,
+                                unfocusedContainerColor = LuxuryTheme.CardBg,
+                                focusedBorderColor = LuxuryTheme.AccentAmber,
+                                unfocusedBorderColor = LuxuryTheme.CardBorder,
+                                focusedTextColor = LuxuryTheme.TextPrimary,
+                                unfocusedTextColor = LuxuryTheme.TextPrimary
+                            ),
+                            singleLine = true
+                        )
+
+                        // SUBJECT HORIZONTAL FILTER ROW
+                        Text(
+                            text = "FILTER BY SUBJECT",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 10.sp,
+                            color = LuxuryTheme.TextSecondary,
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        ) {
+                            item {
+                                FilterChip(
+                                    selected = selectedSubjectId == "all",
+                                    onClick = { selectedSubjectId = "all" },
+                                    label = { Text("All Subjects", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = LuxuryTheme.AccentEmerald,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = LuxuryTheme.CardBg,
+                                        labelColor = LuxuryTheme.TextSecondary
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (selectedSubjectId == "all") LuxuryTheme.AccentEmerald else LuxuryTheme.CardBorder
+                                    )
                                 )
                             }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isDark) Color(0xFF3B82F6).copy(alpha = 0.3f) else Color(0xFF3B82F6).copy(alpha = 0.1f),
-                                modifier = Modifier.padding(start = 12.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = "${savedQuestions.size}",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isDark) Color.White else Color(0xFF1D4ED8)
+
+                            items(subjectsInBookmarks) { subjectId ->
+                                val palette = getSubjectPalette(subjectId)
+                                val isSelected = selectedSubjectId.equals(subjectId, ignoreCase = true)
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedSubjectId = subjectId },
+                                    label = { Text(getSubjectDisplayName(subjectId), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = palette.accentColor,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = palette.gradientStart,
+                                        labelColor = if (isSelected) Color.White else palette.textColor
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) palette.accentColor else palette.accentColor.copy(alpha = 0.35f)
                                     )
-                                    Text(
-                                        text = "SAVED",
-                                        fontSize = 8.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = if (isDark) Color.White else Color(0xFF1D4ED8)
+                                )
+                            }
+                        }
+
+                        // TOPIC HORIZONTAL FILTER ROW (Visible if any subject has topics)
+                        if (topicsInSelectedSubject.isNotEmpty()) {
+                            Text(
+                                text = "FILTER BY TOPIC",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 10.sp,
+                                color = LuxuryTheme.TextSecondary,
+                                letterSpacing = 1.sp,
+                                modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
+                            )
+
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                            ) {
+                                item {
+                                    FilterChip(
+                                        selected = selectedTopicName == "all",
+                                        onClick = { selectedTopicName = "all" },
+                                        label = { Text("All Topics", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = LuxuryTheme.AccentAmberDark,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = LuxuryTheme.CardBg,
+                                            labelColor = LuxuryTheme.TextSecondary
+                                        ),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (selectedTopicName == "all") LuxuryTheme.AccentAmberDark else LuxuryTheme.CardBorder
+                                        )
+                                    )
+                                }
+
+                                items(topicsInSelectedSubject) { topicName ->
+                                    val isSelected = selectedTopicName.equals(topicName, ignoreCase = true)
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { selectedTopicName = topicName },
+                                        label = { Text(topicName, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = LuxuryTheme.AccentEmerald,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = LuxuryTheme.AccentEmeraldLight,
+                                            labelColor = if (isSelected) Color.White else LuxuryTheme.AccentEmeraldDark
+                                        ),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (isSelected) LuxuryTheme.AccentEmerald else LuxuryTheme.AccentEmeraldBorder
+                                        )
                                     )
                                 }
                             }
@@ -493,386 +674,283 @@ fun SavedQuestionsScreen(
                     }
                 }
 
-                // SEARCH BAR
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search among bookmarked questions...", fontSize = 13.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp)) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(18.dp)) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color.Gray, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = if (isDark) Color(0xFF1E293B) else Color.White,
-                        unfocusedContainerColor = if (isDark) Color(0xFF1E293B) else Color.White,
-                        focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1)
-                    ),
-                    singleLine = true
-                )
-
-                // SUBJECT HORIZONTAL FILTER ROW
-                Text(
-                    text = "FILTER BY SUBJECT",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 10.sp,
-                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = selectedSubjectId == "all",
-                            onClick = { selectedSubjectId = "all" },
-                            label = { Text("All Subjects", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFF2563EB),
-                                selectedLabelColor = Color.White,
-                                containerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF),
-                                labelColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF2563EB)
-                            ),
-                            border = null
-                        )
-                    }
-
-                    items(subjectsInBookmarks) { subjectId ->
-                        val palette = getSubjectPalette(subjectId, isDark)
-                        val isSelected = selectedSubjectId.equals(subjectId, ignoreCase = true)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedSubjectId = subjectId },
-                            label = { Text(getSubjectDisplayName(subjectId), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = palette.accentColor,
-                                selectedLabelColor = Color.White,
-                                containerColor = if (isDark) Color(0xFF1E293B) else palette.gradientStart,
-                                labelColor = if (isSelected) Color.White else palette.textColor
-                            ),
-                            border = null
-                        )
-                    }
-                }
-
-                // TOPIC HORIZONTAL FILTER ROW (Visible if any subject has topics)
-                if (topicsInSelectedSubject.isNotEmpty()) {
-                    Text(
-                        text = "FILTER BY TOPIC",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 10.sp,
-                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
-                    )
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = selectedTopicName == "all",
-                                onClick = { selectedTopicName = "all" },
-                                label = { Text("All Topics", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFF10B981),
-                                    selectedLabelColor = Color.White,
-                                    containerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFECFDF5),
-                                    labelColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF047857)
-                                ),
-                                border = null
-                            )
-                        }
-
-                        items(topicsInSelectedSubject) { topicName ->
-                            val isSelected = selectedTopicName.equals(topicName, ignoreCase = true)
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { selectedTopicName = topicName },
-                                label = { Text(topicName, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0xFF10B981),
-                                    selectedLabelColor = Color.White,
-                                    containerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFECFDF5),
-                                    labelColor = if (isSelected) Color.White else Color(0xFF047857)
-                                ),
-                                border = null
-                            )
-                        }
-                    }
-                }
-
                 // CONTENT AREA
                 if (filteredQuestions.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(24.dp)
+                    item(key = "empty_state") {
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = LuxuryTheme.CardBg),
+                            border = BorderStroke(1.2.dp, LuxuryTheme.CardBorder),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                tint = Color.Gray,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "No bookmarked questions match your criteria.",
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else Color(0xFF0F172A),
-                                fontSize = 15.sp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Try adjusting your search query or filters to find saved MCQs.",
-                                fontSize = 12.sp,
-                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = LuxuryTheme.AccentAmberLight,
+                                    border = BorderStroke(1.dp, LuxuryTheme.AccentAmberBorder),
+                                    modifier = Modifier.size(64.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            tint = LuxuryTheme.AccentAmber,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "No bookmarked questions match your criteria.",
+                                    fontWeight = FontWeight.Black,
+                                    color = LuxuryTheme.TextPrimary,
+                                    fontSize = 15.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Try adjusting your search query or selecting another subject filter.",
+                                    fontSize = 12.5.sp,
+                                    color = LuxuryTheme.TextSecondary,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                        contentPadding = PaddingValues(bottom = 24.dp)
-                    ) {
-                        if (viewMode == "hierarchy") {
-                            // SUBJECTS > TOPICS > QUESTIONS HIERARCHY VIEW
-                            val questionsBySubject = filteredQuestions.groupBy { it.subjectId }
+                    if (viewMode == "hierarchy") {
+                        // SUBJECTS > TOPICS > QUESTIONS HIERARCHY VIEW
+                        val questionsBySubject = filteredQuestions.groupBy { it.subjectId }
 
-                            questionsBySubject.forEach { (subjectId, subjectQuestions) ->
-                                val subjectName = getSubjectDisplayName(subjectId)
-                                val isSubjectExpanded = expandedSubjects.contains(subjectId)
-                                val palette = getSubjectPalette(subjectId, isDark)
+                        questionsBySubject.forEach { (subjectId, subjectQuestions) ->
+                            val subjectName = getSubjectDisplayName(subjectId)
+                            val isSubjectExpanded = expandedSubjects.contains(subjectId)
+                            val palette = getSubjectPalette(subjectId)
 
-                                item(key = "subj_$subjectId") {
-                                    Card(
-                                        shape = RoundedCornerShape(16.dp),
-                                        colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E293B) else Color.White),
-                                        border = BorderStroke(1.5.dp, palette.accentColor.copy(alpha = 0.5f)),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column {
-                                            // Subject Header Row
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        expandedSubjects = if (isSubjectExpanded) {
-                                                            expandedSubjects - subjectId
-                                                        } else {
-                                                            expandedSubjects + subjectId
-                                                        }
+                            item(key = "subj_$subjectId") {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = LuxuryTheme.CardBg),
+                                    border = BorderStroke(1.2.dp, LuxuryTheme.CardBorder),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column {
+                                        // Subject Header Row
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    expandedSubjects = if (isSubjectExpanded) {
+                                                        expandedSubjects - subjectId
+                                                    } else {
+                                                        expandedSubjects + subjectId
                                                     }
-                                                    .background(
-                                                        Brush.horizontalGradient(
-                                                            colors = listOf(palette.gradientStart, palette.gradientEnd)
-                                                        )
+                                                }
+                                                .background(
+                                                    Brush.horizontalGradient(
+                                                        colors = listOf(palette.gradientStart, palette.gradientEnd)
                                                     )
-                                                    .padding(16.dp),
+                                                )
+                                                .padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                modifier = Modifier.weight(1f)
                                             ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.weight(1f)
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = palette.iconBgColor,
+                                                    border = BorderStroke(1.dp, palette.accentColor.copy(alpha = 0.3f)),
+                                                    modifier = Modifier.size(38.dp)
                                                 ) {
-                                                    Surface(
-                                                        shape = CircleShape,
-                                                        color = palette.iconBgColor,
-                                                        modifier = Modifier.size(40.dp)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center) {
-                                                            Icon(
-                                                                imageVector = palette.icon,
-                                                                contentDescription = null,
-                                                                tint = palette.accentColor,
-                                                                modifier = Modifier.size(20.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Column {
-                                                        Text(
-                                                            text = subjectName,
-                                                            fontWeight = FontWeight.Black,
-                                                            fontSize = 15.sp,
-                                                            color = palette.textColor
-                                                        )
-                                                        Text(
-                                                            text = "${subjectQuestions.size} Bookmarks Available",
-                                                            fontSize = 11.sp,
-                                                            color = palette.textColor.copy(alpha = 0.8f),
-                                                            fontWeight = FontWeight.Bold
+                                                    Box(contentAlignment = Alignment.Center) {
+                                                        Icon(
+                                                            imageVector = palette.icon,
+                                                            contentDescription = null,
+                                                            tint = palette.accentColor,
+                                                            modifier = Modifier.size(20.dp)
                                                         )
                                                     }
                                                 }
-
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    OutlinedButton(
-                                                        onClick = {
-                                                            onPracticeSaved(subjectQuestions, "$subjectName Revision Practice")
-                                                        },
-                                                        border = BorderStroke(1.dp, palette.accentColor),
-                                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = palette.accentColor),
-                                                        shape = RoundedCornerShape(8.dp),
-                                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                                                        modifier = Modifier.height(30.dp)
-                                                    ) {
-                                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
-                                                        Spacer(modifier = Modifier.width(2.dp))
-                                                        Text("Practice", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                                    }
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Icon(
-                                                        imageVector = if (isSubjectExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                                        contentDescription = null,
-                                                        tint = palette.textColor
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Column {
+                                                    Text(
+                                                        text = subjectName,
+                                                        fontWeight = FontWeight.Black,
+                                                        fontSize = 15.sp,
+                                                        color = LuxuryTheme.TextPrimary
+                                                    )
+                                                    Text(
+                                                        text = "${subjectQuestions.size} Bookmarks Available",
+                                                        fontSize = 11.5.sp,
+                                                        color = palette.textColor,
+                                                        fontWeight = FontWeight.Bold
                                                     )
                                                 }
                                             }
 
-                                            // Topics under Subject
-                                            AnimatedVisibility(visible = isSubjectExpanded) {
-                                                Column(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .background(if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC))
-                                                        .padding(12.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        onPracticeSaved(subjectQuestions, "$subjectName Revision Practice", 0)
+                                                    },
+                                                    border = BorderStroke(1.dp, palette.accentColor),
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = palette.accentColor),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                                    modifier = Modifier.height(32.dp)
                                                 ) {
-                                                    val questionsByTopic = subjectQuestions.groupBy { 
-                                                        if (it.subtopic.isNotBlank()) it.subtopic 
-                                                        else if (it.topicId.isNotBlank()) it.topicId 
-                                                        else "General Bookmarks" 
-                                                    }
+                                                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Text("Practice", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Icon(
+                                                    imageVector = if (isSubjectExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                                    contentDescription = null,
+                                                    tint = LuxuryTheme.TextSecondary
+                                                )
+                                            }
+                                        }
 
-                                                    questionsByTopic.forEach { (topicName, topicQuestions) ->
-                                                        val topicKey = "${subjectId}_$topicName"
-                                                        val isTopicExpanded = expandedTopics.contains(topicKey)
+                                        // Topics under Subject
+                                        AnimatedVisibility(visible = isSubjectExpanded) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(LuxuryTheme.ScreenBg)
+                                                    .padding(12.dp),
+                                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                val questionsByTopic = subjectQuestions.groupBy { 
+                                                    if (it.subtopic.isNotBlank()) it.subtopic 
+                                                    else if (it.topicId.isNotBlank()) it.topicId 
+                                                    else "General Bookmarks" 
+                                                }
 
-                                                        Card(
-                                                            shape = RoundedCornerShape(12.dp),
-                                                            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E293B) else Color.White),
-                                                            border = BorderStroke(1.dp, palette.accentColor.copy(alpha = 0.3f)),
-                                                            modifier = Modifier.fillMaxWidth()
-                                                        ) {
-                                                            Column {
-                                                                // Topic Header Row
-                                                                Row(
-                                                                    modifier = Modifier
-                                                                        .fillMaxWidth()
-                                                                        .clickable {
-                                                                            expandedTopics = if (isTopicExpanded) {
-                                                                                expandedTopics - topicKey
-                                                                            } else {
-                                                                                expandedTopics + topicKey
-                                                                            }
-                                                                        }
-                                                                        .padding(12.dp),
-                                                                    verticalAlignment = Alignment.CenterVertically,
-                                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                                ) {
-                                                                    Row(
-                                                                        verticalAlignment = Alignment.CenterVertically,
-                                                                        modifier = Modifier.weight(1f)
-                                                                    ) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Default.Bookmark,
-                                                                            contentDescription = null,
-                                                                            tint = palette.accentColor,
-                                                                            modifier = Modifier.size(16.dp)
-                                                                        )
-                                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                                        Text(
-                                                                            text = topicName,
-                                                                            fontWeight = FontWeight.Bold,
-                                                                            fontSize = 13.sp,
-                                                                            color = if (isDark) Color.White else Color(0xFF0F172A)
-                                                                        )
-                                                                        Spacer(modifier = Modifier.width(6.dp))
-                                                                        Badge(
-                                                                            containerColor = palette.iconBgColor,
-                                                                            contentColor = palette.accentColor
-                                                                        ) {
-                                                                            Text("${topicQuestions.size}", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                                questionsByTopic.forEach { (topicName, topicQuestions) ->
+                                                    val topicKey = "${subjectId}_$topicName"
+                                                    val isTopicExpanded = expandedTopics.contains(topicKey)
+
+                                                    Card(
+                                                        shape = RoundedCornerShape(12.dp),
+                                                        colors = CardDefaults.cardColors(containerColor = LuxuryTheme.CardBg),
+                                                        border = BorderStroke(1.dp, LuxuryTheme.CardBorderSubtle),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Column {
+                                                            // Topic Header Row
+                                                            Row(
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .clickable {
+                                                                        expandedTopics = if (isTopicExpanded) {
+                                                                            expandedTopics - topicKey
+                                                                        } else {
+                                                                            expandedTopics + topicKey
                                                                         }
                                                                     }
-
-                                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                                        TextButton(
-                                                                            onClick = {
-                                                                                onPracticeSaved(topicQuestions, "$topicName Revision")
-                                                                            },
-                                                                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                                                                        ) {
-                                                                            Text("Practice (${topicQuestions.size})", fontSize = 11.sp, fontWeight = FontWeight.Black, color = palette.accentColor)
-                                                                        }
-                                                                        Icon(
-                                                                            imageVector = if (isTopicExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                                                            contentDescription = null,
-                                                                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-                                                                            modifier = Modifier.size(18.dp)
+                                                                    .padding(12.dp),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically,
+                                                                    modifier = Modifier.weight(1f)
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Bookmark,
+                                                                        contentDescription = null,
+                                                                        tint = palette.accentColor,
+                                                                        modifier = Modifier.size(16.dp)
+                                                                    )
+                                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                                    Text(
+                                                                        text = topicName,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        fontSize = 13.sp,
+                                                                        color = LuxuryTheme.TextPrimary
+                                                                    )
+                                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                                    Surface(
+                                                                        shape = RoundedCornerShape(6.dp),
+                                                                        color = palette.iconBgColor,
+                                                                        border = BorderStroke(1.dp, palette.accentColor.copy(alpha = 0.3f))
+                                                                    ) {
+                                                                        Text(
+                                                                            text = "${topicQuestions.size}",
+                                                                            fontSize = 10.sp,
+                                                                            fontWeight = FontWeight.Bold,
+                                                                            color = palette.textColor,
+                                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                                         )
                                                                     }
                                                                 }
 
-                                                                // Questions under Topic
-                                                                AnimatedVisibility(visible = isTopicExpanded) {
-                                                                    Column(
-                                                                        modifier = Modifier
-                                                                            .fillMaxWidth()
-                                                                            .padding(8.dp),
-                                                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                    TextButton(
+                                                                        onClick = {
+                                                                            onPracticeSaved(topicQuestions, "$topicName Revision", 0)
+                                                                        },
+                                                                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                                                                     ) {
-                                                                        topicQuestions.forEach { question ->
-                                                                            val isExpanded = expandedQuestionIds.contains(question.id)
-                                                                            SavedQuestionCard(
-                                                                                question = question,
-                                                                                isExpanded = isExpanded,
-                                                                                onToggleExpand = {
-                                                                                    expandedQuestionIds = if (isExpanded) {
-                                                                                        expandedQuestionIds - question.id
-                                                                                    } else {
-                                                                                        expandedQuestionIds + question.id
-                                                                                    }
-                                                                                },
-                                                                                onPracticeSingle = {
-                                                                                    onPracticeSaved(listOf(question), "Saved Question Practice")
-                                                                                },
-                                                                                onDeleteClick = {
-                                                                                    questionToDelete = question
-                                                                                },
-                                                                                onShareClick = {
-                                                                                    shareQuestion(question, context)
+                                                                        Text(
+                                                                            "Practice (${topicQuestions.size})",
+                                                                            fontSize = 11.sp,
+                                                                            fontWeight = FontWeight.Black,
+                                                                            color = palette.accentColor
+                                                                        )
+                                                                    }
+                                                                    Icon(
+                                                                        imageVector = if (isTopicExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                                                        contentDescription = null,
+                                                                        tint = LuxuryTheme.TextSecondary,
+                                                                        modifier = Modifier.size(18.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            // Questions under Topic
+                                                            AnimatedVisibility(visible = isTopicExpanded) {
+                                                                Column(
+                                                                    modifier = Modifier
+                                                                        .fillMaxWidth()
+                                                                        .padding(8.dp),
+                                                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                                                ) {
+                                                                    topicQuestions.forEach { question ->
+                                                                        val isExpanded = expandedQuestionIds.contains(question.id)
+                                                                        val targetIdx = filteredQuestions.indexOfFirst { it.id == question.id }.coerceAtLeast(0)
+                                                                        SavedQuestionCard(
+                                                                            question = question,
+                                                                            isExpanded = isExpanded,
+                                                                            onToggleExpand = {
+                                                                                expandedQuestionIds = if (isExpanded) {
+                                                                                    expandedQuestionIds - question.id
+                                                                                } else {
+                                                                                    expandedQuestionIds + question.id
                                                                                 }
-                                                                            )
-                                                                        }
+                                                                            },
+                                                                            onPracticeSingle = {
+                                                                                onPracticeSaved(filteredQuestions, "Bookmarked Questions Practice", targetIdx)
+                                                                            },
+                                                                            onDeleteClick = {
+                                                                                questionToDelete = question
+                                                                            },
+                                                                            onShareClick = {
+                                                                                shareQuestion(question, context)
+                                                                            }
+                                                                        )
                                                                     }
                                                                 }
                                                             }
@@ -884,32 +962,33 @@ fun SavedQuestionsScreen(
                                     }
                                 }
                             }
-                        } else {
-                            // FLAT LIST VIEW
-                            items(filteredQuestions, key = { it.id }) { question ->
-                                val isExpanded = expandedQuestionIds.contains(question.id)
+                        }
+                    } else {
+                        // FLAT LIST VIEW
+                        items(filteredQuestions, key = { it.id }) { question ->
+                            val isExpanded = expandedQuestionIds.contains(question.id)
+                            val targetIdx = filteredQuestions.indexOfFirst { it.id == question.id }.coerceAtLeast(0)
 
-                                SavedQuestionCard(
-                                    question = question,
-                                    isExpanded = isExpanded,
-                                    onToggleExpand = {
-                                        expandedQuestionIds = if (isExpanded) {
-                                            expandedQuestionIds - question.id
-                                        } else {
-                                            expandedQuestionIds + question.id
-                                        }
-                                    },
-                                    onPracticeSingle = {
-                                        onPracticeSaved(listOf(question), "Saved Question Practice")
-                                    },
-                                    onDeleteClick = {
-                                        questionToDelete = question
-                                    },
-                                    onShareClick = {
-                                        shareQuestion(question, context)
+                            SavedQuestionCard(
+                                question = question,
+                                isExpanded = isExpanded,
+                                onToggleExpand = {
+                                    expandedQuestionIds = if (isExpanded) {
+                                        expandedQuestionIds - question.id
+                                    } else {
+                                        expandedQuestionIds + question.id
                                     }
-                                )
-                            }
+                                },
+                                onPracticeSingle = {
+                                    onPracticeSaved(filteredQuestions, "Bookmarked Questions Practice", targetIdx)
+                                },
+                                onDeleteClick = {
+                                    questionToDelete = question
+                                },
+                                onShareClick = {
+                                    shareQuestion(question, context)
+                                }
+                            )
                         }
                     }
                 }
@@ -949,16 +1028,14 @@ private fun SavedQuestionCard(
     onDeleteClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
-    val appConfig = LocalAppConfig.current
-    val pa = appConfig.advancedFontSettings.practiceAppearance
-    val palette = getSubjectPalette(question.subjectId, isDark)
+    val palette = getSubjectPalette(question.subjectId)
 
     Card(
+        onClick = onPracticeSingle,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF1E293B) else Color(pa.questionBgColor)), // Use questionCardBg color
-        border = BorderStroke(1.dp, if (isDark) Color(0xFF334155) else Color(pa.questionBorderColor)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = LuxuryTheme.CardBg),
+        border = BorderStroke(1.2.dp, LuxuryTheme.CardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -974,8 +1051,8 @@ private fun SavedQuestionCard(
                     val label = if (question.subtopic.isNotBlank()) question.subtopic else getSubjectDisplayName(question.subjectId)
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = palette.iconBgColor,
-                        border = BorderStroke(1.dp, palette.accentColor.copy(alpha = 0.3f))
+                        color = palette.gradientStart,
+                        border = BorderStroke(1.dp, palette.accentColor.copy(alpha = 0.35f))
                     ) {
                         Text(
                             text = label,
@@ -984,7 +1061,7 @@ private fun SavedQuestionCard(
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
@@ -997,7 +1074,7 @@ private fun SavedQuestionCard(
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = "Share",
-                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                            tint = LuxuryTheme.TextSecondary,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -1009,63 +1086,55 @@ private fun SavedQuestionCard(
                         Icon(
                             imageVector = Icons.Default.Bookmark,
                             contentDescription = "Remove Bookmark",
-                            tint = Color(0xFFEF4444),
+                            tint = LuxuryTheme.AccentAmberDark,
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = question.questionText,
-                color = if (isDark) Color.White else Color(0xFF0F172A),
+                color = LuxuryTheme.TextPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.5.sp,
                 lineHeight = 20.sp
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 listOf("A", "B", "C", "D").forEach { optKey ->
                     val optText = question.options[optKey] ?: ""
                     if (optText.isNotBlank()) {
-                        val isCorrect = optKey.equals(question.correctOption, ignoreCase = true)
-                        val defaultOptionBorder = when (optKey) {
-                            "A" -> Color(0xFF2563EB).copy(alpha = 0.2f)
-                            "B" -> Color(0xFF7C3AED).copy(alpha = 0.2f)
-                            "C" -> Color(0xFF059669).copy(alpha = 0.2f)
-                            else -> Color(0xFFD97706).copy(alpha = 0.2f)
-                        }
+                        val isCorrect = isExpanded && optKey.equals(question.correctOption, ignoreCase = true)
+                        
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = if (isCorrect) {
-                                if (isDark) Color(0xFF064E3B) else Color(0xFFECFDF5)
-                            } else {
-                                if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC)
-                            },
+                            color = if (isCorrect) LuxuryTheme.AccentEmeraldLight else LuxuryTheme.CardBg,
                             border = BorderStroke(
                                 if (isCorrect) 1.5.dp else 1.dp,
-                                if (isCorrect) Color(0xFF10B981) else defaultOptionBorder
+                                if (isCorrect) LuxuryTheme.AccentEmerald else LuxuryTheme.CardBorderSubtle
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Surface(
                                     shape = CircleShape,
-                                    color = if (isCorrect) Color(0xFF10B981) else if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0),
-                                    modifier = Modifier.size(20.dp)
+                                    color = if (isCorrect) LuxuryTheme.AccentEmerald else Color(0xFFFBF4E8),
+                                    border = BorderStroke(1.dp, if (isCorrect) LuxuryTheme.AccentEmerald else LuxuryTheme.CardBorder),
+                                    modifier = Modifier.size(22.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Text(
                                             text = optKey,
-                                            color = if (isCorrect) Color.White else if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
-                                            fontSize = 10.sp,
+                                            color = if (isCorrect) Color.White else LuxuryTheme.TextPrimary,
+                                            fontSize = 10.5.sp,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
@@ -1075,11 +1144,7 @@ private fun SavedQuestionCard(
 
                                 Text(
                                     text = optText,
-                                    color = if (isCorrect) {
-                                        if (isDark) Color(0xFFD1FAE5) else Color(0xFF065F46)
-                                    } else {
-                                        if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
-                                    },
+                                    color = if (isCorrect) LuxuryTheme.AccentEmeraldDark else LuxuryTheme.TextPrimary,
                                     fontSize = 12.5.sp,
                                     fontWeight = if (isCorrect) FontWeight.Bold else FontWeight.Normal,
                                     modifier = Modifier.weight(1f)
@@ -1089,8 +1154,8 @@ private fun SavedQuestionCard(
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = "Correct Answer",
-                                        tint = Color(0xFF10B981),
-                                        modifier = Modifier.size(16.dp)
+                                        tint = LuxuryTheme.AccentEmerald,
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
                             }
@@ -1112,31 +1177,31 @@ private fun SavedQuestionCard(
                             .fillMaxWidth()
                             .padding(top = 4.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (isDark) Color(0xFF172554) else Color(0xFFF0F9FF))
-                            .border(1.dp, if (isDark) Color(0xFF1E3A8A) else Color(0xFFBAE6FD), RoundedCornerShape(10.dp))
-                            .padding(10.dp)
+                            .background(LuxuryTheme.AccentEmeraldLight)
+                            .border(1.dp, LuxuryTheme.AccentEmeraldBorder, RoundedCornerShape(10.dp))
+                            .padding(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Lightbulb,
                                 contentDescription = null,
-                                tint = Color(0xFF0284C7),
-                                modifier = Modifier.size(14.dp)
+                                tint = LuxuryTheme.AccentAmber,
+                                modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Detailed Explanation / వివరణ",
-                                color = if (isDark) Color(0xFF93C5FD) else Color(0xFF0369A1),
+                                color = LuxuryTheme.AccentEmeraldDark,
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
                             text = question.explanation,
-                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF0F172A),
+                            color = LuxuryTheme.TextPrimary,
                             fontSize = 11.5.sp,
                             lineHeight = 17.sp
                         )
@@ -1159,35 +1224,34 @@ private fun SavedQuestionCard(
                         Icon(
                             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                             contentDescription = null,
-                            tint = Color(0xFF2563EB),
+                            tint = LuxuryTheme.AccentAmberDark,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (isExpanded) "Hide Solution" else "View Solution",
                             fontSize = 11.5.sp,
-                            color = Color(0xFF2563EB),
+                            color = LuxuryTheme.AccentAmberDark,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
 
-                FilledTonalButton(
+                Button(
                     onClick = onPracticeSingle,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = if (isDark) Color(0xFF3B1808) else Color(0xFFFFEDE5),
-                        contentColor = Color(0xFFEA580C)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = LuxuryTheme.AccentEmerald),
                     shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
+                        tint = LuxuryTheme.AccentAmberLight,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Practice", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    Text("Practice", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

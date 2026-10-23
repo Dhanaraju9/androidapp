@@ -1266,6 +1266,9 @@ fun RazorpayGatewayTabContent() {
             }
         }
 
+        // Razorpay Website & KYC Policy Verification Hub
+        com.example.ui.components.RazorpayComplianceHubCard()
+
         // Configuration Form Card
         Card(
             shape = RoundedCornerShape(16.dp),

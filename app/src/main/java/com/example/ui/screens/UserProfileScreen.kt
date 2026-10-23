@@ -134,13 +134,14 @@ fun UserProfileScreen(
             scope.launch {
                 try {
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                        val file = java.io.File(context.cacheDir, "profile_pic_${System.currentTimeMillis()}.jpg")
+                        val file = java.io.File(context.filesDir, "profile_pic_${System.currentTimeMillis()}.jpg")
                         java.io.FileOutputStream(file).use { outputStream ->
                             inputStream.copyTo(outputStream)
                         }
                         SampleData.userProfileState.value = SampleData.userProfileState.value.copy(
                             profileImageUrl = file.absolutePath
                         )
+                        SampleData.saveUserProfile(context)
                         snackbarHostState.showSnackbar("Profile picture updated successfully!")
                     }
                 } catch (e: Exception) {
@@ -352,7 +353,7 @@ fun UserProfileScreen(
                                         )
                                         ProfileDetailChip(
                                             icon = Icons.Default.Email,
-                                            text = userProfile.email.ifBlank { "candidate@prep.portal" },
+                                            text = userProfile.email.ifBlank { "Email not linked" },
                                             burgundyTextPrimary = burgundyTextPrimary
                                         )
                                     }
@@ -698,6 +699,7 @@ fun UserProfileScreen(
                             targetExam = editTargetExam,
                             preferredLanguage = editLanguage
                         )
+                        SampleData.saveUserProfile(context)
                         showEditProfileDialog = false
                         scope.launch {
                             snackbarHostState.showSnackbar("Profile details saved persistently!")
@@ -743,16 +745,18 @@ fun UserProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    val effectiveStreak = realUserProgress.streakDays.coerceAtLeast(userProfile.streakDays)
+                    val totalSolved = realUserProgress.completedQuestionsCount + perfSummary.totalQuestionsAttempted
                     AchievementBadgeRow(
                         title = "Practice Starter",
-                        desc = "Completed initial APPSC Group-2 sets",
-                        isUnlocked = true,
+                        desc = if (totalSolved > 0) "Solved $totalSolved practice MCQs" else "Attempt your first practice set to unlock",
+                        isUnlocked = totalSolved > 0 || realUserProgress.testsCompletedCount > 0,
                         burgundyTextPrimary = burgundyTextPrimary
                     )
                     AchievementBadgeRow(
                         title = "Streak Champion",
-                        desc = "Maintained ${userProfile.streakDays}-day practice streak",
-                        isUnlocked = userProfile.streakDays > 0,
+                        desc = "Maintained ${effectiveStreak}-day practice streak",
+                        isUnlocked = effectiveStreak > 0,
                         burgundyTextPrimary = burgundyTextPrimary
                     )
                     AchievementBadgeRow(
@@ -807,6 +811,10 @@ fun UserProfileScreen(
                         color = burgundyTextSecondary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+                    val appPacks = com.example.util.OfflineSyncManager.downloadedPacks.filter {
+                        it.appId == config.appId || it.appId.isBlank()
+                    }
+                    val totalOfflineQs = appPacks.sumOf { it.questionCount }
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = iconCircleBg,
@@ -819,10 +827,10 @@ fun UserProfileScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("APPSC Group-2 Core Offline Cache", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = burgundyTextPrimary)
-                                Text("8 Subjects • 240+ Practice Questions", fontSize = 11.5.sp, color = burgundyTextSecondary)
+                                Text("${config.appName} Offline Cache", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = burgundyTextPrimary)
+                                Text("${appPacks.size} Packs • $totalOfflineQs Practice Questions", fontSize = 11.5.sp, color = burgundyTextSecondary)
                             }
-                            Text("READY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
+                            Text(if (appPacks.isNotEmpty()) "READY" else "EMPTY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (appPacks.isNotEmpty()) Color(0xFF16A34A) else burgundyTextSecondary)
                         }
                     }
                 }

@@ -14,7 +14,8 @@ enum class LegalDocType(val id: String, val title: String, val icon: String) {
     CONTACT_US("contact_us", "Contact Us", "ContactSupport"),
     FAQ("faq", "Frequently Asked Questions", "Quiz"),
     HELP_CENTER("help_center", "Help Center", "Help"),
-    ABOUT_US("about_us", "About Us", "Business")
+    ABOUT_US("about_us", "About Us", "Business"),
+    SHIPPING_DELIVERY("shipping_policy", "Shipping & Digital Delivery Policy", "LocalShipping")
 }
 
 data class LegalDocument(

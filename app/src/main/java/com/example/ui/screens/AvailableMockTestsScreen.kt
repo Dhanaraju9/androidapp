@@ -83,9 +83,14 @@ fun AvailableMockTestsScreen(
         }
     }
 
+    val appRepository = remember(activeApp.id) {
+        com.example.repository.AppRepository(com.example.db.AppDatabase.getDatabase(context), activeApp.id)
+    }
+
     // Dynamic user-specific mock test filtering (isolated by app & user)
-    val userTests = remember(SampleData.generatedMockTestsState.size, activeApp.id, userProfile.email) {
-        SampleData.generatedMockTestsState.filter {
+    val allMockTestsSnapshot = SampleData.generatedMockTestsState.toList()
+    val userTests = remember(allMockTestsSnapshot, activeApp.id, userProfile.email) {
+        allMockTestsSnapshot.filter {
             it.appId == activeApp.id || it.appId.isBlank()
         }
     }
@@ -156,6 +161,7 @@ fun AvailableMockTestsScreen(
                 Button(
                     onClick = {
                         SampleData.generatedMockTestsState.removeAll { it.id == test.id }
+                        appRepository.deleteMockTest(test.id)
                         testToDelete = null
                         Toast.makeText(context, "Mock Test removed", Toast.LENGTH_SHORT).show()
                     },

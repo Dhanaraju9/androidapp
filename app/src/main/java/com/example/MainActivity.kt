@@ -27,6 +27,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 sealed class AppScreen {
@@ -126,10 +130,12 @@ sealed class AppScreen {
         val subtopicId: String = "",
         val subtopicTitle: String = "",
         val preloadedQuestions: List<Question> = emptyList(),
-        val sectionType: PracticeSectionType? = null
+        val sectionType: PracticeSectionType? = null,
+        val initialQuestionIndex: Int = 0,
+        val preserveQuestionOrder: Boolean = false
     ) : AppScreen() {
         override val routeKey: String =
-            "practice_${subjectId}_${unitId}_${topicId}_${setId}_${subtopicId}_${sectionType?.name ?: "default"}_$setName"
+            "practice_${subjectId}_${unitId}_${topicId}_${setId}_${subtopicId}_${sectionType?.name ?: "default"}_${setName}_$initialQuestionIndex"
     }
 
     data class OfflineSubjectDetail(
@@ -253,6 +259,7 @@ class MainActivity : ComponentActivity(), com.razorpay.PaymentResultWithDataList
         }
 
         com.example.repository.AppConfigRepository.getInstance().initializeWithContext(this)
+        SampleData.initializeWithContext(this)
         com.example.util.AnimationConfigManager.initialize(this)
         com.example.util.BillingPaymentManager.loadMerchantConfig(this)
         com.example.ui.theme.LuxuryFontStudioManager.init(this)
@@ -339,6 +346,75 @@ fun AppNavigationHost() {
     }
 
     val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val activeAppId by SampleData.currentActiveAppId
+    val database = remember { com.example.db.AppDatabase.getDatabase(context) }
+    val appRepository = remember(activeAppId) { com.example.repository.AppRepository(database, activeAppId) }
+    val leaderboardRepository = remember { com.example.repository.LeaderboardRepository.getInstance(context) }
+
+    val bookmarkedQuestions by appRepository.allBookmarks.collectAsStateWithLifecycle()
+    val allTestResults by appRepository.allTestResults.collectAsStateWithLifecycle()
+    val persistedMockTests by appRepository.allMockTests.collectAsStateWithLifecycle()
+
+    // Sync persisted Room test results & mock tests into SampleData state for cross-screen consistency
+    LaunchedEffect(allTestResults) {
+        if (allTestResults.isNotEmpty()) {
+            val existingIds = SampleData.testResultsState.map { it.id }.toSet()
+            val newResults = allTestResults.filter { !existingIds.contains(it.id) }
+            if (newResults.isNotEmpty()) {
+                SampleData.testResultsState.addAll(0, newResults)
+            }
+        }
+    }
+
+    LaunchedEffect(persistedMockTests, activeAppId) {
+        val demoTemplateIds = setOf(
+            "mock-01", "mock-02", "mock-03",
+            "mock-unit-01", "mock-unit-02",
+            "mock-topic-01", "mock-topic-02"
+        )
+        SampleData.seedDefaultMockTestsIfEmpty(activeAppId)
+        if (persistedMockTests.isNotEmpty()) {
+            persistedMockTests.forEach { dbTest ->
+                if (dbTest.id in demoTemplateIds) {
+                    appRepository.deleteMockTest(dbTest.id)
+                } else {
+                    val idx = SampleData.generatedMockTestsState.indexOfFirst { it.id == dbTest.id }
+                    if (idx != -1) {
+                        SampleData.generatedMockTestsState[idx] = dbTest
+                    } else {
+                        SampleData.generatedMockTestsState.add(0, dbTest)
+                    }
+                }
+            }
+        }
+    }
+
+    // Start real-time Firestore Master Admin Config sync so Admin Panel updates immediately reflect in user screens
+    LaunchedEffect(activeAppId) {
+        try {
+            com.example.util.FirebaseSyncManager.startMasterAdminConfigSync(
+                appId = activeAppId,
+                coroutineScope = coroutineScope
+            )
+        } catch (_: Exception) {}
+    }
+
+    // Cache updated subjects and questions from SampleData into Room
+    LaunchedEffect(SampleData.subjectsState.size, activeAppId) {
+        val currentSubjects = SampleData.getSubjectsForApp(activeAppId)
+        if (currentSubjects.isNotEmpty()) {
+            appRepository.cacheSubjects(currentSubjects)
+        }
+    }
+
+    LaunchedEffect(SampleData.questionsState.size, activeAppId) {
+        val currentQuestions = SampleData.questionsState.filter { it.appId == activeAppId || it.appId == "ALL" }
+        if (currentQuestions.isNotEmpty()) {
+            appRepository.saveQuestions(currentQuestions)
+        }
+    }
+
     val userProfile by SampleData.userProfileState
     LaunchedEffect(userProfile.isLoggedIn) {
         if (!userProfile.isLoggedIn && currentScreen !is AppScreen.Login && currentScreen !is AppScreen.Splash) {
@@ -564,6 +640,7 @@ fun AppNavigationHost() {
                                 )
                             )
                         },
+                        testResults = allTestResults,
                         onNavigateToSubscription = {
                             navigateTo(AppScreen.Subscription)
                         }
@@ -693,7 +770,11 @@ fun AppNavigationHost() {
                             }
                         }.ifEmpty { SampleData.questionsState.take(10) }
                     }
-                    val sessionKey = screen.subtopicId.ifBlank { "session-${screen.setName}" }
+                    val sessionKey = screen.subtopicId.ifBlank {
+                        screen.setId.ifBlank {
+                            screen.topicId.takeIf { screen.subjectId == "subj-current-affairs" } ?: "session-${screen.setName}"
+                        }
+                    }
                     PracticeArenaScreen(
                         practiceSessionId = sessionKey,
                         questions = questions,
@@ -704,8 +785,58 @@ fun AppNavigationHost() {
                             screen.subtopicId.isNotBlank() || screen.subtopicTitle.isNotBlank() -> PracticeSectionType.SUBTOPICS
                             else -> PracticeSectionType.SETS
                         },
+                        initialQuestionIndex = screen.initialQuestionIndex,
+                        preserveQuestionOrder = screen.preserveQuestionOrder,
+                        initialBookmarkedIds = bookmarkedQuestions.map { it.id }.toSet(),
+                        onToggleBookmark = { q -> appRepository.toggleBookmark(q) },
                         onBack = { goBack() },
                         onSubmitTest = { correctCount, wrongCount, scoreVal, userAnsMap, elapsedSec ->
+                            val practiceTitle = screen.subtopicTitle.ifBlank { screen.setName }
+                            val totalQs = questions.size.coerceAtLeast(1)
+                            val attemptedQs = (correctCount + wrongCount).coerceAtLeast(1)
+                            val unanswered = (totalQs - (correctCount + wrongCount)).coerceAtLeast(0)
+                            val pctFloat = ((correctCount.toFloat() / totalQs.toFloat()) * 100f).coerceIn(0f, 100f)
+                            val accPct = if (correctCount + wrongCount > 0) ((correctCount * 100) / attemptedQs) else 0
+                            val dateFormatted = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date())
+                            val newResult = com.example.model.TestResult(
+                                id = UUID.randomUUID().toString(),
+                                testName = practiceTitle,
+                                totalQuestions = totalQs,
+                                score = correctCount,
+                                percentage = pctFloat.toInt(),
+                                accuracy = "$accPct%",
+                                date = dateFormatted
+                            )
+                            SampleData.testResultsState.add(0, newResult)
+                            appRepository.saveTestResult(
+                                testTitle = practiceTitle,
+                                totalQuestions = totalQs,
+                                correctCount = correctCount,
+                                wrongCount = wrongCount,
+                                unansweredCount = unanswered,
+                                percentage = pctFloat,
+                                accuracyStr = "$accPct%",
+                                timeSeconds = elapsedSec,
+                                userAnswers = userAnsMap,
+                                testType = "PRACTICE_SET"
+                            )
+                            coroutineScope.launch {
+                                try {
+                                    val completedTopic = screen.topicId.takeIf { it.isNotBlank() && it != "saved" && it != "pyq" }
+                                    if (completedTopic != null) {
+                                        appRepository.userProgressRepository.completeTopic(activeAppId, completedTopic)
+                                    }
+                                    leaderboardRepository.processVerifiedTestResult(
+                                        testId = sessionKey,
+                                        testTitle = practiceTitle,
+                                        totalQuestions = totalQs,
+                                        correctAnswers = correctCount,
+                                        percentage = pctFloat,
+                                        timeSeconds = elapsedSec,
+                                        subjectId = screen.subjectId
+                                    )
+                                } catch (_: Exception) {}
+                            }
                             navigateTo(
                                 AppScreen.Result(
                                     subjectId = screen.subjectId,
@@ -870,11 +1001,28 @@ fun AppNavigationHost() {
 
                 is AppScreen.SavedQuestions -> {
                     SavedQuestionsScreen(
-                        savedQuestions = SampleData.questionsState.take(10),
+                        savedQuestions = bookmarkedQuestions,
                         onBack = { goBack() },
                         onNavigateToHome = { navigateToHome() },
-                        onRemoveBookmark = {},
-                        onPracticeSaved = { _, _ -> },
+                        onRemoveBookmark = { qId -> appRepository.removeBookmark(qId) },
+                        onPracticeSaved = { savedQs, practiceTitle, initialIndex ->
+                            if (savedQs.isNotEmpty()) {
+                                val targetIndex = initialIndex.coerceIn(0, savedQs.size - 1)
+                                val targetQuestionId = savedQs.getOrNull(targetIndex)?.id ?: "0"
+                                navigateTo(
+                                    AppScreen.PracticeArena(
+                                        subjectId = "saved",
+                                        unitId = "saved",
+                                        topicId = "saved",
+                                        setName = practiceTitle,
+                                        setId = "saved_${practiceTitle.hashCode()}_${savedQs.size}_$targetQuestionId",
+                                        preloadedQuestions = savedQs,
+                                        initialQuestionIndex = targetIndex,
+                                        preserveQuestionOrder = true
+                                    )
+                                )
+                            }
+                        },
                         onNavigateToExplore = { navigateToHome() }
                     )
                 }
@@ -897,6 +1045,7 @@ fun AppNavigationHost() {
                                     unitId = unitId,
                                     topicId = topicId,
                                     setName = setName,
+                                    setId = topicId,
                                     sectionType = PracticeSectionType.CURRENT_AFFAIRS
                                 )
                             )
@@ -913,12 +1062,14 @@ fun AppNavigationHost() {
                             if (SampleData.generatedMockTestsState.none { it.id == newTest.id }) {
                                 SampleData.generatedMockTestsState.add(0, newTest)
                             }
+                            appRepository.saveMockTest(newTest)
                         },
                         pastTests = SampleData.generatedMockTestsState,
                         onStartGeneratedTest = { test ->
                             if (SampleData.generatedMockTestsState.none { it.id == test.id }) {
                                 SampleData.generatedMockTestsState.add(0, test)
                             }
+                            appRepository.saveMockTest(test)
                             navigateTo(
                                 AppScreen.FullLengthMockTest(
                                     testId = test.id,
@@ -974,6 +1125,7 @@ fun AppNavigationHost() {
                             if (index != -1) {
                                 SampleData.generatedMockTestsState[index] = reattemptTest
                             }
+                            appRepository.saveMockTest(reattemptTest)
                             navigateTo(
                                 AppScreen.FullLengthMockTest(
                                     testId = reattemptTest.id,
@@ -996,6 +1148,8 @@ fun AppNavigationHost() {
                     if (activeTest != null) {
                         FullLengthMockTestScreen(
                             test = activeTest,
+                            initialBookmarkedIds = bookmarkedQuestions.map { it.id }.toSet(),
+                            onToggleBookmark = { q -> appRepository.toggleBookmark(q) },
                             onSubmitTest = { correct, wrong, score, userAnswers, timeTakenSeconds ->
                                 val totalQs = activeTest.questions.size
                                 val unanswered = (totalQs - (correct + wrong)).coerceAtLeast(0)
@@ -1032,6 +1186,44 @@ fun AppNavigationHost() {
                                 if (idx != -1) {
                                     SampleData.generatedMockTestsState[idx] = updatedTest
                                 }
+                                appRepository.saveMockTest(updatedTest)
+                                val attemptedQs = (correct + wrong).coerceAtLeast(1)
+                                val accPct = if (correct + wrong > 0) ((correct * 100) / attemptedQs) else 0
+                                val dateFormatted = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(newRecord.completedAt))
+                                val testResult = com.example.model.TestResult(
+                                    id = newRecord.attemptId,
+                                    testName = activeTest.title,
+                                    totalQuestions = totalQs,
+                                    score = correct,
+                                    percentage = percentage.toInt(),
+                                    accuracy = "$accPct%",
+                                    date = dateFormatted
+                                )
+                                SampleData.testResultsState.add(0, testResult)
+                                appRepository.saveTestResult(
+                                    testTitle = activeTest.title,
+                                    totalQuestions = totalQs,
+                                    correctCount = correct,
+                                    wrongCount = wrong,
+                                    unansweredCount = unanswered,
+                                    percentage = percentage.toFloat(),
+                                    accuracyStr = "$accPct%",
+                                    timeSeconds = timeTakenSeconds,
+                                    userAnswers = userAnswers,
+                                    testType = activeTest.testMode.name
+                                )
+                                coroutineScope.launch {
+                                    try {
+                                        leaderboardRepository.processVerifiedTestResult(
+                                            testId = activeTest.id,
+                                            testTitle = activeTest.title,
+                                            totalQuestions = totalQs,
+                                            correctAnswers = correct,
+                                            percentage = percentage.toFloat(),
+                                            timeSeconds = timeTakenSeconds
+                                        )
+                                    } catch (_: Exception) {}
+                                }
                                 navigateTo(AppScreen.MockTestResult(activeTest.id))
                             },
                             onPauseTest = { correct, wrong, unanswered, markedForReview, visited, userAnswers ->
@@ -1043,6 +1235,7 @@ fun AppNavigationHost() {
                                 if (idx != -1) {
                                     SampleData.generatedMockTestsState[idx] = updatedTest
                                 }
+                                appRepository.saveMockTest(updatedTest)
                                 goBack()
                             },
                             onNavigateToSubscription = {

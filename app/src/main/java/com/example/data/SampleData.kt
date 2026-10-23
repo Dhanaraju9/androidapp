@@ -270,7 +270,7 @@ object SampleData {
     }
 
     // Global Broadcast Notice / Announcements (Configured & Synchronized via Admin Panel)
-    val broadcastNoticeState = mutableStateOf("🎯 APPSC Group-2 Prelims & Mains Comprehensive Test Series is now Live! Practice new sets daily.")
+    val broadcastNoticeState = mutableStateOf("")
 
     // Card Border & Styling Config (Configurable via Admin Panel)
     val cardBorderConfigState = mutableStateOf(CardBorderConfig())
@@ -502,177 +502,13 @@ object SampleData {
     val generatedMockTestsState = androidx.compose.runtime.mutableStateListOf<com.example.model.GeneratedMockTest>()
 
     fun seedDefaultMockTestsIfEmpty(appId: String = "appsc-group2") {
-        if (generatedMockTestsState.none { it.appId == appId }) {
-            val allQuestions = questionsState.filter { it.appId == appId || it.subjectId == "subj-current-affairs" }
-            
-            // Test 1: Mock Test 01 (Completed)
-            val test1Questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(200) else emptyList()).ifEmpty { allQuestions }
-            val test1 = com.example.model.GeneratedMockTest(
-                id = "mock-01",
-                appId = appId,
-                title = "Mock Test 01",
-                createdAt = System.currentTimeMillis() - 86400000L * 10,
-                subjectConfigs = emptyList(),
-                totalQuestions = 150,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 150,
-                questions = test1Questions.take(150),
-                testMode = com.example.model.MockTestMode.FULL_LENGTH,
-                status = "Completed",
-                score = 112.0,
-                correctAnswers = 120,
-                wrongAnswers = 24,
-                unanswered = 6,
-                percentage = 74.6,
-                timeTakenSeconds = 140 * 60,
-                attemptsHistory = listOf(
-                    com.example.model.MockTestAttemptRecord(
-                        attemptNumber = 1,
-                        completedAt = System.currentTimeMillis() - 86400000L * 10,
-                        score = 112.0,
-                        totalMarks = 150.0,
-                        correctAnswers = 120,
-                        wrongAnswers = 24,
-                        unanswered = 6,
-                        timeTakenSeconds = 140 * 60,
-                        percentage = 74.6,
-                        accuracyStr = "83%"
-                    )
-                )
-            )
-
-            // Test 2: Mock Test 02 (In Progress / Continuing)
-            val test2Questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(150) else allQuestions.shuffled().take(150)).ifEmpty { allQuestions }
-            val test2 = com.example.model.GeneratedMockTest(
-                id = "mock-02",
-                appId = appId,
-                title = "Mock Test 02",
-                createdAt = System.currentTimeMillis() - 86400000L * 5,
-                subjectConfigs = emptyList(),
-                totalQuestions = 150,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 150,
-                questions = test2Questions,
-                testMode = com.example.model.MockTestMode.FULL_LENGTH,
-                status = "In Progress",
-                currentIndex = 45,
-                remainingSeconds = 6300,
-                timeTakenSeconds = 2700,
-                score = null,
-                userAnswers = test2Questions.take(45).mapIndexed { i, q -> q.id to q.correctOption }.toMap()
-            )
-
-            // Test 3: Mock Test 03 (Not Started)
-            val test3Questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(150) else allQuestions.shuffled().take(150)).ifEmpty { allQuestions }
-            val test3 = com.example.model.GeneratedMockTest(
-                id = "mock-03",
-                appId = appId,
-                title = "Mock Test 03",
-                createdAt = System.currentTimeMillis() - 86400000L * 2,
-                subjectConfigs = emptyList(),
-                totalQuestions = 150,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 150,
-                questions = test3Questions,
-                testMode = com.example.model.MockTestMode.FULL_LENGTH,
-                status = "Not Started"
-            )
-
-            // Test 4: Unit-Wise Mock Test 01 (Completed)
-            val test4Questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(50) else emptyList()).ifEmpty { allQuestions }
-            val test4 = com.example.model.GeneratedMockTest(
-                id = "mock-unit-01",
-                appId = appId,
-                title = "Unit-Wise Test 01",
-                createdAt = System.currentTimeMillis() - 86400000L * 7,
-                subjectConfigs = emptyList(),
-                totalQuestions = 50,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 45,
-                questions = test4Questions,
-                testMode = com.example.model.MockTestMode.UNIT_WISE,
-                status = "Completed",
-                score = 38.0,
-                correctAnswers = 40,
-                wrongAnswers = 6,
-                unanswered = 4,
-                percentage = 76.0,
-                timeTakenSeconds = 35 * 60,
-                attemptsHistory = listOf(
-                    com.example.model.MockTestAttemptRecord(
-                        attemptNumber = 1,
-                        completedAt = System.currentTimeMillis() - 86400000L * 7,
-                        score = 38.0,
-                        totalMarks = 50.0,
-                        correctAnswers = 40,
-                        wrongAnswers = 6,
-                        unanswered = 4,
-                        timeTakenSeconds = 35 * 60,
-                        percentage = 76.0,
-                        accuracyStr = "87%"
-                    )
-                )
-            )
-
-            // Test 5: Unit-Wise Mock Test 02 (Not Started)
-            val test5 = com.example.model.GeneratedMockTest(
-                id = "mock-unit-02",
-                appId = appId,
-                title = "Unit-Wise Test 02",
-                createdAt = System.currentTimeMillis() - 86400000L * 3,
-                subjectConfigs = emptyList(),
-                totalQuestions = 50,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 45,
-                questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(50) else emptyList()).ifEmpty { allQuestions },
-                testMode = com.example.model.MockTestMode.UNIT_WISE,
-                status = "Not Started"
-            )
-
-            // Test 6: Topic-Wise Mock Test 01 (In Progress / Continuing)
-            val test6Questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(30) else emptyList()).ifEmpty { allQuestions }
-            val test6 = com.example.model.GeneratedMockTest(
-                id = "mock-topic-01",
-                appId = appId,
-                title = "Topic-Wise Test 01",
-                createdAt = System.currentTimeMillis() - 86400000L * 4,
-                subjectConfigs = emptyList(),
-                totalQuestions = 30,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 30,
-                questions = test6Questions,
-                testMode = com.example.model.MockTestMode.TOPIC_WISE,
-                status = "In Progress",
-                currentIndex = 12,
-                remainingSeconds = 1100,
-                timeTakenSeconds = 700,
-                userAnswers = test6Questions.take(12).mapIndexed { i, q -> q.id to q.correctOption }.toMap()
-            )
-
-            // Test 7: Topic-Wise Mock Test 02 (Not Started)
-            val test7 = com.example.model.GeneratedMockTest(
-                id = "mock-topic-02",
-                appId = appId,
-                title = "Topic-Wise Test 02",
-                createdAt = System.currentTimeMillis() - 86400000L * 1,
-                subjectConfigs = emptyList(),
-                totalQuestions = 30,
-                positiveMarks = 1.0,
-                negativeMarks = 0.33,
-                durationMinutes = 30,
-                questions = (if (allQuestions.isNotEmpty()) allQuestions.shuffled().take(30) else emptyList()).ifEmpty { allQuestions },
-                testMode = com.example.model.MockTestMode.TOPIC_WISE,
-                status = "Not Started"
-            )
-
-            generatedMockTestsState.addAll(listOf(test1, test2, test3, test4, test5, test6, test7))
-        }
+        // Demo mock test templates removed; tests are populated from user generation, Room persistence, or Admin Panel.
+        val demoTemplateIds = setOf(
+            "mock-01", "mock-02", "mock-03",
+            "mock-unit-01", "mock-unit-02",
+            "mock-topic-01", "mock-topic-02"
+        )
+        generatedMockTestsState.removeAll { it.id in demoTemplateIds }
     }
 
     val subjectsState = mutableStateListOf<Subject>(
@@ -1756,6 +1592,23 @@ object SampleData {
     }
 
     fun getQuestionsForPractice(subjectId: String, unitId: String, topicId: String, subtopic: String, appId: String = ""): List<Question> {
+        if (subjectId == "subj-current-affairs") {
+            val monthlyCA = monthlyCurrentAffairsState.find { it.id == unitId }
+                ?: monthlyCurrentAffairsState.firstOrNull { it.sets.any { s -> s.id == topicId || s.title.equals(subtopic, ignoreCase = true) } }
+            if (monthlyCA != null) {
+                val matchedSet = monthlyCA.sets.find {
+                    it.id == topicId || it.title.equals(subtopic, ignoreCase = true)
+                }
+                if (matchedSet != null && matchedSet.questions.isNotEmpty()) {
+                    return matchedSet.questions
+                }
+                val allMonthQuestions = monthlyCA.sets.flatMap { it.questions }
+                if (allMonthQuestions.isNotEmpty()) {
+                    return allMonthQuestions
+                }
+            }
+        }
+
         val targetAppId = if (appId.isNotBlank()) appId else {
             subjectsState.find { it.id == subjectId }?.appId ?: currentActiveAppId.value
         }
@@ -2114,78 +1967,9 @@ object SampleData {
     // 5. PROMOTIONAL POSTERS & BANNERS (CONFIGURED VIA ADMIN)
     // =========================================================================
 
-    val initialPosters = listOf(
-        PromotionalPosterModel(
-            id = "poster-appsc-group2-prelims",
-            appId = "appsc-group2",
-            mappedAppIds = listOf("appsc-group2", "appsc-group1", "ap-dsc", "ap-tet", "ALL"),
-            posterType = "Home Screen Poster",
-            title = "🎯 APPSC Group-2 Prelims & Mains Master Batch",
-            imageUrl = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&auto=format&fit=crop&q=80",
-            promotionalText = "100% Comprehensive Syllabus Coverage • 10,000+ Topic Wise MCQs • Expert AP Faculty Notes",
-            ctaText = "CLAIM 50% OFF",
-            offerDetails = "⚡ Use Code: APPSC50 • Flat 50% Early Bird Discount",
-            destinationPage = "subscription",
-            targetPages = listOf("Home Screen", "Subscription Screen"),
-            targetPlans = listOf("All Plans"),
-            targetUserTypes = listOf("All Users"),
-            startDate = "2024-01-01",
-            startTime = "00:00",
-            endDate = "2030-12-31",
-            endTime = "23:59",
-            priorityOrder = 1,
-            isActive = true,
-            isSharedMultiApp = true
-        ),
-        PromotionalPosterModel(
-            id = "poster-state-grand-mock",
-            appId = "appsc-group2",
-            mappedAppIds = listOf("appsc-group2", "appsc-group1", "ALL"),
-            posterType = "Exam Update",
-            title = "🏆 State-Wide All-Andhra Grand Mock Test Series",
-            imageUrl = "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200&auto=format&fit=crop&q=80",
-            promotionalText = "Real Exam Interface • 150 Marks Full Papers • Instant Andhra State Rank & Percentile",
-            ctaText = "START MOCK TEST",
-            offerDetails = "📊 In-Depth Sectional Accuracy, Time-Spent Analysis & Solutions",
-            destinationPage = "mock_tests",
-            targetPages = listOf("Home Screen", "Mock Tests"),
-            targetPlans = listOf("All Plans"),
-            targetUserTypes = listOf("All Users"),
-            startDate = "2024-01-01",
-            startTime = "00:00",
-            endDate = "2030-12-31",
-            endTime = "23:59",
-            priorityOrder = 2,
-            isActive = true,
-            isSharedMultiApp = true
-        ),
-        PromotionalPosterModel(
-            id = "poster-ca-special-compendium",
-            appId = "appsc-group2",
-            mappedAppIds = listOf("appsc-group2", "appsc-group1", "ALL"),
-            posterType = "Study Material Banner",
-            title = "📚 AP Socio-Economic Survey & Special CA 2026",
-            imageUrl = "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?w=1200&auto=format&fit=crop&q=80",
-            promotionalText = "Exclusive Handcrafted Notes on AP Bifurcation Act, State Schemes & Monthly Quizzes",
-            ctaText = "EXPLORE NOW",
-            offerDetails = "✨ 1,500+ High-Yield Questions with Bilingual Explanations",
-            destinationPage = "current_affairs",
-            targetPages = listOf("Home Screen", "Current Affairs"),
-            targetPlans = listOf("All Plans"),
-            targetUserTypes = listOf("All Users"),
-            startDate = "2024-01-01",
-            startTime = "00:00",
-            endDate = "2030-12-31",
-            endTime = "23:59",
-            priorityOrder = 3,
-            isActive = true,
-            isSharedMultiApp = true
-        )
-    )
+    val initialPosters = emptyList<PromotionalPosterModel>()
 
-    val postersState = mutableStateListOf<PromotionalPosterModel>().apply {
-        addAll(initialPosters)
-    }
+    val postersState = mutableStateListOf<PromotionalPosterModel>()
 
     val defaultPosters: List<PromotionalPosterModel>
         get() = postersState.filter { it.mappedAppIds.contains("ALL") || it.mappedAppIds.contains(currentActiveAppId.value) }
@@ -2375,26 +2159,87 @@ object SampleData {
 
     val couponsState = mutableStateListOf<CouponModel>()
 
+    @Volatile
+    private var appContext: android.content.Context? = null
+
     var userProfileState = mutableStateOf(UserProfileModel(
-        name = "Aspirant",
-        email = "candidate@prep.portal",
+        name = "",
+        email = "",
         phone = "",
         district = "Visakhapatnam",
-        targetExam = "Prep Portal",
-        targetAppId = "andhra-pradesh-ap-tet-en",
+        targetExam = "APPSC Group-2",
+        targetAppId = "appsc-group2",
         preferredLanguage = "English",
         dailyGoalQuestions = 30,
-        streakDays = 5,
-        isProSubscribed = true,
-        proPlanName = "Lifetime Pass",
+        streakDays = 0,
+        isProSubscribed = false,
+        proPlanName = "",
         isLoggedIn = true,
-        isPhoneVerified = true,
-        isEmailVerified = true
+        isPhoneVerified = false,
+        isEmailVerified = false
     ))
+
+    fun initializeWithContext(context: android.content.Context) {
+        val appCtx = context.applicationContext
+        appContext = appCtx
+        try {
+            val prefs = appCtx.getSharedPreferences("appsc_user_profile_prefs", android.content.Context.MODE_PRIVATE)
+            val savedJson = prefs.getString("user_profile_json", null)
+            if (!savedJson.isNullOrBlank()) {
+                val restored = com.google.gson.Gson().fromJson(savedJson, UserProfileModel::class.java)
+                if (restored != null) {
+                    val isLegacyDemoProfile = restored.email == "candidate@prep.portal" ||
+                        (restored.proPlanName == "Lifetime Pass" && restored.activatedAt == 0L)
+                    userProfileState.value = if (isLegacyDemoProfile) {
+                        restored.copy(
+                            name = if (restored.name == "Aspirant") "" else restored.name,
+                            email = if (restored.email == "candidate@prep.portal") "" else restored.email,
+                            isProSubscribed = false,
+                            proPlanName = ""
+                        )
+                    } else {
+                        restored
+                    }
+                }
+            }
+            val firebaseUser = try { FirebaseAuth.getInstance().currentUser } catch (_: Exception) { null }
+            if (firebaseUser != null) {
+                val current = userProfileState.value
+                userProfileState.value = current.copy(
+                    name = firebaseUser.displayName?.takeIf { it.isNotBlank() } ?: current.name,
+                    email = firebaseUser.email?.takeIf { it.isNotBlank() } ?: current.email,
+                    phone = firebaseUser.phoneNumber?.takeIf { it.isNotBlank() } ?: current.phone,
+                    profileImageUrl = firebaseUser.photoUrl?.toString()?.takeIf { it.isNotBlank() } ?: current.profileImageUrl,
+                    isLoggedIn = true,
+                    isEmailVerified = firebaseUser.isEmailVerified || current.isEmailVerified
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SampleData", "Failed to initialize userProfile from preferences: ${e.message}")
+        }
+    }
+
+    fun saveUserProfile(context: android.content.Context? = appContext) {
+        val ctx = context?.applicationContext ?: appContext ?: return
+        try {
+            val prefs = ctx.getSharedPreferences("appsc_user_profile_prefs", android.content.Context.MODE_PRIVATE)
+            val profile = userProfileState.value
+            val json = com.google.gson.Gson().toJson(profile)
+            prefs.edit().putString("user_profile_json", json).apply()
+            if (profile.email.isNotBlank() || profile.phone.isNotBlank()) {
+                com.example.util.FirebaseSyncManager.syncUserProfileToFirestore(profile)
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SampleData", "Failed to save userProfile: ${e.message}")
+        }
+    }
 
     var sampleUserProfile: UserProfileModel
         get() = userProfileState.value
-        set(value) { userProfileState.value = value }
+        set(value) {
+            userProfileState.value = value
+            saveUserProfile()
+        }
 
     fun logout() {
         try {
@@ -2407,6 +2252,7 @@ object SampleData {
             isProSubscribed = false,
             proPlanName = ""
         )
+        saveUserProfile()
     }
     
     fun updateSubscription(planName: String, durationHours: Long = 24L) {
@@ -2419,6 +2265,7 @@ object SampleData {
             expiresAt = expiresAt,
             isSubscriptionCancelled = false
         )
+        saveUserProfile()
     }
 
     fun cancelSubscription(reason: String, details: String? = null) {
@@ -2427,6 +2274,7 @@ object SampleData {
             cancellationReason = reason,
             cancellationDetails = details
         )
+        saveUserProfile()
     }
 
     fun isUserPremium(): Boolean {
@@ -2480,97 +2328,7 @@ object SampleData {
 
     val adminUsersState = androidx.compose.runtime.mutableStateListOf<com.example.model.AdminUserModel>()
 
-    val adminNotificationsState = androidx.compose.runtime.mutableStateListOf<com.example.model.AdminNotificationModel>(
-        com.example.model.AdminNotificationModel(
-            id = "notif-001",
-            title = "🚨 APPSC Group-2 Mains Exam Schedule Announced!",
-            message = "Official APPSC notification released. The Mains Examination for Group-2 Services is scheduled for November 2026. Check the updated syllabus and exam pattern details now.",
-            imageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop",
-            deepLink = "SYLLABUS",
-            category = com.example.model.NotificationCategory.IMPORTANT,
-            audience = com.example.model.NotificationAudience.ALL,
-            status = com.example.model.NotificationStatus.SENT,
-            sentAt = System.currentTimeMillis() - 7200000L,
-            priority = "HIGH",
-            iconName = "siren",
-            isFeatured = true,
-            isRead = false,
-            actionText = "View Exam Schedule",
-            deliveryCount = 14250,
-            openCount = 5890
-        ),
-        com.example.model.AdminNotificationModel(
-            id = "notif-002",
-            title = "🧪 Weekly Full Mock Test #12 is Now Live",
-            message = "Attempt the 150-question full-length APPSC Group-2 Grand Mock Test with negative marking, instant score analysis, and statewide rank calculation.",
-            imageUrl = "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=800&auto=format&fit=crop",
-            deepLink = "MOCK_TESTS",
-            category = com.example.model.NotificationCategory.MOCK_TEST,
-            audience = com.example.model.NotificationAudience.ALL,
-            status = com.example.model.NotificationStatus.SENT,
-            sentAt = System.currentTimeMillis() - 18000000L,
-            priority = "HIGH",
-            iconName = "flask",
-            isFeatured = true,
-            isRead = false,
-            actionText = "Take Mock Test Now",
-            deliveryCount = 12400,
-            openCount = 4310
-        ),
-        com.example.model.AdminNotificationModel(
-            id = "notif-003",
-            title = "📰 September 2026 Current Affairs Digest",
-            message = "Comprehensive monthly Andhra Pradesh state news, welfare schemes, budget highlights, and national updates with 100+ practice MCQs.",
-            imageUrl = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800&auto=format&fit=crop",
-            deepLink = "CURRENT_AFFAIRS",
-            category = com.example.model.NotificationCategory.CURRENT_AFFAIRS,
-            audience = com.example.model.NotificationAudience.ALL,
-            status = com.example.model.NotificationStatus.SENT,
-            sentAt = System.currentTimeMillis() - 86400000L,
-            priority = "MEDIUM",
-            iconName = "newspaper",
-            isFeatured = false,
-            isRead = true,
-            actionText = "Read Current Affairs",
-            deliveryCount = 15800,
-            openCount = 6120
-        ),
-        com.example.model.AdminNotificationModel(
-            id = "notif-004",
-            title = "🎁 Special Pass: 50% Off Unlimited Pro Subscription",
-            message = "Unlock 5,000+ Topic Tests, Previous Year Solved Papers, AI Study Mentor & Speed Duel Challenges at half price. Limited time offer!",
-            imageUrl = "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=800&auto=format&fit=crop",
-            deepLink = "SUBSCRIPTION",
-            category = com.example.model.NotificationCategory.OFFERS,
-            audience = com.example.model.NotificationAudience.FREE,
-            status = com.example.model.NotificationStatus.SENT,
-            sentAt = System.currentTimeMillis() - 172800000L,
-            priority = "HIGH",
-            iconName = "gift",
-            isFeatured = true,
-            isRead = true,
-            actionText = "Claim 50% Off Now",
-            deliveryCount = 9800,
-            openCount = 3450
-        ),
-        com.example.model.AdminNotificationModel(
-            id = "notif-005",
-            title = "⚙️ System Update: Advanced Analytics & Leaderboard V2",
-            message = "We have upgraded performance reporting! Now track accuracy by topic, time-per-question metrics, and real-time state leaderboard ranks.",
-            deepLink = "PERFORMANCE",
-            category = com.example.model.NotificationCategory.SYSTEM,
-            audience = com.example.model.NotificationAudience.ALL,
-            status = com.example.model.NotificationStatus.SENT,
-            sentAt = System.currentTimeMillis() - 259200000L,
-            priority = "LOW",
-            iconName = "gear",
-            isFeatured = false,
-            isRead = true,
-            actionText = "View Performance Stats",
-            deliveryCount = 16200,
-            openCount = 5100
-        )
-    )
+    val adminNotificationsState = androidx.compose.runtime.mutableStateListOf<com.example.model.AdminNotificationModel>()
 
     fun getUnreadNotificationCount(): Int {
         return adminNotificationsState.count { it.status == com.example.model.NotificationStatus.SENT && !it.isRead }
@@ -3687,6 +3445,22 @@ object SampleData {
 
                 3. Escalation & Feedback
                 We value your feedback. For urgent concerns, please provide your registered candidate details.
+            """.trimIndent(),
+            mappedAppIds = emptyList()
+        ),
+        LegalDocument(
+            id = "default_shipping_policy",
+            type = LegalDocType.SHIPPING_DELIVERY,
+            title = "Shipping & Digital Delivery Policy",
+            content = """
+                1. 100% Digital Educational Service
+                APPSC Group 2 Exam Prep Pro (operated by SOBHA DHANARAJU, MID: T89U1OXHFIQbHa) provides exclusively digital study material, topic-wise MCQs, and online mock tests inside the mobile application. No physical books or tangible items are shipped.
+
+                2. Instant In-App Fulfilment (0–5 Minutes)
+                Upon payment verification via Razorpay (UPI, Cards, NetBanking, Wallets) or Google Play Billing, your premium subscription pass is unlocked instantaneously on your account.
+
+                3. Shipping & Handling Charges
+                Because all preparation sets and mock exams are delivered digitally over the internet inside the Android app, shipping and handling charges are ₹0 (Nil) across all subscription plans.
             """.trimIndent(),
             mappedAppIds = emptyList()
         )

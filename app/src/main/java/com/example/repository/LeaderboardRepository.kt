@@ -72,17 +72,9 @@ class LeaderboardRepository private constructor(
             }
         }
 
-        // 2. Load cached candidates from Room immediately, seed if empty
+        // 2. Purge any legacy synthetic demo candidates and load real cached candidates from Room
         scope.launch {
-            val local = leaderboardDao.getAllCandidatesDirect()
-            val currentUserId = getCurrentUserId()
-            if (local.isNotEmpty()) {
-                val list = local.map { it.toDomainModel().copy(isCurrentUser = it.userId == currentUserId) }
-                _allCandidates.value = list
-                _currentUserEntry.value = list.find { it.isCurrentUser }
-            } else {
-                seedInitialCandidates()
-            }
+            seedInitialCandidates()
         }
 
         // 3. Ensure Firebase Auth session exists so Firestore rules permit requests, then start sync
@@ -191,15 +183,7 @@ class LeaderboardRepository private constructor(
                     if (error != null) {
                         Log.w(TAG, "Leaderboard sync note: ${error.message}. Serving local verified Room cache.")
                         scope.launch {
-                            val local = leaderboardDao.getAllCandidatesDirect()
-                            val curUserId = getCurrentUserId()
-                            if (local.isNotEmpty()) {
-                                val list = local.map { it.toDomainModel().copy(isCurrentUser = it.userId == curUserId) }
-                                _allCandidates.value = list
-                                _currentUserEntry.value = list.find { it.isCurrentUser }
-                            } else {
-                                seedInitialCandidates()
-                            }
+                            seedInitialCandidates()
                         }
                         if (error.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                             ensureFirebaseAuth {
@@ -271,19 +255,17 @@ class LeaderboardRepository private constructor(
                             }
                         }
 
-                        if (candidates.isNotEmpty()) {
+                        val realCandidates = candidates.filterNot { isDemoCandidateId(it.userId) || isLegacyDemoUserRecord(it.xp, it.testsCompleted, it.questionsAttempted) }
+                        if (realCandidates.isNotEmpty()) {
                             // Persist into Room and update state
                             scope.launch {
-                                leaderboardDao.upsertCandidates(candidates.map { it.toEntity() })
-                                _allCandidates.value = candidates
-                                _currentUserEntry.value = candidates.find { it.isCurrentUser }
+                                leaderboardDao.upsertCandidates(realCandidates.map { it.toEntity() })
+                                _allCandidates.value = realCandidates
+                                _currentUserEntry.value = realCandidates.find { it.isCurrentUser }
                             }
                         } else {
                             scope.launch {
-                                val local = leaderboardDao.getAllCandidatesDirect()
-                                if (local.isEmpty()) {
-                                    seedInitialCandidates()
-                                }
+                                seedInitialCandidates()
                             }
                         }
                     }
@@ -898,287 +880,31 @@ class LeaderboardRepository private constructor(
         }
     }
 
+    private fun isDemoCandidateId(userId: String): Boolean {
+        return userId.matches(Regex("^cand_\\d+$"))
+    }
+
+    private fun isLegacyDemoUserRecord(xp: Int, testsCompleted: Int, questionsAttempted: Int): Boolean {
+        return xp == 2840 && testsCompleted == 12 && questionsAttempted == 780
+    }
+
     suspend fun seedInitialCandidates() = withContext(ioDispatcher) {
         val currentUserId = getCurrentUserId()
-        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val profile = SampleData.sampleUserProfile
-        val config = _configState.value
+        val existingLocal = leaderboardDao.getAllCandidatesDirect()
 
-        val baseSeeds = listOf(
-            LeaderboardCandidate(
-                userId = "cand_1", rank = 1, previousRank = 1,
-                displayName = "K. Venkata Raman", avatarColorHex = 0xFF2563EB,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Visakhapatnam",
-                xp = 12450, weeklyXp = 3840, monthlyXp = 8200,
-                accuracyPercentage = 97.4f, testsCompleted = 38, questionsAttempted = 1420, correctAnswers = 1383,
-                streakDays = 32, longestStreak = 35, league = ExamLeague.DIAMOND,
-                badges = listOf("🏅 Top 1%", "💎 Diamond League", "🎯 95% Accuracy", "⚡ Speed Master", "🏆 Mock Test Champion"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_2", rank = 2, previousRank = 3,
-                displayName = "S. Lavanya Devi", avatarColorHex = 0xFF9333EA,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Vijayawada",
-                xp = 11820, weeklyXp = 3520, monthlyXp = 7600,
-                accuracyPercentage = 96.1f, testsCompleted = 35, questionsAttempted = 1380, correctAnswers = 1326,
-                streakDays = 28, longestStreak = 30, league = ExamLeague.DIAMOND,
-                badges = listOf("💎 Diamond League", "🎯 95% Accuracy", "⚡ Speed Master"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_3", rank = 3, previousRank = 2,
-                displayName = "M. Sai Krishna", avatarColorHex = 0xFF059669,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Guntur",
-                xp = 10950, weeklyXp = 3290, monthlyXp = 7100,
-                accuracyPercentage = 95.2f, testsCompleted = 31, questionsAttempted = 1310, correctAnswers = 1247,
-                streakDays = 25, longestStreak = 25, league = ExamLeague.DIAMOND,
-                badges = listOf("💎 Diamond League", "🎯 95% Accuracy"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_4", rank = 4, previousRank = 5,
-                displayName = "P. Anusha Reddy", avatarColorHex = 0xFFD97706,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Tirupati",
-                xp = 8940, weeklyXp = 2980, monthlyXp = 6200,
-                accuracyPercentage = 93.8f, testsCompleted = 28, questionsAttempted = 1250, correctAnswers = 1172,
-                streakDays = 21, longestStreak = 22, league = ExamLeague.PLATINUM,
-                badges = listOf("🏆 Platinum League", "📈 Consistency Pro"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_5", rank = 5, previousRank = 4,
-                displayName = "R. Bhaskar Rao", avatarColorHex = 0xFFE11D48,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Kurnool",
-                xp = 8210, weeklyXp = 2710, monthlyXp = 5800,
-                accuracyPercentage = 92.5f, testsCompleted = 26, questionsAttempted = 1190, correctAnswers = 1100,
-                streakDays = 19, longestStreak = 20, league = ExamLeague.PLATINUM,
-                badges = listOf("🏆 Platinum League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_6", rank = 6, previousRank = 7,
-                displayName = "T. Harshitha", avatarColorHex = 0xFF0D9488,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Nellore",
-                xp = 7650, weeklyXp = 2550, monthlyXp = 5300,
-                accuracyPercentage = 91.8f, testsCompleted = 24, questionsAttempted = 1140, correctAnswers = 1046,
-                streakDays = 18, longestStreak = 18, league = ExamLeague.PLATINUM,
-                badges = listOf("🏆 Platinum League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_7", rank = 7, previousRank = 6,
-                displayName = "B. Kalyan Kumar", avatarColorHex = 0xFF4F46E5,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Rajahmundry",
-                xp = 7120, weeklyXp = 2320, monthlyXp = 4900,
-                accuracyPercentage = 90.6f, testsCompleted = 22, questionsAttempted = 1080, correctAnswers = 978,
-                streakDays = 16, longestStreak = 17, league = ExamLeague.PLATINUM,
-                badges = listOf("🏆 Platinum League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_8", rank = 8, previousRank = 9,
-                displayName = "V. Sneha Latha", avatarColorHex = 0xFFBE185D,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Kakinada",
-                xp = 6580, weeklyXp = 2180, monthlyXp = 4500,
-                accuracyPercentage = 89.9f, testsCompleted = 20, questionsAttempted = 1040, correctAnswers = 935,
-                streakDays = 15, longestStreak = 16, league = ExamLeague.PLATINUM,
-                badges = listOf("🏆 Platinum League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_9", rank = 9, previousRank = 8,
-                displayName = "Ch. Naveen Varma", avatarColorHex = 0xFFB45309,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Anantapur",
-                xp = 5420, weeklyXp = 1990, monthlyXp = 3900,
-                accuracyPercentage = 89.1f, testsCompleted = 18, questionsAttempted = 990, correctAnswers = 882,
-                streakDays = 14, longestStreak = 14, league = ExamLeague.GOLD,
-                badges = listOf("🥇 Gold League", "⚡ 14-Day Consistency Pro"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_10", rank = 10, previousRank = 11,
-                displayName = "G. Divya Prasanthi", avatarColorHex = 0xFF047857,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Kadapa",
-                xp = 4890, weeklyXp = 1850, monthlyXp = 3500,
-                accuracyPercentage = 88.7f, testsCompleted = 16, questionsAttempted = 960, correctAnswers = 851,
-                streakDays = 14, longestStreak = 15, league = ExamLeague.GOLD,
-                badges = listOf("🥇 Gold League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_11", rank = 11, previousRank = 10,
-                displayName = "J. Suresh Naidu", avatarColorHex = 0xFF1D4ED8,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Srikakulam",
-                xp = 4350, weeklyXp = 1710, monthlyXp = 3200,
-                accuracyPercentage = 88.0f, testsCompleted = 15, questionsAttempted = 920, correctAnswers = 810,
-                streakDays = 13, longestStreak = 13, league = ExamLeague.GOLD,
-                badges = listOf("🥇 Gold League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_12", rank = 12, previousRank = 13,
-                displayName = "D. Rajesh Patel", avatarColorHex = 0xFF6D28D9,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Eluru",
-                xp = 3890, weeklyXp = 1590, monthlyXp = 2900,
-                accuracyPercentage = 87.4f, testsCompleted = 14, questionsAttempted = 890, correctAnswers = 778,
-                streakDays = 12, longestStreak = 12, league = ExamLeague.GOLD,
-                badges = listOf("🥇 Gold League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_13", rank = 13, previousRank = 12,
-                displayName = "N. Bhavani Shankar", avatarColorHex = 0xFF0369A1,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Machilipatnam",
-                xp = 3420, weeklyXp = 1480, monthlyXp = 2600,
-                accuracyPercentage = 87.1f, testsCompleted = 13, questionsAttempted = 860, correctAnswers = 749,
-                streakDays = 11, longestStreak = 11, league = ExamLeague.GOLD,
-                badges = listOf("🥇 Gold League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            // User Candidate (Rank 14, moved up 8 positions from 22)
-            LeaderboardCandidate(
-                userId = currentUserId, rank = 14, previousRank = 22,
-                displayName = profile.name.ifBlank { "You (Candidate)" }, avatarColorHex = 0xFFFF7A00,
-                avatarUrl = profile.profileImageUrl, appId = profile.targetAppId.ifBlank { "appsc-group2" },
-                targetExam = profile.targetExam.ifBlank { "APPSC Group-2" }, district = profile.district.ifBlank { "Visakhapatnam" },
-                xp = 2840, weeklyXp = 1350, monthlyXp = 2300,
-                accuracyPercentage = 88.5f, testsCompleted = 12, questionsAttempted = 780, correctAnswers = 690,
-                streakDays = 12, longestStreak = 14, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League", "🔥 12-Day Streak", "🎯 88% Accuracy"),
-                isCurrentUser = true, privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_15", rank = 15, previousRank = 14,
-                displayName = "K. Madhuri", avatarColorHex = 0xFF047857,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Chittoor",
-                xp = 2450, weeklyXp = 1180, monthlyXp = 1950,
-                accuracyPercentage = 86.2f, testsCompleted = 10, questionsAttempted = 710, correctAnswers = 612,
-                streakDays = 9, longestStreak = 10, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_16", rank = 16, previousRank = 15,
-                displayName = "Y. Pavan Teja", avatarColorHex = 0xFF2563EB,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Ongole",
-                xp = 2180, weeklyXp = 1040, monthlyXp = 1750,
-                accuracyPercentage = 85.5f, testsCompleted = 9, questionsAttempted = 680, correctAnswers = 581,
-                streakDays = 8, longestStreak = 8, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_17", rank = 17, previousRank = 17,
-                displayName = "A. Sandhya Rani", avatarColorHex = 0xFFBE185D,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Vizianagaram",
-                xp = 1920, weeklyXp = 920, monthlyXp = 1550,
-                accuracyPercentage = 84.8f, testsCompleted = 8, questionsAttempted = 640, correctAnswers = 543,
-                streakDays = 7, longestStreak = 8, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_18", rank = 18, previousRank = 19,
-                displayName = "K. Srinivasulu", avatarColorHex = 0xFFB45309,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Nandyal",
-                xp = 1650, weeklyXp = 810, monthlyXp = 1350,
-                accuracyPercentage = 84.1f, testsCompleted = 7, questionsAttempted = 590, correctAnswers = 496,
-                streakDays = 6, longestStreak = 7, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_19", rank = 19, previousRank = 18,
-                displayName = "M. Deepika", avatarColorHex = 0xFF9333EA,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Bapatla",
-                xp = 1380, weeklyXp = 710, monthlyXp = 1150,
-                accuracyPercentage = 83.4f, testsCompleted = 6, questionsAttempted = 530, correctAnswers = 442,
-                streakDays = 5, longestStreak = 6, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_20", rank = 20, previousRank = 20,
-                displayName = "T. Venkatesh", avatarColorHex = 0xFF0D9488,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Narasaraopet",
-                xp = 1120, weeklyXp = 610, monthlyXp = 950,
-                accuracyPercentage = 82.7f, testsCompleted = 5, questionsAttempted = 480, correctAnswers = 397,
-                streakDays = 4, longestStreak = 5, league = ExamLeague.SILVER,
-                badges = listOf("🥈 Silver League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_21", rank = 21, previousRank = 23,
-                displayName = "S. Swathi", avatarColorHex = 0xFFE11D48,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Tenali",
-                xp = 890, weeklyXp = 490, monthlyXp = 750,
-                accuracyPercentage = 81.5f, testsCompleted = 4, questionsAttempted = 410, correctAnswers = 334,
-                streakDays = 3, longestStreak = 4, league = ExamLeague.BRONZE,
-                badges = listOf("🥉 Bronze League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_22", rank = 22, previousRank = 21,
-                displayName = "V. Ravi Teja", avatarColorHex = 0xFF4F46E5,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Hindupur",
-                xp = 680, weeklyXp = 380, monthlyXp = 580,
-                accuracyPercentage = 80.2f, testsCompleted = 3, questionsAttempted = 350, correctAnswers = 281,
-                streakDays = 3, longestStreak = 3, league = ExamLeague.BRONZE,
-                badges = listOf("🥉 Bronze League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_23", rank = 23, previousRank = 25,
-                displayName = "P. Hemalatha", avatarColorHex = 0xFF059669,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Proddatur",
-                xp = 510, weeklyXp = 290, monthlyXp = 420,
-                accuracyPercentage = 78.9f, testsCompleted = 2, questionsAttempted = 280, correctAnswers = 221,
-                streakDays = 2, longestStreak = 2, league = ExamLeague.BRONZE,
-                badges = listOf("🥉 Bronze League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_24", rank = 24, previousRank = 24,
-                displayName = "R. Pradeep Kumar", avatarColorHex = 0xFFB45309,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Adoni",
-                xp = 340, weeklyXp = 190, monthlyXp = 290,
-                accuracyPercentage = 76.5f, testsCompleted = 1, questionsAttempted = 210, correctAnswers = 161,
-                streakDays = 1, longestStreak = 2, league = ExamLeague.BRONZE,
-                badges = listOf("🥉 Bronze League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            ),
-            LeaderboardCandidate(
-                userId = "cand_25", rank = 25, previousRank = 26,
-                displayName = "L. Geetha Vani", avatarColorHex = 0xFF6D28D9,
-                appId = "appsc-group2", targetExam = "APPSC Group-2", district = "Gudivada",
-                xp = 220, weeklyXp = 120, monthlyXp = 190,
-                accuracyPercentage = 75.0f, testsCompleted = 1, questionsAttempted = 150, correctAnswers = 113,
-                streakDays = 1, longestStreak = 1, league = ExamLeague.BRONZE,
-                badges = listOf("🥉 Bronze League"),
-                privacyMode = LeaderboardPrivacyMode.PUBLIC, lastActiveDate = todayStr
-            )
-        )
-
-        val enriched = baseSeeds.map { c ->
-            val score = calculateFairScore(c.xp, c.accuracyPercentage, c.testsCompleted, c.streakDays, config)
-            val subMap = mapOf(
-                "indian_history" to (c.xp * 0.3).toInt(),
-                "indian_polity" to (c.xp * 0.28).toInt(),
-                "indian_economy" to (c.xp * 0.24).toInt(),
-                "geography_ap" to (c.xp * 0.18).toInt()
-            )
-            c.copy(leaderboardScore = score, subjectXp = subMap)
+        // Purge any legacy synthetic demo candidates (cand_1..cand_25 or pre-seeded 2840 XP record)
+        existingLocal.forEach { entity ->
+            if (isDemoCandidateId(entity.userId) || isLegacyDemoUserRecord(entity.xp, entity.testsCompleted, entity.questionsAttempted)) {
+                leaderboardDao.deleteCandidate(entity.userId)
+            }
         }
 
-        // Save into Room
-        leaderboardDao.upsertCandidates(enriched.map { it.toEntity() })
-        _allCandidates.value = enriched
-        _currentUserEntry.value = enriched.find { it.isCurrentUser }
-
-        // Sync to Firestore in background
-        enriched.forEach { candidate ->
-            syncCandidateToFirestore(candidate.toEntity())
+        val cleanedLocal = leaderboardDao.getAllCandidatesDirect()
+        val realCandidates = cleanedLocal.map {
+            it.toDomainModel().copy(isCurrentUser = it.userId == currentUserId)
         }
+        _allCandidates.value = realCandidates
+        _currentUserEntry.value = realCandidates.find { it.isCurrentUser }
     }
 
     companion object {

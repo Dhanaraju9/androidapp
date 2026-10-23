@@ -7,6 +7,7 @@ import com.example.ui.components.premiumAnswerFeedback
 import com.example.ui.components.premiumTargetAnimation
 import com.example.model.HighlightLocation
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import kotlinx.coroutines.launch
 
 import android.content.Context
 import android.widget.Toast
@@ -156,10 +157,13 @@ fun PracticeArenaScreen(
     onToggleBookmark: (Question) -> Unit = {},
     onNavigateToHome: (() -> Unit)? = null,
     sectionType: PracticeSectionType? = null,
+    initialQuestionIndex: Int = 0,
+    preserveQuestionOrder: Boolean = false,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val appConfig = LocalAppConfig.current
+    val practiceScope = rememberCoroutineScope()
     var isDarkMode by remember { mutableStateOf(false) }
     var pendingExitDestination by remember { mutableStateOf("previous") }
     LaunchedEffect(Unit) {
@@ -223,34 +227,43 @@ fun PracticeArenaScreen(
         return
     }
 
-    val restoredQuestions = remember(questions, savedSession) {
-        if (savedSession != null && savedSession.questionIdsOrder.isNotEmpty()) {
-            val qMap = questions.associateBy { it.id }
-            savedSession.questionIdsOrder.mapNotNull { qMap[it] }
+    val restoredQuestions = remember(questions, preserveQuestionOrder) {
+        if (preserveQuestionOrder) {
+            questions
         } else {
             // Highly randomize questions and multiple choice options with cryptographic multi-pass shuffle
             questions.map { it.shuffledOptions() }.highlyShuffled()
         }
     }
 
-    var currentIndex by remember(practiceSessionId) { mutableStateOf(savedSession?.currentQuestionIndex ?: 0) }
-    var activeQuestions by remember(restoredQuestions) { mutableStateOf(restoredQuestions.ifEmpty { questions.map { it.shuffledOptions() }.highlyShuffled() }) }
-    var isShuffled by remember(practiceSessionId) { mutableStateOf(true) }
+    var activeQuestions by remember(restoredQuestions) {
+        mutableStateOf(
+            restoredQuestions.ifEmpty {
+                if (preserveQuestionOrder) questions else questions.map { it.shuffledOptions() }.highlyShuffled()
+            }
+        )
+    }
+    var currentIndex by remember(practiceSessionId, initialQuestionIndex, activeQuestions.size) {
+        mutableStateOf(initialQuestionIndex.coerceIn(0, (activeQuestions.size - 1).coerceAtLeast(0)))
+    }
+    var isShuffled by remember(practiceSessionId) { mutableStateOf(!preserveQuestionOrder) }
     val userAnswers = remember(practiceSessionId) {
         mutableStateMapOf<String, String>().apply {
-            if (savedSession != null) {
-                putAll(savedSession.userAnswers)
-            } else {
-                putAll(initialUserAnswers)
-            }
+            putAll(initialUserAnswers)
         }
     }
-    var markedForReviewIds by remember(practiceSessionId) { mutableStateOf(savedSession?.markedForReviewIds ?: setOf<String>()) }
+    var markedForReviewIds by remember(practiceSessionId) { mutableStateOf(setOf<String>()) }
     var bookmarkedQuestionIds by remember(initialBookmarkedIds, practiceSessionId) { mutableStateOf(initialBookmarkedIds) }
     var visitedIndices by remember(practiceSessionId) { mutableStateOf(setOf(currentIndex)) }
     var showExitDialog by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
     var correctAnswerTrigger by remember { mutableStateOf(0) }
+    var isInputReady by remember(practiceSessionId) { mutableStateOf(false) }
+
+    LaunchedEffect(practiceSessionId) {
+        delay(300L)
+        isInputReady = true
+    }
 
     // Immediately reset and clear burst animation effect whenever current question changes (Next / Previous / Palette)
     LaunchedEffect(currentIndex) {
@@ -741,13 +754,22 @@ fun PracticeArenaScreen(
                                         autoShowExplanation = autoShowExplanation,
                                         isMockTest = isMockTest,
                                         onOptionSelected = { key ->
-                                            if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                            val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
+                                            if (isMockTest || !wasAlreadyAnswered) {
                                                 userAnswers[currentQuestion.id] = key
                                                 onAnswerSelected(userAnswers.toMap())
                                                 val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
                                                 performResultHaptic(isCorrect)
-                                                if (!isMockTest && isCorrect) {
-                                                    correctAnswerTrigger++
+                                                if (!isMockTest) {
+                                                    if (!wasAlreadyAnswered) {
+                                                        practiceScope.launch {
+                                                            com.example.repository.UserProgressRepository.getInstance(context)
+                                                                .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                        }
+                                                    }
+                                                    if (isCorrect) {
+                                                        correctAnswerTrigger++
+                                                    }
                                                 }
                                             }
                                         },
@@ -800,14 +822,25 @@ fun PracticeArenaScreen(
                                     questionFontSizeScale = questionFontSizeScale,
                                     autoShowExplanation = autoShowExplanation,
                                     isMockTest = isMockTest,
+                                    isInputReady = isInputReady,
                                     onOptionSelected = { key ->
-                                        if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                        if (!isInputReady) return@QuestionDetailPanel
+                                        val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
+                                        if (isMockTest || !wasAlreadyAnswered) {
                                             userAnswers[currentQuestion.id] = key
                                             onAnswerSelected(userAnswers.toMap())
                                             val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
                                             performResultHaptic(isCorrect)
-                                            if (!isMockTest && isCorrect) {
-                                                correctAnswerTrigger++
+                                            if (!isMockTest) {
+                                                if (!wasAlreadyAnswered) {
+                                                    practiceScope.launch {
+                                                        com.example.repository.UserProgressRepository.getInstance(context)
+                                                            .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                    }
+                                                }
+                                                if (isCorrect) {
+                                                    correctAnswerTrigger++
+                                                }
                                             }
                                         }
                                     },
@@ -842,6 +875,9 @@ fun PracticeArenaScreen(
                     } else {
                         // Standard MCQ Practice Screen: Centered, clean single card view without palette/matrix
                         val scrollState = rememberScrollState()
+                        LaunchedEffect(currentIndex) {
+                            scrollState.scrollTo(0)
+                        }
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -862,14 +898,25 @@ fun PracticeArenaScreen(
                                     questionFontSizeScale = questionFontSizeScale,
                                     autoShowExplanation = autoShowExplanation,
                                     isMockTest = isMockTest,
+                                    isInputReady = isInputReady,
                                     onOptionSelected = { key ->
-                                        if (isMockTest || !userAnswers.containsKey(currentQuestion.id)) {
+                                        if (!isInputReady) return@QuestionDetailPanel
+                                        val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
+                                        if (isMockTest || !wasAlreadyAnswered) {
                                             userAnswers[currentQuestion.id] = key
                                             onAnswerSelected(userAnswers.toMap())
                                             val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
                                             performResultHaptic(isCorrect)
-                                            if (!isMockTest && isCorrect) {
-                                                correctAnswerTrigger++
+                                            if (!isMockTest) {
+                                                if (!wasAlreadyAnswered) {
+                                                    practiceScope.launch {
+                                                        com.example.repository.UserProgressRepository.getInstance(context)
+                                                            .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                    }
+                                                }
+                                                if (isCorrect) {
+                                                    correctAnswerTrigger++
+                                                }
                                             }
                                         }
                                     },
@@ -1321,6 +1368,7 @@ fun QuestionDetailPanel(
     questionFontSizeScale: Float = 1.0f,
     autoShowExplanation: Boolean = true,
     isMockTest: Boolean = false,
+    isInputReady: Boolean = true,
     onOptionSelected: (String) -> Unit,
     onHapticSelection: () -> Unit,
     onToggleReview: () -> Unit,
@@ -1541,11 +1589,11 @@ fun QuestionDetailPanel(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable(
-                                            enabled = isMockTest || !hasAnswered,
-                                            interactionSource = remember(key) { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            enabled = isInputReady && (isMockTest || !hasAnswered),
+                                            interactionSource = remember(currentQuestion.id, key) { androidx.compose.foundation.interaction.MutableInteractionSource() },
                                             indication = ripple()
                                         ) {
-                                            if (isMockTest || !hasAnswered) {
+                                            if (isInputReady && (isMockTest || !hasAnswered)) {
                                                 onHapticSelection()
                                                 onOptionSelected(key)
                                             }

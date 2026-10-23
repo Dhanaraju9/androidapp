@@ -42,6 +42,7 @@ import com.example.db.TestResultEntity
 import com.example.model.*
 import com.example.repository.UserProgressRepository
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -103,38 +104,86 @@ fun PerformanceBoardScreen(
     // Time filter pills
     var selectedPeriod by remember { mutableStateOf("Overall") }
 
-    // Aggregate derived analytics metrics
-    val accuracyInt = remember(performanceSummary, userProgress) {
-        val parsed = performanceSummary.overallAccuracy.replace("%", "").trim().toIntOrNull()
-        if (parsed != null && parsed > 0) parsed
-        else if (userProgress.accuracyPercentage > 0f) userProgress.accuracyPercentage.roundToInt().coerceIn(0, 100)
-        else 86 // Realistic baseline if initial
+    val periodFilteredResults = remember(dbResults, selectedPeriod) {
+        val now = System.currentTimeMillis()
+        val cal = Calendar.getInstance()
+        when (selectedPeriod) {
+            "Today" -> {
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                val startOfDay = cal.timeInMillis
+                dbResults.filter { it.timestamp >= startOfDay }
+            }
+            "This Week" -> {
+                val sevenDaysAgo = now - 7L * 24L * 60L * 60L * 1000L
+                dbResults.filter { it.timestamp >= sevenDaysAgo }
+            }
+            "This Month" -> {
+                val thirtyDaysAgo = now - 30L * 24L * 60L * 60L * 1000L
+                dbResults.filter { it.timestamp >= thirtyDaysAgo }
+            }
+            else -> dbResults
+        }
     }
 
-    val totalAttempted = remember(performanceSummary, userProgress) {
-        if (performanceSummary.totalQuestionsAttempted > 0) performanceSummary.totalQuestionsAttempted
-        else if (userProgress.completedQuestionsCount > 0) userProgress.completedQuestionsCount
-        else 520
+    // Aggregate derived analytics metrics from real database records
+    val totalAttempted = remember(periodFilteredResults, performanceSummary, userProgress, selectedPeriod) {
+        val fromFiltered = periodFilteredResults.sumOf { it.correctAnswers + it.wrongAnswers }
+        when {
+            selectedPeriod != "Overall" -> fromFiltered
+            fromFiltered > 0 -> maxOf(fromFiltered, userProgress.completedQuestionsCount)
+            performanceSummary.totalQuestionsAttempted > 0 -> performanceSummary.totalQuestionsAttempted
+            else -> userProgress.completedQuestionsCount
+        }
     }
 
-    val totalCorrect = remember(performanceSummary, userProgress, accuracyInt, totalAttempted) {
-        if (performanceSummary.totalCorrectAnswers > 0) performanceSummary.totalCorrectAnswers
-        else ((totalAttempted * accuracyInt) / 100).coerceAtLeast(1)
+    val totalCorrect = remember(periodFilteredResults, performanceSummary, userProgress, selectedPeriod) {
+        val fromFiltered = periodFilteredResults.sumOf { it.correctAnswers }
+        val estimatedFromProgress = ((userProgress.completedQuestionsCount * userProgress.accuracyPercentage) / 100f).roundToInt()
+        when {
+            selectedPeriod != "Overall" -> fromFiltered
+            fromFiltered > 0 -> maxOf(fromFiltered, performanceSummary.totalCorrectAnswers)
+            performanceSummary.totalCorrectAnswers > 0 -> performanceSummary.totalCorrectAnswers
+            else -> estimatedFromProgress
+        }
     }
 
-    val testsCount = remember(performanceSummary, userProgress, dbResults) {
-        if (performanceSummary.totalTestsTaken > 0) performanceSummary.totalTestsTaken
-        else if (dbResults.isNotEmpty()) dbResults.size
-        else if (userProgress.testsCompletedCount > 0) userProgress.testsCompletedCount
-        else 18
+    val accuracyInt = remember(totalAttempted, totalCorrect, performanceSummary, userProgress, selectedPeriod) {
+        when {
+            totalAttempted > 0 -> ((totalCorrect.toFloat() / totalAttempted.toFloat()) * 100f).roundToInt().coerceIn(0, 100)
+            selectedPeriod == "Overall" && userProgress.accuracyPercentage > 0f -> userProgress.accuracyPercentage.roundToInt().coerceIn(0, 100)
+            else -> 0
+        }
+    }
+
+    val testsCount = remember(periodFilteredResults, performanceSummary, userProgress, selectedPeriod) {
+        when {
+            selectedPeriod != "Overall" -> periodFilteredResults.size
+            periodFilteredResults.isNotEmpty() -> maxOf(periodFilteredResults.size, userProgress.testsCompletedCount)
+            performanceSummary.totalTestsTaken > 0 -> performanceSummary.totalTestsTaken
+            else -> userProgress.testsCompletedCount
+        }
     }
 
     val streakDays = remember(userProgress) {
-        if (userProgress.streakDays > 0) userProgress.streakDays else 18
+        userProgress.streakDays.coerceAtLeast(0)
     }
 
-    val totalXp = remember(userProgress) {
-        if (userProgress.totalXp > 0) userProgress.totalXp else 2840
+    val totalXp = remember(userProgress, totalCorrect, testsCount) {
+        if (userProgress.totalXp > 0) userProgress.totalXp
+        else (totalCorrect * 10) + (testsCount * 50)
+    }
+
+    val avgScoreInt = remember(periodFilteredResults, performanceSummary) {
+        if (periodFilteredResults.isNotEmpty()) {
+            periodFilteredResults.map { it.scorePercentage }.average().roundToInt().coerceIn(0, 100)
+        } else if (performanceSummary.averageScorePercentage > 0f) {
+            performanceSummary.averageScorePercentage.roundToInt().coerceIn(0, 100)
+        } else {
+            0
+        }
     }
 
     BoxWithConstraints(
@@ -313,7 +362,7 @@ fun PerformanceBoardScreen(
                         attempted = totalAttempted,
                         streak = streakDays,
                         xp = totalXp,
-                        avgScore = (performanceSummary.averageScorePercentage.takeIf { it > 0f } ?: 82.5f).roundToInt(),
+                        avgScore = avgScoreInt,
                         isTablet = isTablet
                     )
                 }
@@ -321,13 +370,16 @@ fun PerformanceBoardScreen(
                 // 4. WEEKLY ACTIVITY CHART (Mon - Sun Questions Solved)
                 item {
                     WeeklyActivityChartCard(
-                        userProgress = userProgress
+                        userProgress = userProgress,
+                        dbResults = dbResults
                     )
                 }
 
                 // 5. WEAK-TOPICS TARGETED DIAGNOSTICS & ACTION CARD
                 item {
                     WeakTopicsSectionCard(
+                        currentAppId = currentAppId,
+                        dbResults = dbResults,
                         onNavigateToTopic = onNavigateToTopic,
                         onNavigateToSubject = onNavigateToSubject,
                         onNavigateToMockTests = onNavigateToMockTests
@@ -337,6 +389,8 @@ fun PerformanceBoardScreen(
                 // 6. SUBJECT-WISE SYLLABUS PERFORMANCE BREAKDOWN
                 item {
                     SubjectWisePerformanceCard(
+                        currentAppId = currentAppId,
+                        dbResults = dbResults,
                         onNavigateToSubject = onNavigateToSubject
                     )
                 }
@@ -344,7 +398,7 @@ fun PerformanceBoardScreen(
                 // 7. RECENT TESTS & MOCK PAPERS HISTORY
                 item {
                     RecentTestResultsCard(
-                        dbResults = dbResults,
+                        dbResults = periodFilteredResults,
                         onNavigateToMockTests = onNavigateToMockTests
                     )
                 }
@@ -671,7 +725,8 @@ private fun KpiTileItem(model: KpiCardModel) {
 // ----------------------------------------------------------------------------
 @Composable
 private fun WeeklyActivityChartCard(
-    userProgress: UserProgress
+    userProgress: UserProgress,
+    dbResults: List<TestResultEntity>
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -703,7 +758,7 @@ private fun WeeklyActivityChartCard(
                 }
 
                 Text(
-                    text = "Goal: 30 MCQs/day",
+                    text = "Goal: ${SampleData.userProfileState.value.dailyGoalQuestions.coerceAtLeast(30)} MCQs/day",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = PeachAccent
@@ -712,17 +767,32 @@ private fun WeeklyActivityChartCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 7 Days of Activity
-            val daysData = listOf(
-                "Mon" to 35,
-                "Tue" to 48,
-                "Wed" to 52,
-                "Thu" to 42,
-                "Fri" to 60,
-                "Sat" to 75,
-                "Sun" to 55
-            )
-            val maxQuestions = 80f
+            // 7 Days of Activity computed from real TestResultEntity timestamps + today's progress
+            val daysData = remember(dbResults, userProgress) {
+                val labels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                val countsByDay = IntArray(7)
+                val sevenDaysAgo = System.currentTimeMillis() - 7L * 24L * 60L * 60L * 1000L
+                val cal = Calendar.getInstance()
+                dbResults.filter { it.timestamp >= sevenDaysAgo }.forEach { res ->
+                    cal.timeInMillis = res.timestamp
+                    val dow = cal.get(Calendar.DAY_OF_WEEK) // Sun=1 .. Sat=7
+                    val idx = if (dow == Calendar.SUNDAY) 6 else dow - 2
+                    if (idx in 0..6) {
+                        countsByDay[idx] += (res.correctAnswers + res.wrongAnswers)
+                    }
+                }
+                // Include direct practice questions answered today if higher than logged test results today
+                val todayCal = Calendar.getInstance()
+                val todayDow = todayCal.get(Calendar.DAY_OF_WEEK)
+                val todayIdx = if (todayDow == Calendar.SUNDAY) 6 else todayDow - 2
+                if (countsByDay.sum() == 0 && userProgress.completedQuestionsCount > 0 && todayIdx in 0..6) {
+                    countsByDay[todayIdx] = userProgress.completedQuestionsCount
+                }
+                labels.mapIndexed { i, label -> label to countsByDay[i] }
+            }
+            val maxQuestions = (daysData.maxOfOrNull { it.second }?.toFloat() ?: 0f).coerceAtLeast(30f)
+            val totalWeekQuestions = daysData.sumOf { it.second }
+            val peakEntry = daysData.maxByOrNull { it.second }
 
             Row(
                 modifier = Modifier
@@ -745,7 +815,7 @@ private fun WeeklyActivityChartCard(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        val barHeightRatio = (count / maxQuestions).coerceIn(0.15f, 1f)
+                        val barHeightRatio = if (count > 0) (count / maxQuestions).coerceIn(0.12f, 1f) else 0.06f
 
                         Box(
                             modifier = Modifier
@@ -781,13 +851,17 @@ private fun WeeklyActivityChartCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "⚡ Peak Day: Saturday (75 MCQs solved)",
+                    text = if (peakEntry != null && peakEntry.second > 0) {
+                        "⚡ Peak Day: ${peakEntry.first} (${peakEntry.second} MCQs solved)"
+                    } else {
+                        "⚡ Start practicing today to build your weekly trend"
+                    },
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = PrimaryTextColor
                 )
                 Text(
-                    text = "367 Total this week",
+                    text = "$totalWeekQuestions Total this week",
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = CoralPinkPrimary
@@ -802,10 +876,51 @@ private fun WeeklyActivityChartCard(
 // ----------------------------------------------------------------------------
 @Composable
 private fun WeakTopicsSectionCard(
+    currentAppId: String,
+    dbResults: List<TestResultEntity>,
     onNavigateToTopic: ((Subject, UnitModel, TopicModel) -> Unit)?,
     onNavigateToSubject: ((Subject) -> Unit)?,
     onNavigateToMockTests: (() -> Unit)?
 ) {
+    val appSubjects = remember(currentAppId, SampleData.subjectsState.size) {
+        SampleData.getSubjectsForApp(currentAppId)
+    }
+
+    val weakTopics = remember(dbResults, appSubjects) {
+        val resultsWithErrors = dbResults.filter { it.wrongAnswers > 0 }
+            .sortedBy { it.scorePercentage }
+            .take(3)
+        if (resultsWithErrors.isNotEmpty()) {
+            resultsWithErrors.map { res ->
+                val matchedSub = appSubjects.firstOrNull { subj ->
+                    res.testTitle.contains(subj.name.take(6), ignoreCase = true) ||
+                        subj.units.any { u -> u.topics.any { t -> res.testTitle.contains(t.name, ignoreCase = true) } }
+                } ?: appSubjects.firstOrNull()
+                val attempted = (res.correctAnswers + res.wrongAnswers).coerceAtLeast(1)
+                val acc = ((res.correctAnswers.toFloat() / attempted) * 100f).roundToInt()
+                Triple(
+                    res.testTitle.ifBlank { "Practice Set" },
+                    matchedSub?.name ?: "Syllabus Module",
+                    "$acc% Accuracy • ${res.wrongAnswers} Errors"
+                )
+            }
+        } else {
+            // Recommend actual unattempted syllabus topics from the app's subjects
+            appSubjects.flatMap { subj ->
+                subj.units.flatMap { u ->
+                    u.topics.map { t ->
+                        val qCount = SampleData.getQuestionsCountForTopic(subj.id, u.id, t.id)
+                        Triple(
+                            t.name,
+                            subj.name,
+                            "Not Attempted • $qCount MCQs Available"
+                        )
+                    }
+                }
+            }.take(3)
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -855,7 +970,7 @@ private fun WeakTopicsSectionCard(
                     color = Color(0xFFFFEBEE)
                 ) {
                     Text(
-                        text = "3 Focus Areas",
+                        text = "${weakTopics.size} Focus Areas",
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = RoseWarning,
@@ -865,12 +980,6 @@ private fun WeakTopicsSectionCard(
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-
-            val weakTopics = listOf(
-                Triple("Economic Reforms & NITI Aayog", "Indian & AP Economy", "58% Accuracy • 8 Errors"),
-                Triple("Satavahana Dynasty Inscriptions", "AP History Module", "62% Accuracy • 6 Errors"),
-                Triple("73rd & 74th Amendments", "Indian Constitution", "65% Accuracy • 5 Errors")
-            )
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 weakTopics.forEach { (topicTitle, subjectName, statStr) ->
@@ -909,13 +1018,20 @@ private fun WeakTopicsSectionCard(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .clickable {
-                                    val matchedSub = SampleData.defaultSubjects.firstOrNull {
-                                        subjectName.contains(it.name.take(6), ignoreCase = true)
-                                    } ?: SampleData.defaultSubjects.firstOrNull()
+                                    val matchedSub = appSubjects.firstOrNull {
+                                        it.name.equals(subjectName, ignoreCase = true) ||
+                                            subjectName.contains(it.name.take(6), ignoreCase = true)
+                                    } ?: appSubjects.firstOrNull()
 
                                     if (matchedSub != null) {
-                                        val u = matchedSub.units.firstOrNull()
-                                        val t = u?.topics?.firstOrNull()
+                                        val matchedPair = matchedSub.units.flatMap { u ->
+                                            u.topics.map { t -> u to t }
+                                        }.firstOrNull { (_, t) ->
+                                            t.name.equals(topicTitle, ignoreCase = true) ||
+                                                topicTitle.contains(t.name, ignoreCase = true)
+                                        }
+                                        val u = matchedPair?.first ?: matchedSub.units.firstOrNull()
+                                        val t = matchedPair?.second ?: u?.topics?.firstOrNull()
                                         if (u != null && t != null && onNavigateToTopic != null) {
                                             onNavigateToTopic(matchedSub, u, t)
                                         } else {
@@ -944,8 +1060,14 @@ private fun WeakTopicsSectionCard(
 // ----------------------------------------------------------------------------
 @Composable
 private fun SubjectWisePerformanceCard(
+    currentAppId: String,
+    dbResults: List<TestResultEntity>,
     onNavigateToSubject: ((Subject) -> Unit)?
 ) {
+    val appSubjects = remember(currentAppId, SampleData.subjectsState.size) {
+        SampleData.getSubjectsForApp(currentAppId)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -976,7 +1098,7 @@ private fun SubjectWisePerformanceCard(
                 }
 
                 Text(
-                    text = "${SampleData.defaultSubjects.size} Subjects",
+                    text = "${appSubjects.size} Subjects",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = SubtitleTextColor
@@ -987,16 +1109,23 @@ private fun SubjectWisePerformanceCard(
 
             // Subject rows
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SampleData.defaultSubjects.take(5).forEachIndexed { idx, subject ->
-                    val acc = when (idx) {
-                        0 -> 88
-                        1 -> 92
-                        2 -> 79
-                        3 -> 84
-                        else -> 81
+                appSubjects.forEach { subject ->
+                    val subjectResults = remember(dbResults, subject.id, subject.name) {
+                        val topicNames = subject.units.flatMap { it.topics }.map { it.name.lowercase() }
+                        dbResults.filter { res ->
+                            val titleLower = res.testTitle.lowercase()
+                            titleLower.contains(subject.name.lowercase()) ||
+                                topicNames.any { tName -> tName.isNotBlank() && titleLower.contains(tName) }
+                        }
                     }
-                    val questionsCount = remember(subject.id) {
-                        SampleData.getQuestionsCountForSubject(subject.id).let { if (it <= 0) 120 else it }
+                    val acc = remember(subjectResults) {
+                        val totalAtt = subjectResults.sumOf { it.correctAnswers + it.wrongAnswers }
+                        val totalCorr = subjectResults.sumOf { it.correctAnswers }
+                        if (totalAtt > 0) ((totalCorr.toFloat() / totalAtt.toFloat()) * 100f).roundToInt().coerceIn(0, 100)
+                        else 0
+                    }
+                    val questionsCount = remember(subject.id, SampleData.questionsState.size) {
+                        SampleData.getQuestionsCountForSubject(subject.id)
                     }
 
                     Column(

@@ -87,47 +87,77 @@ fun LeaderboardScreen(
     var selectedTablePeriod by remember { mutableStateOf("This Month") }
     var showTablePeriodMenu by remember { mutableStateOf(false) }
 
-    // Top 3 Candidates
-    val top1 = remember(allCandidates) {
-        allCandidates.find { it.rank == 1 } ?: LeaderboardCandidate(
-            userId = "1", displayName = "Priya S", xp = 3450, accuracyPercentage = 96f,
-            testsCompleted = 1250, streakDays = 42, rank = 1
+    val rankedCandidates = remember(allCandidates, selectedFilterTab, selectedTimePeriod, currentAppId) {
+        val tab = when {
+            selectedTimePeriod.equals("This Week", ignoreCase = true) -> LeaderboardTab.WEEKLY
+            selectedTimePeriod.equals("This Month", ignoreCase = true) || selectedFilterTab.equals("Monthly", ignoreCase = true) -> LeaderboardTab.MONTHLY
+            selectedFilterTab.equals("Subjects", ignoreCase = true) -> LeaderboardTab.SUBJECT
+            selectedFilterTab.equals("Prelims", ignoreCase = true) || selectedFilterTab.equals("Mains", ignoreCase = true) -> LeaderboardTab.EXAM
+            else -> LeaderboardTab.OVERALL
+        }
+        val subjectKey = when {
+            selectedFilterTab.equals("Prelims", ignoreCase = true) -> "indian_history"
+            selectedFilterTab.equals("Mains", ignoreCase = true) -> "indian_polity"
+            selectedFilterTab.equals("Subjects", ignoreCase = true) -> "indian_economy"
+            else -> null
+        }
+        leaderboardRepo.getRankedCandidates(
+            tab = tab,
+            activeAppId = currentAppId,
+            subjectFilter = subjectKey
         )
     }
-    val top2 = remember(allCandidates) {
-        allCandidates.find { it.rank == 2 } ?: LeaderboardCandidate(
-            userId = "2", displayName = "Karthik M", xp = 2980, accuracyPercentage = 96f,
-            testsCompleted = 1250, streakDays = 42, rank = 2
+
+    // Top 3 Candidates from ranked list
+    val top1 = remember(rankedCandidates) {
+        rankedCandidates.getOrNull(0) ?: rankedCandidates.find { it.rank == 1 } ?: LeaderboardCandidate(
+            userId = "1", displayName = "Top Candidate", xp = 0, accuracyPercentage = 0f,
+            testsCompleted = 0, streakDays = 0, rank = 1
         )
     }
-    val top3 = remember(allCandidates) {
-        allCandidates.find { it.rank == 3 } ?: LeaderboardCandidate(
-            userId = "3", displayName = "Sneha P", xp = 2760, accuracyPercentage = 90f,
-            testsCompleted = 980, streakDays = 28, rank = 3
+    val top2 = remember(rankedCandidates) {
+        rankedCandidates.getOrNull(1) ?: rankedCandidates.find { it.rank == 2 } ?: LeaderboardCandidate(
+            userId = "2", displayName = "Rank 2 Candidate", xp = 0, accuracyPercentage = 0f,
+            testsCompleted = 0, streakDays = 0, rank = 2
+        )
+    }
+    val top3 = remember(rankedCandidates) {
+        rankedCandidates.getOrNull(2) ?: rankedCandidates.find { it.rank == 3 } ?: LeaderboardCandidate(
+            userId = "3", displayName = "Rank 3 Candidate", xp = 0, accuracyPercentage = 0f,
+            testsCompleted = 0, streakDays = 0, rank = 3
         )
     }
 
     // Ranks 4 to 10 for table
-    val tableCandidates = remember(allCandidates) {
-        val filtered = allCandidates.filter { it.rank in 4..10 }
-        if (filtered.isNotEmpty()) filtered
-        else listOf(
-            LeaderboardCandidate(userId = "4", displayName = "Aditya K", xp = 2660, accuracyPercentage = 88f, testsCompleted = 920, streakDays = 24, rank = 4),
-            LeaderboardCandidate(userId = "5", displayName = "Divya R", xp = 2420, accuracyPercentage = 86f, testsCompleted = 860, streakDays = 22, rank = 5),
-            LeaderboardCandidate(userId = "6", displayName = "Manoj R", xp = 2310, accuracyPercentage = 84f, testsCompleted = 780, streakDays = 20, rank = 6),
-            LeaderboardCandidate(userId = "7", displayName = "Harsha V", xp = 2150, accuracyPercentage = 82f, testsCompleted = 720, streakDays = 18, rank = 7),
-            LeaderboardCandidate(userId = "8", displayName = "Meena K", xp = 1980, accuracyPercentage = 80f, testsCompleted = 680, streakDays = 16, rank = 8),
-            LeaderboardCandidate(userId = "9", displayName = "Rohit P", xp = 1760, accuracyPercentage = 78f, testsCompleted = 620, streakDays = 14, rank = 9),
-            LeaderboardCandidate(userId = "10", displayName = "Nikhil T", xp = 1620, accuracyPercentage = 76f, testsCompleted = 580, streakDays = 12, rank = 10)
-        )
+    val tableCandidates = remember(rankedCandidates, selectedTablePeriod) {
+        val sortedForTable = when {
+            selectedTablePeriod.equals("This Week", ignoreCase = true) ->
+                rankedCandidates.sortedByDescending { it.weeklyXp }.mapIndexed { idx, c -> c.copy(rank = idx + 1) }
+            selectedTablePeriod.equals("This Month", ignoreCase = true) ->
+                rankedCandidates.sortedByDescending { it.monthlyXp }.mapIndexed { idx, c -> c.copy(rank = idx + 1) }
+            else -> rankedCandidates
+        }
+        sortedForTable.filter { it.rank in 4..10 }
     }
 
-    // User's Own Performance Values
-    val userRankDisplay = currentUserCandidate?.rank ?: 15
-    val userPointsDisplay = currentUserCandidate?.xp ?: (userProgress.totalXp.takeIf { it > 0 } ?: 1380)
-    val userAccuracyDisplay = (currentUserCandidate?.accuracyPercentage ?: (performanceSummary.overallAccuracy.replace("%", "").toFloatOrNull() ?: 86f)).toInt()
-    val userQuestionsDisplay = currentUserCandidate?.testsCompleted ?: (userProgress.completedQuestionsCount.takeIf { it > 0 } ?: 520)
-    val userStreakDisplay = currentUserCandidate?.streakDays ?: (userProgress.streakDays.takeIf { it > 0 } ?: 18)
+    // User's Own Real Performance Values
+    val rankedCurrentUser = remember(rankedCandidates, currentUserCandidate) {
+        rankedCandidates.find { it.isCurrentUser } ?: currentUserCandidate
+    }
+    val userRankDisplay = rankedCurrentUser?.rank ?: (rankedCandidates.size + 1)
+    val userPointsDisplay = if (userProgress.totalXp > 0) userProgress.totalXp else (rankedCurrentUser?.xp ?: 0)
+    val userAccuracyDisplay = when {
+        performanceSummary.totalQuestionsAttempted > 0 ->
+            performanceSummary.overallAccuracy.replace("%", "").toFloatOrNull()?.toInt() ?: 0
+        userProgress.accuracyPercentage > 0f -> userProgress.accuracyPercentage.toInt()
+        else -> rankedCurrentUser?.accuracyPercentage?.toInt() ?: 0
+    }
+    val userQuestionsDisplay = when {
+        userProgress.completedQuestionsCount > 0 -> userProgress.completedQuestionsCount
+        performanceSummary.totalQuestionsAttempted > 0 -> performanceSummary.totalQuestionsAttempted
+        else -> rankedCurrentUser?.questionsAttempted ?: 0
+    }
+    val userStreakDisplay = if (userProgress.streakDays > 0) userProgress.streakDays else (rankedCurrentUser?.streakDays ?: 0)
 
     BoxWithConstraints(
         modifier = Modifier
@@ -422,7 +452,10 @@ fun LeaderboardScreen(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Box(modifier = Modifier.weight(1f)) {
-                                    SubjectWiseRankQuadrantCard()
+                                    SubjectWiseRankQuadrantCard(
+                                        currentUser = rankedCurrentUser,
+                                        allCandidates = rankedCandidates
+                                    )
                                 }
                                 Box(modifier = Modifier.weight(1f)) {
                                     WeeklyProgressQuadrantCard()
@@ -438,7 +471,10 @@ fun LeaderboardScreen(
                                 streak = userStreakDisplay
                             )
                             BadgesAndAchievementsQuadrantCard()
-                            SubjectWiseRankQuadrantCard()
+                            SubjectWiseRankQuadrantCard(
+                                currentUser = rankedCurrentUser,
+                                allCandidates = rankedCandidates
+                            )
                             WeeklyProgressQuadrantCard()
                         }
                     }
@@ -698,79 +734,112 @@ private fun TopLearnersTableCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Candidates rows (4 to 10)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                candidates.forEach { candidate ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFFFF8F9), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Left: Rank Number + Avatar + Name
+            // Candidates rows (4 to 10) or clean empty state
+            if (candidates.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFFF8F9), RoundedCornerShape(12.dp))
+                        .padding(vertical = 24.dp, horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Outlined.EmojiEvents,
+                            contentDescription = null,
+                            tint = PaletteSubtitleText,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "No additional candidate standings yet",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PaletteTitleMagenta,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Complete practice sets or mock tests to populate state rankings.",
+                            fontSize = 11.sp,
+                            color = PaletteSubtitleText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    candidates.forEach { candidate ->
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFFF8F9), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "#${candidate.rank}",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = PaletteSubtitleText,
-                                modifier = Modifier.width(32.dp)
-                            )
-
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0xFFF3E5F5),
-                                modifier = Modifier.size(34.dp)
+                            // Left: Rank Number + Avatar + Name
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "#${candidate.rank}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = PaletteSubtitleText,
+                                    modifier = Modifier.width(32.dp)
+                                )
+
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFFF3E5F5),
+                                    modifier = Modifier.size(34.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = candidate.displayName.take(2).uppercase().ifBlank { "AP" },
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PaletteTitleMagenta
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                Column {
                                     Text(
-                                        text = candidate.displayName.take(2).uppercase().ifBlank { "AP" },
-                                        fontSize = 12.sp,
+                                        text = candidate.displayName.ifBlank { "Aspirant" },
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = PaletteTitleMagenta
+                                        color = Color(0xFF1E181C),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "${candidate.streakDays}d Streak • ${candidate.accuracyPercentage.toInt()}% Acc",
+                                        fontSize = 10.5.sp,
+                                        color = PaletteSubtitleText
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            Column {
+                            // Right: Points + Chevron
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = candidate.displayName.ifBlank { "Aspirant" },
+                                    text = "${candidate.xp} pts",
                                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E181C),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    fontWeight = FontWeight.Black,
+                                    color = PaletteTitleMagenta
                                 )
-                                Text(
-                                    text = "${candidate.streakDays}d Streak • ${candidate.accuracyPercentage.toInt()}% Acc",
-                                    fontSize = 10.5.sp,
-                                    color = PaletteSubtitleText
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = PaletteSubtitleText,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
-                        }
-
-                        // Right: Points + Chevron
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "${candidate.xp} pts",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Black,
-                                color = PaletteTitleMagenta
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = PaletteSubtitleText,
-                                modifier = Modifier.size(16.dp)
-                            )
                         }
                     }
                 }
@@ -1035,7 +1104,10 @@ private fun BadgeItem(emoji: String, title: String, bg: Color, border: Color) {
 // COMPOSABLE 6: Quadrant 3 - Subject-wise Rank
 // ----------------------------------------------------------------------------
 @Composable
-private fun SubjectWiseRankQuadrantCard() {
+private fun SubjectWiseRankQuadrantCard(
+    currentUser: LeaderboardCandidate?,
+    allCandidates: List<LeaderboardCandidate>
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -1059,12 +1131,24 @@ private fun SubjectWiseRankQuadrantCard() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            val subjectsList = listOf(
-                Triple("🏛️ Indian Polity", "#8", "2,450 pts"),
-                Triple("💹 Economy", "#12", "2,180 pts"),
-                Triple("🌐 Geography", "#15", "1,760 pts"),
-                Triple("📜 Modern History", "#18", "1,420 pts")
+            val subjectDefinitions = listOf(
+                "🏛️ Indian Polity" to "indian_polity",
+                "💹 Economy" to "indian_economy",
+                "🌐 Geography" to "geography_ap",
+                "📜 Modern History" to "indian_history"
             )
+
+            val subjectsList = remember(currentUser, allCandidates) {
+                subjectDefinitions.map { (label, key) ->
+                    val userPts = currentUser?.subjectXp?.get(key) ?: 0
+                    val sortedBySubj = allCandidates
+                        .filter { (it.subjectXp[key] ?: 0) > 0 }
+                        .sortedByDescending { it.subjectXp[key] ?: 0 }
+                    val userIdx = sortedBySubj.indexOfFirst { it.isCurrentUser }
+                    val rankStr = if (userIdx >= 0) "#${userIdx + 1}" else if (userPts > 0) "#1" else "#--"
+                    Triple(label, rankStr, "$userPts pts")
+                }
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 subjectsList.forEach { (subject, rankStr, ptsStr) ->
@@ -1097,6 +1181,36 @@ private fun SubjectWiseRankQuadrantCard() {
 // ----------------------------------------------------------------------------
 @Composable
 private fun WeeklyProgressQuadrantCard() {
+    val testResults = SampleData.testResultsState.toList()
+    val weekData = remember(testResults) {
+        val dayLabels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        val totalsByDay = mutableMapOf<String, Int>().apply {
+            dayLabels.forEach { put(it, 0) }
+        }
+        val cal = java.util.Calendar.getInstance()
+        val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+        testResults.take(14).forEachIndexed { index, res ->
+            val parsedDate = try { sdf.parse(res.date) } catch (_: Exception) { null }
+            val dayLabel = if (parsedDate != null) {
+                cal.time = parsedDate
+                when (cal.get(java.util.Calendar.DAY_OF_WEEK)) {
+                    java.util.Calendar.MONDAY -> "Mon"
+                    java.util.Calendar.TUESDAY -> "Tue"
+                    java.util.Calendar.WEDNESDAY -> "Wed"
+                    java.util.Calendar.THURSDAY -> "Thu"
+                    java.util.Calendar.FRIDAY -> "Fri"
+                    java.util.Calendar.SATURDAY -> "Sat"
+                    else -> "Sun"
+                }
+            } else {
+                dayLabels[index % dayLabels.size]
+            }
+            totalsByDay[dayLabel] = (totalsByDay[dayLabel] ?: 0) + (res.score * 10)
+        }
+        dayLabels.map { it to (totalsByDay[it] ?: 0) }
+    }
+    val maxVal = (weekData.maxOfOrNull { it.second }?.toFloat() ?: 0f).coerceAtLeast(100f)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -1120,12 +1234,6 @@ private fun WeeklyProgressQuadrantCard() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val weekData = listOf(
-                "Mon" to 120, "Tue" to 150, "Wed" to 180,
-                "Thu" to 160, "Fri" to 200, "Sat" to 220, "Sun" to 190
-            )
-            val maxVal = 250f
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1143,7 +1251,7 @@ private fun WeeklyProgressQuadrantCard() {
                         Box(
                             modifier = Modifier
                                 .width(18.dp)
-                                .height((80 * (valNum / maxVal)).dp)
+                                .height((80 * (valNum / maxVal)).coerceAtLeast(4f).dp)
                                 .background(
                                     Brush.verticalGradient(
                                         listOf(PaletteActiveTabBg, Color(0xFFFFB74D))

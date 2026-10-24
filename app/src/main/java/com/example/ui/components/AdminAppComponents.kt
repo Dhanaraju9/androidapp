@@ -55,8 +55,8 @@ fun AppTargetSelector(
 
     Card(
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF5)),
+        border = BorderStroke(1.dp, Color(0xFFE2D8C3)),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
@@ -75,13 +75,13 @@ fun AppTargetSelector(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFEFF6FF)),
+                            .background(Color(0xFFE8F3EE)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Hub,
                             contentDescription = null,
-                            tint = Color(0xFF2563EB),
+                            tint = Color(0xFF047857),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -91,12 +91,12 @@ fun AppTargetSelector(
                             text = title,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = Color(0xFF062C22)
                         )
                         Text(
                             text = subtitle,
                             fontSize = 11.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF1C2D27)
                         )
                     }
                 }
@@ -104,15 +104,15 @@ fun AppTargetSelector(
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = when (scope) {
-                        TargetScopeType.ALL_APPS -> Color(0xFFECFDF5)
-                        TargetScopeType.SINGLE_APP -> Color(0xFFEFF6FF)
+                        TargetScopeType.ALL_APPS -> Color(0xFFDCFCE7)
+                        TargetScopeType.SINGLE_APP -> Color(0xFFE8F3EE)
                         TargetScopeType.SELECT_APPS -> Color(0xFFF3E8FF)
                     },
                     border = BorderStroke(
                         1.dp,
                         when (scope) {
                             TargetScopeType.ALL_APPS -> Color(0xFFA7F3D0)
-                            TargetScopeType.SINGLE_APP -> Color(0xFFBFDBFE)
+                            TargetScopeType.SINGLE_APP -> Color(0xFFA7F3D0)
                             TargetScopeType.SELECT_APPS -> Color(0xFFDDD6FE)
                         }
                     )
@@ -123,7 +123,7 @@ fun AppTargetSelector(
                         fontWeight = FontWeight.Bold,
                         color = when (scope) {
                             TargetScopeType.ALL_APPS -> Color(0xFF059669)
-                            TargetScopeType.SINGLE_APP -> Color(0xFF2563EB)
+                            TargetScopeType.SINGLE_APP -> Color(0xFF047857)
                             TargetScopeType.SELECT_APPS -> Color(0xFF7C3AED)
                         },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -139,10 +139,10 @@ fun AppTargetSelector(
                 // All Apps Option
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (scope == TargetScopeType.ALL_APPS) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                    color = if (scope == TargetScopeType.ALL_APPS) Color(0xFFE8F3EE) else Color(0xFFFFFDF5),
                     border = BorderStroke(
                         1.2.dp,
-                        if (scope == TargetScopeType.ALL_APPS) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+                        if (scope == TargetScopeType.ALL_APPS) Color(0xFF059669) else Color(0xFFE2D8C3)
                     ),
                     modifier = Modifier
                         .weight(1f)
@@ -156,12 +156,12 @@ fun AppTargetSelector(
                             text = "🌐 All Apps",
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.5.sp,
-                            color = if (scope == TargetScopeType.ALL_APPS) Color(0xFF1E3A8A) else Color(0xFF1E293B)
+                            color = if (scope == TargetScopeType.ALL_APPS) Color(0xFF062C22) else Color(0xFF1C2D27)
                         )
                         Text(
                             text = "Universal default",
                             fontSize = 9.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF4D5E56)
                         )
                     }
                 }
@@ -169,10 +169,10 @@ fun AppTargetSelector(
                 // One App Option
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (scope == TargetScopeType.SINGLE_APP) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                    color = if (scope == TargetScopeType.SINGLE_APP) Color(0xFFE8F3EE) else Color(0xFFFFFDF5),
                     border = BorderStroke(
                         1.2.dp,
-                        if (scope == TargetScopeType.SINGLE_APP) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+                        if (scope == TargetScopeType.SINGLE_APP) Color(0xFF059669) else Color(0xFFE2D8C3)
                     ),
                     modifier = Modifier
                         .weight(1f)
@@ -186,12 +186,12 @@ fun AppTargetSelector(
                             text = "📱 One App",
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.5.sp,
-                            color = if (scope == TargetScopeType.SINGLE_APP) Color(0xFF1E3A8A) else Color(0xFF1E293B)
+                            color = if (scope == TargetScopeType.SINGLE_APP) Color(0xFF062C22) else Color(0xFF1C2D27)
                         )
                         Text(
                             text = "Single target",
                             fontSize = 9.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF4D5E56)
                         )
                     }
                 }
@@ -199,10 +199,10 @@ fun AppTargetSelector(
                 // Multiple Apps Option
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (scope == TargetScopeType.SELECT_APPS) Color(0xFFEFF6FF) else Color(0xFFF8FAFC),
+                    color = if (scope == TargetScopeType.SELECT_APPS) Color(0xFFE8F3EE) else Color(0xFFFFFDF5),
                     border = BorderStroke(
                         1.2.dp,
-                        if (scope == TargetScopeType.SELECT_APPS) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+                        if (scope == TargetScopeType.SELECT_APPS) Color(0xFF059669) else Color(0xFFE2D8C3)
                     ),
                     modifier = Modifier
                         .weight(1f)
@@ -216,12 +216,12 @@ fun AppTargetSelector(
                             text = "📱 Multiple",
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.5.sp,
-                            color = if (scope == TargetScopeType.SELECT_APPS) Color(0xFF1E3A8A) else Color(0xFF1E293B)
+                            color = if (scope == TargetScopeType.SELECT_APPS) Color(0xFF062C22) else Color(0xFF1C2D27)
                         )
                         Text(
                             text = "Selected apps",
                             fontSize = 9.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF4D5E56)
                         )
                     }
                 }
@@ -629,8 +629,8 @@ fun AppSpecificContextBar(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
-        border = BorderStroke(1.dp, Color(0xFF334155)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFE8DC)),
+        border = BorderStroke(1.dp, Color(0xFFD8CEBD)),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
@@ -656,15 +656,15 @@ fun AppSpecificContextBar(
                         text = "APP-SPECIFIC MANAGEMENT CONTEXT",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFF38BDF8),
+                        color = Color(0xFF047857),
                         letterSpacing = 0.8.sp
                     )
                 }
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFFEF4444).copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.4f))
+                    color = Color(0xFFEF4444).copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.3f))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -673,7 +673,7 @@ fun AppSpecificContextBar(
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = null,
-                            tint = Color(0xFFF87171),
+                            tint = Color(0xFFB91C1C),
                             modifier = Modifier.size(10.dp)
                         )
                         Spacer(modifier = Modifier.width(3.dp))
@@ -681,7 +681,7 @@ fun AppSpecificContextBar(
                             text = "STRICT DATA ISOLATION",
                             fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFCA5A5)
+                            color = Color(0xFFB91C1C)
                         )
                     }
                 }
@@ -714,13 +714,13 @@ fun AppSpecificContextBar(
                     Column {
                         Text(
                             text = currentApp.name,
-                            color = Color.White,
+                            color = Color(0xFF062C22),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "${currentApp.code} • ${currentApp.examCategory}",
-                            color = Color(0xFF94A3B8),
+                            color = Color(0xFF1C2D27),
                             fontSize = 11.sp
                         )
                     }
@@ -730,8 +730,8 @@ fun AppSpecificContextBar(
                 Box {
                     Button(
                         onClick = { expanded = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
-                        border = BorderStroke(1.dp, Color(0xFF38BDF8)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE8F3EE)),
+                        border = BorderStroke(1.dp, Color(0xFF059669)),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
@@ -739,13 +739,13 @@ fun AppSpecificContextBar(
                             text = "Switch App",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF38BDF8)
+                            color = Color(0xFF047857)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = null,
-                            tint = Color(0xFF38BDF8),
+                            tint = Color(0xFF047857),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -773,12 +773,13 @@ fun AppSpecificContextBar(
                                             Text(
                                                 text = app.name,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                fontSize = 13.sp
+                                                fontSize = 13.sp,
+                                                color = Color(0xFF062C22)
                                             )
                                             Text(
                                                 text = "${app.code} • ${app.examCategory}",
                                                 fontSize = 10.sp,
-                                                color = Color.Gray
+                                                color = Color(0xFF1C2D27)
                                             )
                                         }
                                         if (isSelected) {

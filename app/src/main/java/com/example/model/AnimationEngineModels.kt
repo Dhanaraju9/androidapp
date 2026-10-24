@@ -507,8 +507,8 @@ data class GlobalAnimationMasterConfig(
     val speedMultiplier: Float = 1.0f, // 0.5x, 0.75x, 1.0x, 1.25x, 1.5x, 2.0x
     val intensityLevel: AnimationIntensityLevel = AnimationIntensityLevel.BALANCED,
     val activePresetId: AnimationPresetId = AnimationPresetId.CASCADE_ACCORDION_PRO,
-    val screenTransitionType: ScreenTransitionAnimationType = ScreenTransitionAnimationType.SHARED_AXIS_X,
-    val screenTransitionDurationMs: Int = 280
+    val screenTransitionType: ScreenTransitionAnimationType = ScreenTransitionAnimationType.HERO_EXPAND,
+    val screenTransitionDurationMs: Int = 320
 )
 
 /**
@@ -1065,8 +1065,8 @@ object AnimationPresets {
                 speedMultiplier = 1.0f,
                 intensityLevel = AnimationIntensityLevel.BALANCED,
                 activePresetId = preset,
-                screenTransitionType = ScreenTransitionAnimationType.SHARED_AXIS_X,
-                screenTransitionDurationMs = 280
+                screenTransitionType = ScreenTransitionAnimationType.HERO_EXPAND,
+                screenTransitionDurationMs = 320
             )
         }
     }

@@ -744,48 +744,78 @@ fun PracticeArenaScreen(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 // Left Question Details (65%)
-                                Box(modifier = Modifier.weight(0.65f)) {
-                                    QuestionDetailPanel(
-                                        currentQuestion = currentQuestion,
-                                        currentIndex = currentIndex,
-                                        currentSelectedOption = currentSelectedOption,
-                                        isMarkedForReview = isMarkedForReview,
-                                        questionFontSizeScale = questionFontSizeScale,
-                                        autoShowExplanation = autoShowExplanation,
-                                        isMockTest = isMockTest,
-                                        onOptionSelected = { key ->
-                                            val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
-                                            if (isMockTest || !wasAlreadyAnswered) {
-                                                userAnswers[currentQuestion.id] = key
-                                                onAnswerSelected(userAnswers.toMap())
-                                                val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
-                                                performResultHaptic(isCorrect)
-                                                if (!isMockTest) {
-                                                    if (!wasAlreadyAnswered) {
-                                                        practiceScope.launch {
-                                                            com.example.repository.UserProgressRepository.getInstance(context)
-                                                                .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                val tabletScrollState = rememberScrollState()
+                                LaunchedEffect(currentIndex) {
+                                    tabletScrollState.scrollTo(0)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .weight(0.65f)
+                                        .fillMaxHeight()
+                                        .verticalScroll(tabletScrollState)
+                                ) {
+                                    AnimatedContent(
+                                        targetState = currentIndex,
+                                        transitionSpec = {
+                                            val isForward = targetState >= initialState
+                                            val dir = if (isForward) 1 else -1
+                                            (slideInHorizontally(
+                                                animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+                                            ) { fullWidth -> dir * (fullWidth * 0.35f).toInt() } + fadeIn(
+                                                animationSpec = tween(durationMillis = 200)
+                                            )) togetherWith (slideOutHorizontally(
+                                                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+                                            ) { fullWidth -> -dir * (fullWidth * 0.25f).toInt() } + fadeOut(
+                                                animationSpec = tween(durationMillis = 180)
+                                            ))
+                                        },
+                                        label = "MockTestTabletQuestionTransition"
+                                    ) { targetIndex ->
+                                        val q = activeQuestions.getOrNull(targetIndex) ?: currentQuestion
+                                        val targetSelectedOption = userAnswers[q.id]
+                                        val targetIsMarked = markedForReviewIds.contains(q.id)
+                                        QuestionDetailPanel(
+                                            currentQuestion = q,
+                                            currentIndex = targetIndex,
+                                            currentSelectedOption = targetSelectedOption,
+                                            isMarkedForReview = targetIsMarked,
+                                            questionFontSizeScale = questionFontSizeScale,
+                                            autoShowExplanation = autoShowExplanation,
+                                            isMockTest = isMockTest,
+                                            onOptionSelected = { key ->
+                                                val wasAlreadyAnswered = userAnswers.containsKey(q.id)
+                                                if (isMockTest || !wasAlreadyAnswered) {
+                                                    userAnswers[q.id] = key
+                                                    onAnswerSelected(userAnswers.toMap())
+                                                    val isCorrect = key.equals(q.correctOption, ignoreCase = true)
+                                                    performResultHaptic(isCorrect)
+                                                    if (!isMockTest) {
+                                                        if (!wasAlreadyAnswered) {
+                                                            practiceScope.launch {
+                                                                com.example.repository.UserProgressRepository.getInstance(context)
+                                                                    .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                            }
+                                                        }
+                                                        if (isCorrect) {
+                                                            correctAnswerTrigger++
                                                         }
                                                     }
-                                                    if (isCorrect) {
-                                                        correctAnswerTrigger++
-                                                    }
                                                 }
-                                            }
-                                        },
-                                        onHapticSelection = performSelectionHaptic,
-                                        onToggleReview = {
-                                            markedForReviewIds = if (isMarkedForReview) {
-                                                markedForReviewIds - currentQuestion.id
-                                            } else {
-                                                markedForReviewIds + currentQuestion.id
-                                            }
-                                        },
-                                        onFlagQuestion = { q -> showFlagDialog = q },
-                                        speakText = ::speakText,
-                                        onBack = onBack,
-                                        isDarkMode = isDarkMode
-                                    )
+                                            },
+                                            onHapticSelection = performSelectionHaptic,
+                                            onToggleReview = {
+                                                markedForReviewIds = if (targetIsMarked) {
+                                                    markedForReviewIds - q.id
+                                                } else {
+                                                    markedForReviewIds + q.id
+                                                }
+                                            },
+                                            onFlagQuestion = { flgQ -> showFlagDialog = flgQ },
+                                            speakText = ::speakText,
+                                            onBack = onBack,
+                                            isDarkMode = isDarkMode
+                                        )
+                                    }
                                 }
 
                                 // Right Questions list palette (35%)
@@ -814,49 +844,70 @@ fun PracticeArenaScreen(
                                     .padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                QuestionDetailPanel(
-                                    currentQuestion = currentQuestion,
-                                    currentIndex = currentIndex,
-                                    currentSelectedOption = currentSelectedOption,
-                                    isMarkedForReview = isMarkedForReview,
-                                    questionFontSizeScale = questionFontSizeScale,
-                                    autoShowExplanation = autoShowExplanation,
-                                    isMockTest = isMockTest,
-                                    isInputReady = isInputReady,
-                                    onOptionSelected = { key ->
-                                        if (!isInputReady) return@QuestionDetailPanel
-                                        val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
-                                        if (isMockTest || !wasAlreadyAnswered) {
-                                            userAnswers[currentQuestion.id] = key
-                                            onAnswerSelected(userAnswers.toMap())
-                                            val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
-                                            performResultHaptic(isCorrect)
-                                            if (!isMockTest) {
-                                                if (!wasAlreadyAnswered) {
-                                                    practiceScope.launch {
-                                                        com.example.repository.UserProgressRepository.getInstance(context)
-                                                            .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                AnimatedContent(
+                                    targetState = currentIndex,
+                                    transitionSpec = {
+                                        val isForward = targetState >= initialState
+                                        val dir = if (isForward) 1 else -1
+                                        (slideInHorizontally(
+                                            animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+                                        ) { fullWidth -> dir * (fullWidth * 0.35f).toInt() } + fadeIn(
+                                            animationSpec = tween(durationMillis = 200)
+                                        )) togetherWith (slideOutHorizontally(
+                                            animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+                                        ) { fullWidth -> -dir * (fullWidth * 0.25f).toInt() } + fadeOut(
+                                            animationSpec = tween(durationMillis = 180)
+                                        ))
+                                    },
+                                    label = "MockTestMobileQuestionTransition"
+                                ) { targetIndex ->
+                                    val q = activeQuestions.getOrNull(targetIndex) ?: currentQuestion
+                                    val targetSelectedOption = userAnswers[q.id]
+                                    val targetIsMarked = markedForReviewIds.contains(q.id)
+                                    QuestionDetailPanel(
+                                        currentQuestion = q,
+                                        currentIndex = targetIndex,
+                                        currentSelectedOption = targetSelectedOption,
+                                        isMarkedForReview = targetIsMarked,
+                                        questionFontSizeScale = questionFontSizeScale,
+                                        autoShowExplanation = autoShowExplanation,
+                                        isMockTest = isMockTest,
+                                        isInputReady = isInputReady,
+                                        onOptionSelected = { key ->
+                                            if (!isInputReady) return@QuestionDetailPanel
+                                            val wasAlreadyAnswered = userAnswers.containsKey(q.id)
+                                            if (isMockTest || !wasAlreadyAnswered) {
+                                                userAnswers[q.id] = key
+                                                onAnswerSelected(userAnswers.toMap())
+                                                val isCorrect = key.equals(q.correctOption, ignoreCase = true)
+                                                performResultHaptic(isCorrect)
+                                                if (!isMockTest) {
+                                                    if (!wasAlreadyAnswered) {
+                                                        practiceScope.launch {
+                                                            com.example.repository.UserProgressRepository.getInstance(context)
+                                                                .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                        }
+                                                    }
+                                                    if (isCorrect) {
+                                                        correctAnswerTrigger++
                                                     }
                                                 }
-                                                if (isCorrect) {
-                                                    correctAnswerTrigger++
-                                                }
                                             }
-                                        }
-                                    },
-                                    onToggleReview = {
-                                        markedForReviewIds = if (isMarkedForReview) {
-                                            markedForReviewIds - currentQuestion.id
-                                        } else {
-                                            markedForReviewIds + currentQuestion.id
-                                        }
-                                    },
-                                    onFlagQuestion = { q -> showFlagDialog = q },
-                                    speakText = ::speakText,
-                                    onBack = onBack,
-                                    onHapticSelection = performSelectionHaptic,
-                                    isDarkMode = isDarkMode
-                                )
+                                        },
+                                        onToggleReview = {
+                                            markedForReviewIds = if (targetIsMarked) {
+                                                markedForReviewIds - q.id
+                                            } else {
+                                                markedForReviewIds + q.id
+                                            }
+                                        },
+                                        onFlagQuestion = { flgQ -> showFlagDialog = flgQ },
+                                        speakText = ::speakText,
+                                        onBack = onBack,
+                                        onHapticSelection = performSelectionHaptic,
+                                        isDarkMode = isDarkMode
+                                    )
+                                }
                                 
                                 QuestionsPalettePanel(
                                     questions = activeQuestions,
@@ -890,49 +941,70 @@ fun PracticeArenaScreen(
                                     .verticalScroll(scrollState),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                QuestionDetailPanel(
-                                    currentQuestion = currentQuestion,
-                                    currentIndex = currentIndex,
-                                    currentSelectedOption = currentSelectedOption,
-                                    isMarkedForReview = isMarkedForReview,
-                                    questionFontSizeScale = questionFontSizeScale,
-                                    autoShowExplanation = autoShowExplanation,
-                                    isMockTest = isMockTest,
-                                    isInputReady = isInputReady,
-                                    onOptionSelected = { key ->
-                                        if (!isInputReady) return@QuestionDetailPanel
-                                        val wasAlreadyAnswered = userAnswers.containsKey(currentQuestion.id)
-                                        if (isMockTest || !wasAlreadyAnswered) {
-                                            userAnswers[currentQuestion.id] = key
-                                            onAnswerSelected(userAnswers.toMap())
-                                            val isCorrect = key.equals(currentQuestion.correctOption, ignoreCase = true)
-                                            performResultHaptic(isCorrect)
-                                            if (!isMockTest) {
-                                                if (!wasAlreadyAnswered) {
-                                                    practiceScope.launch {
-                                                        com.example.repository.UserProgressRepository.getInstance(context)
-                                                            .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                AnimatedContent(
+                                    targetState = currentIndex,
+                                    transitionSpec = {
+                                        val isForward = targetState >= initialState
+                                        val dir = if (isForward) 1 else -1
+                                        (slideInHorizontally(
+                                            animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+                                        ) { fullWidth -> dir * (fullWidth * 0.35f).toInt() } + fadeIn(
+                                            animationSpec = tween(durationMillis = 200)
+                                        )) togetherWith (slideOutHorizontally(
+                                            animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+                                        ) { fullWidth -> -dir * (fullWidth * 0.25f).toInt() } + fadeOut(
+                                            animationSpec = tween(durationMillis = 180)
+                                        ))
+                                    },
+                                    label = "StandardMCQQuestionTransition"
+                                ) { targetIndex ->
+                                    val q = activeQuestions.getOrNull(targetIndex) ?: currentQuestion
+                                    val targetSelectedOption = userAnswers[q.id]
+                                    val targetIsMarked = markedForReviewIds.contains(q.id)
+                                    QuestionDetailPanel(
+                                        currentQuestion = q,
+                                        currentIndex = targetIndex,
+                                        currentSelectedOption = targetSelectedOption,
+                                        isMarkedForReview = targetIsMarked,
+                                        questionFontSizeScale = questionFontSizeScale,
+                                        autoShowExplanation = autoShowExplanation,
+                                        isMockTest = isMockTest,
+                                        isInputReady = isInputReady,
+                                        onOptionSelected = { key ->
+                                            if (!isInputReady) return@QuestionDetailPanel
+                                            val wasAlreadyAnswered = userAnswers.containsKey(q.id)
+                                            if (isMockTest || !wasAlreadyAnswered) {
+                                                userAnswers[q.id] = key
+                                                onAnswerSelected(userAnswers.toMap())
+                                                val isCorrect = key.equals(q.correctOption, ignoreCase = true)
+                                                performResultHaptic(isCorrect)
+                                                if (!isMockTest) {
+                                                    if (!wasAlreadyAnswered) {
+                                                        practiceScope.launch {
+                                                            com.example.repository.UserProgressRepository.getInstance(context)
+                                                                .recordQuestionAnswered(appConfig.appId, isCorrect)
+                                                        }
+                                                    }
+                                                    if (isCorrect) {
+                                                        correctAnswerTrigger++
                                                     }
                                                 }
-                                                if (isCorrect) {
-                                                    correctAnswerTrigger++
-                                                }
                                             }
-                                        }
-                                    },
-                                    onToggleReview = {
-                                        markedForReviewIds = if (isMarkedForReview) {
-                                            markedForReviewIds - currentQuestion.id
-                                        } else {
-                                            markedForReviewIds + currentQuestion.id
-                                        }
-                                    },
-                                    onFlagQuestion = { q -> showFlagDialog = q },
-                                    speakText = ::speakText,
-                                    onBack = onBack,
-                                    onHapticSelection = performSelectionHaptic,
-                                    isDarkMode = isDarkMode
-                                )
+                                        },
+                                        onToggleReview = {
+                                            markedForReviewIds = if (targetIsMarked) {
+                                                markedForReviewIds - q.id
+                                            } else {
+                                                markedForReviewIds + q.id
+                                            }
+                                        },
+                                        onFlagQuestion = { flgQ -> showFlagDialog = flgQ },
+                                        speakText = ::speakText,
+                                        onBack = onBack,
+                                        onHapticSelection = performSelectionHaptic,
+                                        isDarkMode = isDarkMode
+                                    )
+                                }
                             }
                         }
                     }

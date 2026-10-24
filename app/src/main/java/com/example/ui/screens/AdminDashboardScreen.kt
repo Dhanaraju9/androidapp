@@ -69,12 +69,12 @@ fun AdminLoginDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
+        containerColor = Color(0xFFFFFDF5),
         shape = RoundedCornerShape(24.dp),
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Box(
-                    modifier = Modifier.size(56.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF1E3A8A), Color(0xFF2563EB)))),
+                    modifier = Modifier.size(56.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF065F46), Color(0xFF059669)))),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -89,7 +89,7 @@ fun AdminLoginDialog(
                     text = "${SampleData.getActiveApp().name} Admin Login",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFF0F172A),
+                    color = Color(0xFF062C22),
                     textAlign = TextAlign.Center
                 )
             }
@@ -106,8 +106,8 @@ fun AdminLoginDialog(
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = { phoneNumber = it },
-                        label = { Text("Phone Number (+91...)") },
-                        placeholder = { Text("+91XXXXXXXXXX") },
+                        label = { Text("Phone Number (+91...)", color = Color(0xFF1C2D27)) },
+                        placeholder = { Text("+91XXXXXXXXXX", color = Color(0xFF4D5E56)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
@@ -116,7 +116,7 @@ fun AdminLoginDialog(
                     OutlinedTextField(
                         value = otpCode,
                         onValueChange = { otpCode = it },
-                        label = { Text("Enter OTP") },
+                        label = { Text("Enter OTP", color = Color(0xFF1C2D27)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -165,13 +165,14 @@ fun AdminLoginDialog(
                     }
                 },
                 enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF047857)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isLoading) "Loading..." else if (isOtpSent) "Verify OTP" else "Send OTP")
+                Text(if (isLoading) "Loading..." else if (isOtpSent) "Verify OTP" else "Send OTP", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
+            OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancel", color = Color(0xFF062C22)) }
         }
     )
 }
@@ -187,7 +188,8 @@ fun AdminCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF5)),
+        border = BorderStroke(1.dp, Color(0xFFE2D8C3)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -258,7 +260,7 @@ fun AdminDashboardScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color(0xFF0F172A)
+                            tint = Color(0xFF062C22)
                         )
                     }
                 },
@@ -273,7 +275,7 @@ fun AdminDashboardScreen(
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(
                                     Brush.linearGradient(
-                                        listOf(Color(0xFF1E3A8A), Color(0xFF2563EB))
+                                        listOf(Color(0xFF065F46), Color(0xFF059669))
                                     )
                                 ),
                             contentAlignment = Alignment.Center
@@ -293,17 +295,17 @@ fun AdminDashboardScreen(
                                     text = activeApp.name,
                                     fontSize = 14.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A),
+                                    color = Color(0xFF062C22),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Switch App", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Switch App", tint = Color(0xFF047857), modifier = Modifier.size(18.dp))
                             }
                             Text(
                                 text = "Admin Portal",
                                 fontSize = 10.5.sp,
-                                color = Color(0xFF2563EB),
+                                color = Color(0xFF047857),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -315,7 +317,7 @@ fun AdminDashboardScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search Apps",
-                            tint = Color(0xFF2563EB),
+                            tint = Color(0xFF047857),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -341,11 +343,11 @@ fun AdminDashboardScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = Color(0xFFF4EFE6)
                 )
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = Color(0xFFF9F6F0)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -358,7 +360,7 @@ fun AdminDashboardScreen(
             androidx.compose.foundation.lazy.LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF8FAFC))
+                    .background(Color(0xFFF9F6F0))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -380,10 +382,10 @@ fun AdminDashboardScreen(
                     }
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = if (isSelectedGroup) Color(0xFFEFF6FF) else Color.White,
+                        color = if (isSelectedGroup) Color(0xFFE8F3EE) else Color(0xFFFFFDF5),
                         border = BorderStroke(
                             1.dp,
-                            if (isSelectedGroup) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+                            if (isSelectedGroup) Color(0xFF059669) else Color(0xFFE2D8C3)
                         ),
                         modifier = Modifier.clickable { activeTab = targetIndex }
                     ) {
@@ -391,7 +393,7 @@ fun AdminDashboardScreen(
                             text = pillTitle,
                             fontSize = 11.sp,
                             fontWeight = if (isSelectedGroup) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelectedGroup) Color(0xFF2563EB) else Color(0xFF64748B),
+                            color = if (isSelectedGroup) Color(0xFF047857) else Color(0xFF1C2D27),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -401,7 +403,8 @@ fun AdminDashboardScreen(
             // Compact Admin Profile & Status Header Bar
             val isReviewer = AdminSessionManager.isReviewerSession(context)
             Surface(
-                color = Color(0xFF1E293B),
+                color = Color(0xFFEFE8DC),
+                border = BorderStroke(1.dp, Color(0xFFD8CEBD)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -416,12 +419,12 @@ fun AdminDashboardScreen(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (isReviewer) Color(0xFFD97706) else Color(0xFF334155)),
+                                .background(if (isReviewer) Color(0xFFD97706) else Color(0xFF047857)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = if (isReviewer) "GR" else "SD",
-                                color = Color(0xFFFBBF24),
+                                color = Color.White,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 11.sp
                             )
@@ -429,14 +432,14 @@ fun AdminDashboardScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = AdminSessionManager.getAdminName(context),
-                            color = Color.White,
+                            color = Color(0xFF062C22),
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "(${AdminSessionManager.getAdminEmail(context)})",
-                            color = Color(0xFF94A3B8),
+                            color = Color(0xFF4D5E56),
                             fontSize = 10.5.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -444,7 +447,7 @@ fun AdminDashboardScreen(
                     }
 
                     Surface(
-                        color = if (isReviewer) Color(0xFF78350F) else Color(0xFF065F46),
+                        color = if (isReviewer) Color(0xFFFEF3C7) else Color(0xFFDCFCE7),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Row(
@@ -455,12 +458,12 @@ fun AdminDashboardScreen(
                                 modifier = Modifier
                                     .size(5.dp)
                                     .clip(CircleShape)
-                                    .background(if (isReviewer) Color(0xFFFBBF24) else Color(0xFF34D399))
+                                    .background(if (isReviewer) Color(0xFFD97706) else Color(0xFF16A34A))
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Text(
                                 text = if (isReviewer) "Reviewer" else "Super Admin",
-                                color = if (isReviewer) Color(0xFFFDE68A) else Color(0xFF34D399),
+                                color = if (isReviewer) Color(0xFFB45309) else Color(0xFF15803D),
                                 fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -472,8 +475,8 @@ fun AdminDashboardScreen(
             // Navigation Tabs
             ScrollableTabRow(
                 selectedTabIndex = activeTab,
-                containerColor = Color.White,
-                contentColor = Color(0xFF2563EB),
+                containerColor = Color(0xFFF4EFE6),
+                contentColor = Color(0xFF047857),
                 edgePadding = 12.dp
             ) {
                 tabs.forEachIndexed { index, title ->
@@ -485,7 +488,7 @@ fun AdminDashboardScreen(
                                 text = title,
                                 fontWeight = if (activeTab == index) FontWeight.Bold else FontWeight.Medium,
                                 fontSize = 13.sp,
-                                color = if (activeTab == index) Color(0xFF2563EB) else Color(0xFF64748B)
+                                color = if (activeTab == index) Color(0xFF047857) else Color(0xFF1C2D27)
                             )
                         }
                     )
@@ -1158,9 +1161,9 @@ private fun MetricCard(
     onClick: () -> Unit
 ) {
     Surface(
-        color = Color.White,
+        color = Color(0xFFFFFDF5),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        border = BorderStroke(1.dp, Color(0xFFE2D8C3)),
         shadowElevation = 1.dp,
         modifier = modifier.clickable { onClick() }
     ) {
@@ -1187,7 +1190,7 @@ private fun MetricCard(
                 Icon(
                     imageVector = Icons.Default.ArrowForward,
                     contentDescription = null,
-                    tint = Color(0xFFCBD5E1),
+                    tint = Color(0xFF4D5E56),
                     modifier = Modifier.size(14.dp)
                 )
             }
@@ -1196,20 +1199,20 @@ private fun MetricCard(
                 text = value,
                 fontWeight = FontWeight.Black,
                 fontSize = 17.sp,
-                color = Color(0xFF0F172A)
+                color = Color(0xFF062C22)
             )
             Text(
                 text = title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
-                color = Color(0xFF334155),
+                color = Color(0xFF1C2D27),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = subtitle,
                 fontSize = 10.sp,
-                color = Color(0xFF94A3B8),
+                color = Color(0xFF4D5E56),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1229,9 +1232,9 @@ private fun AdminActionRow(
     onClick: () -> Unit
 ) {
     Surface(
-        color = Color.White,
+        color = Color(0xFFFFFDF5),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        border = BorderStroke(1.dp, Color(0xFFE2D8C3)),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -1257,18 +1260,18 @@ private fun AdminActionRow(
                     text = title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color(0xFF0F172A)
+                    color = Color(0xFF062C22)
                 )
                 Text(
                     text = subtitle,
                     fontSize = 11.5.sp,
-                    color = Color(0xFF64748B)
+                    color = Color(0xFF1C2D27)
                 )
             }
             Icon(
                 Icons.Default.ArrowForward,
                 contentDescription = null,
-                tint = Color(0xFF94A3B8),
+                tint = Color(0xFF4D5E56),
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -1311,6 +1314,7 @@ fun AdminAppSearchDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color(0xFFFFFDF5),
         title = {
             Column {
                 Row(
@@ -1323,13 +1327,13 @@ fun AdminAppSearchDialog(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFEFF6FF)),
+                                .background(Color(0xFFE8F3EE)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = null,
-                                tint = Color(0xFF2563EB),
+                                tint = Color(0xFF047857),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -1339,17 +1343,17 @@ fun AdminAppSearchDialog(
                                 text = "Search & Switch Exam App",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
+                                color = Color(0xFF062C22)
                             )
                             Text(
                                 text = "Quick switcher for multi-exam tenants",
                                 fontSize = 11.5.sp,
-                                color = Color(0xFF64748B)
+                                color = Color(0xFF4D5E56)
                             )
                         }
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF64748B))
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF062C22))
                     }
                 }
             }
@@ -1365,24 +1369,26 @@ fun AdminAppSearchDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search by name, exam, category (e.g. APPSC, UPSC)...", fontSize = 13.sp) },
+                    placeholder = { Text("Search by name, exam, category (e.g. APPSC, UPSC)...", fontSize = 13.sp, color = Color(0xFF4D5E56)) },
                     leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF047857), modifier = Modifier.size(20.dp))
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Color(0xFF062C22), modifier = Modifier.size(18.dp))
                             }
                         }
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = Color(0xFFCBD5E1),
-                        focusedContainerColor = Color(0xFFF8FAFC),
-                        unfocusedContainerColor = Color(0xFFF8FAFC)
+                        focusedBorderColor = Color(0xFF047857),
+                        unfocusedBorderColor = Color(0xFFE2D8C3),
+                        focusedContainerColor = Color(0xFFFFFDF5),
+                        unfocusedContainerColor = Color(0xFFFFFDF5),
+                        focusedTextColor = Color(0xFF062C22),
+                        unfocusedTextColor = Color(0xFF062C22)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1397,14 +1403,14 @@ fun AdminAppSearchDialog(
                             val isSelected = selectedCategory == cat
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected) Color(0xFF2563EB) else Color(0xFFF1F5F9),
+                                color = if (isSelected) Color(0xFF047857) else Color(0xFFE8F3EE),
                                 modifier = Modifier.clickable { selectedCategory = cat }
                             ) {
                                 Text(
                                     text = cat,
                                     fontSize = 11.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Color.White else Color(0xFF475569),
+                                    color = if (isSelected) Color.White else Color(0xFF062C22),
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                                 )
                             }
@@ -1416,7 +1422,7 @@ fun AdminAppSearchDialog(
                 Text(
                     text = "${filteredApps.size} apps found • Click to switch active exam",
                     fontSize = 11.5.sp,
-                    color = Color(0xFF64748B),
+                    color = Color(0xFF1C2D27),
                     fontWeight = FontWeight.Medium
                 )
 
@@ -1429,9 +1435,9 @@ fun AdminAppSearchDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.SearchOff, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(40.dp))
+                            Icon(Icons.Default.SearchOff, contentDescription = null, tint = Color(0xFF4D5E56), modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("No Exam Apps match \"$searchQuery\"", color = Color.Gray, fontSize = 13.sp)
+                            Text("No Exam Apps match \"$searchQuery\"", color = Color(0xFF1C2D27), fontSize = 13.sp)
                         }
                     }
                 } else {
@@ -1443,10 +1449,10 @@ fun AdminAppSearchDialog(
                             val isActive = app.id == activeApp.id
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isActive) Color(0xFFEFF6FF) else Color.White,
+                                color = if (isActive) Color(0xFFE8F3EE) else Color(0xFFFFFDF5),
                                 border = BorderStroke(
                                     width = if (isActive) 1.5.dp else 1.dp,
-                                    color = if (isActive) Color(0xFF3B82F6) else Color(0xFFE2E8F0)
+                                    color = if (isActive) Color(0xFF059669) else Color(0xFFE2D8C3)
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1468,13 +1474,13 @@ fun AdminAppSearchDialog(
                                                 .size(38.dp)
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .background(
-                                                    if (isActive) Color(0xFF2563EB) else Color(0xFFF1F5F9)
+                                                    if (isActive) Color(0xFF047857) else Color(0xFFE8F3EE)
                                                 ),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = app.shortName.take(3).uppercase(),
-                                                color = if (isActive) Color.White else Color(0xFF475569),
+                                                color = if (isActive) Color.White else Color(0xFF062C22),
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp
                                             )
@@ -1486,7 +1492,7 @@ fun AdminAppSearchDialog(
                                                     text = app.name,
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 13.5.sp,
-                                                    color = Color(0xFF0F172A),
+                                                    color = Color(0xFF062C22),
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
@@ -1509,7 +1515,7 @@ fun AdminAppSearchDialog(
                                             Text(
                                                 text = "${app.examName} • ${app.category}",
                                                 fontSize = 11.5.sp,
-                                                color = Color(0xFF64748B),
+                                                color = Color(0xFF1C2D27),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -1519,7 +1525,7 @@ fun AdminAppSearchDialog(
                                     Button(
                                         onClick = { onAppSelected(app) },
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isActive) Color(0xFF16A34A) else Color(0xFF2563EB)
+                                            containerColor = if (isActive) Color(0xFF16A34A) else Color(0xFF047857)
                                         ),
                                         shape = RoundedCornerShape(8.dp),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
@@ -1541,7 +1547,7 @@ fun AdminAppSearchDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
+                Text("Close", color = Color(0xFF062C22), fontWeight = FontWeight.SemiBold)
             }
         }
     )

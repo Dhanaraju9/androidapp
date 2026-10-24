@@ -82,7 +82,8 @@ fun AdminTenantGeneratorTab() {
         item {
             // Stats Card
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFEFE8DC)),
+                border = BorderStroke(1.dp, Color(0xFFD8CEBD)),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -95,25 +96,25 @@ fun AdminTenantGeneratorTab() {
                         Column {
                             Text(
                                 text = "Multi-Tenant App Platform",
-                                color = Color(0xFF94A3B8),
+                                color = Color(0xFF047857),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = "$totalApps Apps Configured",
-                                color = Color.White,
+                                color = Color(0xFF062C22),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Surface(
-                            color = Color(0xFF10B981).copy(alpha = 0.2f),
+                            color = Color(0xFFDCFCE7),
                             shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, Color(0xFF10B981))
+                            border = BorderStroke(1.dp, Color(0xFFA7F3D0))
                         ) {
                             Text(
                                 text = "Next: $suggestedTenantId",
-                                color = Color(0xFF34D399),
+                                color = Color(0xFF15803D),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -123,7 +124,7 @@ fun AdminTenantGeneratorTab() {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Deploy 662+ independent Play Store APKs/AABs from this single Kotlin + Jetpack Compose codebase.",
-                        color = Color(0xFFCBD5E1),
+                        color = Color(0xFF1C2D27),
                         fontSize = 12.sp
                     )
                 }
